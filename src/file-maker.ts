@@ -1,7 +1,7 @@
 import { OperationBuilder } from "./operations/builder";
 import { isRequestError, type IRequest } from "./request";
 
-class Logger {
+export class Logger {
   log(message: unknown) {
     console.log(message);
   }

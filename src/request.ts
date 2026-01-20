@@ -2,7 +2,7 @@ import { merge } from "lodash";
 import axios, { isAxiosError, type ResponseType } from "axios";
 import type { FileMakerCredentials } from "./file-maker";
 
-interface RequestOptions {
+export interface RequestOptions {
   headers?: Record<string, string>;
   responseType?: ResponseType;
 }
