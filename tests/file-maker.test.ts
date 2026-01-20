@@ -381,3 +381,42 @@ describe("getRecords", () => {
     });
   });
 });
+
+describe("getRecord", () => {
+  test("fetches a single record by ID", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<MockPerson>({
+      type: "GET",
+      url: fm.url("people('1234')"),
+      response: { ID: "1234", name: "Fede", company: "Beezwax" },
+    });
+
+    const response = await fm.getRecord<MockPerson>("people", "1234");
+    expect(response.ID).toEqual("1234");
+    expect(response.name).toEqual("Fede");
+    expect(response.company).toEqual("Beezwax");
+  });
+
+  test("properly encodes special characters in ID", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<MockPerson>({
+      type: "GET",
+      url: fm.url("people('test%40example.com')"),
+      response: {
+        ID: "test@example.com",
+        name: "Test User",
+        company: "Test Corp",
+      },
+    });
+
+    const response = await fm.getRecord<MockPerson>(
+      "people",
+      "test@example.com",
+    );
+    expect(response.ID).toEqual("test@example.com");
+    expect(response.name).toEqual("Test User");
+    expect(response.company).toEqual("Test Corp");
+  });
+});
