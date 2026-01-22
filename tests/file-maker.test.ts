@@ -5,17 +5,24 @@ import {
   FileMakerBasicCredentials,
   Logger,
 } from "../src/file-maker";
-import type { IRequest, RequestOptions } from "../src/request";
+import type {
+  IRequest,
+  IResponse,
+  IResponseHeaders,
+  RequestOptions,
+} from "../src/request";
 
 class MockRequest implements IRequest {
-  private requests: Record<"GET" | "POST", Record<string, unknown>>;
+  private requests: Record<"GET" | "POST", Record<string, IResponse<unknown>>>;
+
   private responses: {
-    response: unknown;
+    response: IResponse<unknown>;
     request: {
       type: "GET" | "POST";
       url: string;
       options?: RequestOptions;
       params?: unknown;
+      headers?: IResponseHeaders;
     };
   }[];
 
@@ -27,31 +34,33 @@ class MockRequest implements IRequest {
     this.responses = [];
   }
 
-  mock<R>({
+  mock<T>({
     type,
     url,
-    response,
+    data,
+    headers,
   }: {
     type: "GET" | "POST";
     url: string;
-    response: R;
+    data: T;
+    headers?: IResponseHeaders;
   }) {
-    this.requests[type][url] = response;
+    this.requests[type][url] = { data, headers: headers ?? {} };
   }
 
-  async get<T>(url: string, options?: RequestOptions): Promise<T> {
-    const request = this.requests.GET[url];
+  async get<T>(url: string, options?: RequestOptions) {
+    const response = this.requests.GET[url] as IResponse<T>;
 
-    if (request === undefined)
+    if (response === undefined)
       throw new Error(`Could not find mock GET request: "${url}"`);
 
     // Store response for latest inspection if needed by tests
     this.responses.push({
-      response: request,
+      response,
       request: { type: "GET", url, options },
     });
 
-    return request as T;
+    return response as IResponse<T>;
   }
 
   async post<T>(
@@ -113,7 +122,7 @@ describe("FileMaker", () => {
     request.mock({
       type: "GET",
       url: fm.url("$metadata"),
-      response: "someJSON",
+      data: "someJSON",
     });
 
     const response = await fm.metadata<string>();
@@ -128,7 +137,7 @@ describe("getRecords", () => {
     request.mock<{ value: MockPerson[] }>({
       type: "GET",
       url: fm.url("people?"),
-      response: { value: [{ ID: "1234", name: "Fede", company: "Beezwax" }] },
+      data: { value: [{ ID: "1234", name: "Fede", company: "Beezwax" }] },
     });
 
     const response = await fm.getRecords<MockPerson>("people");
@@ -144,7 +153,7 @@ describe("getRecords", () => {
       request.mock<{ value: Partial<MockPerson>[] }>({
         type: "GET",
         url: fm.url("people?$select=name"),
-        response: { value: [{ name: "Fede" }] },
+        data: { value: [{ name: "Fede" }] },
       });
 
       const response = await fm.getRecords<MockPerson>("people", {
@@ -160,7 +169,7 @@ describe("getRecords", () => {
       request.mock<{ value: Pick<MockPerson, "ID">[] }>({
         type: "GET",
         url: fm.url('people?$select="ID"'),
-        response: { value: [{ ID: "1234" }] },
+        data: { value: [{ ID: "1234" }] },
       });
 
       const response = await fm.getRecords<MockPerson>("people", {
@@ -176,7 +185,7 @@ describe("getRecords", () => {
       request.mock<{ value: Partial<MockPerson>[] }>({
         type: "GET",
         url: fm.url('people?$select="ID",name,company'),
-        response: {
+        data: {
           value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
         },
       });
@@ -198,7 +207,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$top=5"),
-        response: {
+        data: {
           value: [
             { ID: "1", name: "Person 1", company: "Company 1" },
             { ID: "2", name: "Person 2", company: "Company 2" },
@@ -220,7 +229,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$skip=10"),
-        response: {
+        data: {
           value: [{ ID: "11", name: "Person 11", company: "Company 11" }],
         },
       });
@@ -240,7 +249,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$filter=name eq 'Fede'"),
-        response: {
+        data: {
           value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
         },
       });
@@ -260,7 +269,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$expand=orders"),
-        response: {
+        data: {
           value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
         },
       });
@@ -279,7 +288,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$orderby=name%20asc"),
-        response: {
+        data: {
           value: [
             { ID: "1", name: "Alice", company: "Company A" },
             { ID: "2", name: "Bob", company: "Company B" },
@@ -301,7 +310,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$orderby=name%20desc"),
-        response: {
+        data: {
           value: [
             { ID: "2", name: "Bob", company: "Company B" },
             { ID: "1", name: "Alice", company: "Company A" },
@@ -325,7 +334,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$count=true"),
-        response: {
+        data: {
           value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
         },
       });
@@ -342,7 +351,7 @@ describe("getRecords", () => {
       request.mock<{ value: MockPerson[] }>({
         type: "GET",
         url: fm.url("people?$count=false"),
-        response: {
+        data: {
           value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
         },
       });
@@ -363,7 +372,7 @@ describe("getRecords", () => {
         url: fm.url(
           "people?$select=name,company&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=name%20asc",
         ),
-        response: {
+        data: {
           value: [{ name: "Fede", company: "Beezwax" }],
         },
       });
@@ -389,7 +398,7 @@ describe("getRecord", () => {
     request.mock<MockPerson>({
       type: "GET",
       url: fm.url("people('1234')"),
-      response: { ID: "1234", name: "Fede", company: "Beezwax" },
+      data: { ID: "1234", name: "Fede", company: "Beezwax" },
     });
 
     const response = await fm.getRecord<MockPerson>("people", "1234");
@@ -404,7 +413,7 @@ describe("getRecord", () => {
     request.mock<MockPerson>({
       type: "GET",
       url: fm.url("people('test%40example.com')"),
-      response: {
+      data: {
         ID: "test@example.com",
         name: "Test User",
         company: "Test Corp",

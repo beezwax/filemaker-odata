@@ -1,4 +1,4 @@
-import { FileMakerConfig } from "../file-maker";
+import type { FileMakerConfig } from "../file-maker";
 import type {
   BatchOperation,
   RecordWithId,
@@ -43,7 +43,7 @@ export class UpdateOperation<T extends RecordWithId> implements BatchOperation {
       `Content-ID: ${changeId}\r\n\r\n` +
       `PATCH ${this.url(this.table)}('${this.record.ID}') HTTP/1.1\r\n` +
       `Content-Type: application/json\r\n` +
-      `Content-Length: ${Buffer.byteLength(json)}\r\n\r\n` +
+      `Content-Length: ${this.byteLength(json)}\r\n\r\n` +
       json +
       "\r\n"
     );
@@ -70,5 +70,9 @@ export class UpdateOperation<T extends RecordWithId> implements BatchOperation {
 
   private url(path: string) {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${path}`;
+  }
+
+  private byteLength(value: string) {
+    return new TextEncoder().encode(value).byteLength;
   }
 }

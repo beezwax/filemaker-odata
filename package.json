@@ -1,8 +1,18 @@
 {
-  "name": "bw-filemaker-odata",
-  "private": true,
-  "version": "0.0.0",
+  "name": "filemaker-odata",
+  "version": "0.0.1",
   "type": "module",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/filemaker-odata.umd.cjs",
+  "module": "./dist/filemaker-odata.js",
+  "exports": {
+    ".": {
+      "import": "./dist/filemaker-odata.js",
+      "require": "./dist/filemaker-odata.umd.cjs"
+    }
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",

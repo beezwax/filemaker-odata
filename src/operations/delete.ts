@@ -1,4 +1,4 @@
-import { FileMakerConfig } from "../file-maker";
+import type { FileMakerConfig } from "../file-maker";
 import type { BatchOperation, FileMakerErrorResponse } from "./operation";
 
 export class DeleteOperation implements BatchOperation {

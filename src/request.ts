@@ -1,13 +1,24 @@
 import { merge } from "lodash";
-import axios, { isAxiosError, type ResponseType } from "axios";
+import axios, {
+  isAxiosError,
+  type ResponseType,
+  type AxiosResponse,
+} from "axios";
 import type { FileMakerCredentials } from "./file-maker";
+
+// This `IRequest` implementation uses types from axios. If we ever need
+// another implementation (unlikely, but for example, using fetch instead) we
+// would need to re-define some types (eg: `ResponseType` and
+// `IResponseHeaders`) and make them compatible.
+//
+// For now we keep it simple by simply aliasing the types.
 
 export interface RequestOptions {
   headers?: Record<string, string>;
   responseType?: ResponseType;
 }
 
-export class RequestError extends Error {
+class RequestError extends Error {
   data?: unknown;
 
   constructor(data?: unknown) {
@@ -19,13 +30,20 @@ export class RequestError extends Error {
 export const isRequestError = (error: unknown): error is RequestError =>
   error instanceof RequestError;
 
+export type IResponseHeaders = AxiosResponse["headers"];
+
+export interface IResponse<T> {
+  data: T;
+  headers: IResponseHeaders;
+}
+
 export interface IRequest {
-  get<T>(url: string, options?: RequestOptions): Promise<T>;
+  get<T>(url: string, options?: RequestOptions): Promise<IResponse<T>>;
   post<T>(
     url: string,
     params: string | Record<string, unknown> | null,
     options?: RequestOptions,
-  ): Promise<T>;
+  ): Promise<IResponse<T>>;
 }
 
 /**
@@ -40,7 +58,7 @@ export class Request implements IRequest {
     this.agent = agent;
   }
 
-  async get<T>(url: string, options?: RequestOptions): Promise<T> {
+  async get<T>(url: string, options?: RequestOptions) {
     try {
       const response = await axios.get<T>(
         url,
@@ -53,7 +71,7 @@ export class Request implements IRequest {
         ),
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       throw new RequestError(
         isAxiosError(error) && error.response ? error.response.data : undefined,
@@ -65,7 +83,7 @@ export class Request implements IRequest {
     url: string,
     params: string | Record<string, unknown> | null,
     options?: RequestOptions,
-  ): Promise<T> {
+  ) {
     try {
       const response = await axios.post<T>(
         url,
@@ -79,7 +97,7 @@ export class Request implements IRequest {
         ),
       );
 
-      return response.data;
+      return response;
     } catch (error) {
       throw new RequestError(
         isAxiosError(error) && error.response ? error.response.data : undefined,

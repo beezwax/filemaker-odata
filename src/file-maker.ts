@@ -23,6 +23,12 @@ export interface FileMakerCredentials {
   get authorizationHeaders(): Record<string, string>;
 }
 
+export class NullFileMakerCredentials implements FileMakerCredentials {
+  get authorizationHeaders() {
+    return {};
+  }
+}
+
 export class FileMakerOAuthCredentials implements FileMakerCredentials {
   private requestId: string;
   private identifier: string;
@@ -67,7 +73,7 @@ export class FileMakerBasicCredentials implements FileMakerCredentials {
 // An authorization strategy using the raw string which will be passed to
 // `Authorization` header. Eg:
 //
-//   new FileMakerRawCredentials('Basic <base64-encoded-username-and-password>');
+//   new FileMakerRawCredentials('Basic <access-token>');
 //
 export class FileMakerRawCredentials implements FileMakerCredentials {
   private authorization: string;
@@ -129,7 +135,7 @@ export class FileMaker {
   }
 
   async metadata<T>() {
-    return await this.request.get<T>(this.url("$metadata"));
+    return (await this.request.get<T>(this.url("$metadata"))).data;
   }
 
   async subquery<T>(params: {
@@ -152,7 +158,7 @@ export class FileMaker {
         `${this.url(`${params.table}('${params.recordId}')/${params.path}`)}?${this.parameterize(params.options)}`,
       );
 
-      return response.value;
+      return response.data.value;
     } catch (error) {
       if (isRequestError(error)) {
         this.log("Get records HTTP error");
@@ -176,7 +182,7 @@ export class FileMaker {
         "@odata.count"?: number;
       }>(`${this.url(table)}?${this.parameterize(options)}`);
 
-      return response.value;
+      return response.data.value;
     } catch (error) {
       if (isRequestError(error)) {
         this.log("Get records HTTP error");
@@ -204,8 +210,8 @@ export class FileMaker {
       }>(`${this.url(table)}?${this.parameterize(actualOptions)}`);
 
       return {
-        data: response.value,
-        count: response["@odata.count"] ?? 0,
+        data: response.data.value,
+        count: response.data["@odata.count"] ?? 0,
       };
     } catch (error) {
       if (isRequestError(error)) {
@@ -227,7 +233,7 @@ export class FileMaker {
         `${this.url(table)}('${encodeURIComponent(id)}')`,
       );
 
-      return response;
+      return response.data;
     } catch (error) {
       if (isRequestError(error)) {
         this.log(error.data);
@@ -245,7 +251,7 @@ export class FileMaker {
         },
       );
 
-      return response;
+      return response.data;
     } catch (error) {
       if (isRequestError(error)) {
         this.log(error.data);
@@ -273,7 +279,7 @@ export class FileMaker {
         },
       );
 
-      return response;
+      return response.data;
     } catch (error) {
       if (isRequestError(error)) {
         this.log(error.data);
@@ -346,11 +352,11 @@ export class FileMaker {
           },
         );
 
-        const match = /boundary=(.+?)\r\n/.exec(response);
+        const match = /boundary=(.+?)\r\n/.exec(response.data);
         if (match === null) throw new Error("Could not find changeset");
 
         const changeset = match[0].split("=")[1].trim();
-        const changes = response.split(`--${changeset}`).slice(1, -1);
+        const changes = response.data.split(`--${changeset}`).slice(1, -1);
         return changes.map((change, index) =>
           operations[index].parseResponse(change),
         );
@@ -380,10 +386,10 @@ export class FileMaker {
     this.log(`[FileMaker Service] Script ${name} finished. Response:`);
     this.log(response);
 
-    const success = response.scriptResult.code === 0;
+    const success = response.data.scriptResult.code === 0;
     return {
       success,
-      data: success ? response.scriptResult.resultParameter : undefined,
+      data: success ? response.data.scriptResult.resultParameter : undefined,
     };
   }
 
