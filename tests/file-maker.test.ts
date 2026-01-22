@@ -5,88 +5,12 @@ import {
   FileMakerBasicCredentials,
   Logger,
 } from "../src/file-maker";
-import type {
-  IRequest,
-  IResponse,
-  IResponseHeaders,
-  RequestOptions,
-} from "../src/request";
+import { MockRequest } from "./mocks";
 
-class MockRequest implements IRequest {
-  private requests: Record<"GET" | "POST", Record<string, IResponse<unknown>>>;
-
-  private responses: {
-    response: IResponse<unknown>;
-    request: {
-      type: "GET" | "POST";
-      url: string;
-      options?: RequestOptions;
-      params?: unknown;
-      headers?: IResponseHeaders;
-    };
-  }[];
-
-  constructor() {
-    this.requests = {
-      GET: {},
-      POST: {},
-    };
-    this.responses = [];
-  }
-
-  mock<T>({
-    type,
-    url,
-    data,
-    headers,
-  }: {
-    type: "GET" | "POST";
-    url: string;
-    data: T;
-    headers?: IResponseHeaders;
-  }) {
-    this.requests[type][url] = { data, headers: headers ?? {} };
-  }
-
-  async get<T>(url: string, options?: RequestOptions) {
-    const response = this.requests.GET[url] as IResponse<T>;
-
-    if (response === undefined)
-      throw new Error(`Could not find mock GET request: "${url}"`);
-
-    // Store response for latest inspection if needed by tests
-    this.responses.push({
-      response,
-      request: { type: "GET", url, options },
-    });
-
-    return response as IResponse<T>;
-  }
-
-  async post<T>(
-    url: string,
-    params: string | Record<string, unknown> | null,
-    options?: RequestOptions,
-  ): Promise<T> {
-    const request = this.requests.POST[url];
-
-    if (request === undefined)
-      throw new Error(`Could not find mock POST request: "${url}"`);
-
-    // Store response for latest inspection if needed by tests
-    this.responses.push({
-      response: request,
-      request: { type: "GET", url, params, options },
-    });
-
-    return request as T;
-  }
-}
-
-interface MockPerson {
+interface MockPersonRecord {
   ID: string;
-  name: string;
-  company: string;
+  NAME: string;
+  COMPANY: string;
 }
 
 const fixtures = () => {
@@ -134,45 +58,45 @@ describe("getRecords", () => {
   test("no options", async () => {
     const { fm, request } = fixtures();
 
-    request.mock<{ value: MockPerson[] }>({
+    request.mock<{ value: MockPersonRecord[] }>({
       type: "GET",
       url: fm.url("people?"),
-      data: { value: [{ ID: "1234", name: "Fede", company: "Beezwax" }] },
+      data: { value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }] },
     });
 
-    const response = await fm.getRecords<MockPerson>("people");
+    const response = await fm.getRecords<MockPersonRecord>("people");
     expect(response.length).toEqual(1);
-    expect(response[0].name).toEqual("Fede");
-    expect(response[0].company).toEqual("Beezwax");
+    expect(response[0].NAME).toEqual("Fede");
+    expect(response[0].COMPANY).toEqual("Beezwax");
   });
 
   describe("$select", () => {
     test("Adds name to the URL", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: Partial<MockPerson>[] }>({
+      request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
         url: fm.url("people?$select=name"),
-        data: { value: [{ name: "Fede" }] },
+        data: { value: [{ NAME: "Fede" }] },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $select: ["name"],
       });
       expect(response.length).toEqual(1);
-      expect(response[0].name).toEqual("Fede");
+      expect(response[0].NAME).toEqual("Fede");
     });
 
     test("escapes the ID", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: Pick<MockPerson, "ID">[] }>({
+      request.mock<{ value: Pick<MockPersonRecord, "ID">[] }>({
         type: "GET",
         url: fm.url('people?$select="ID"'),
         data: { value: [{ ID: "1234" }] },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $select: ["ID"],
       });
       expect(response.length).toEqual(1);
@@ -182,21 +106,21 @@ describe("getRecords", () => {
     test("handles multiple fields", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: Partial<MockPerson>[] }>({
+      request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
         url: fm.url('people?$select="ID",name,company'),
         data: {
-          value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
+          value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $select: ["ID", "name", "company"],
       });
       expect(response.length).toEqual(1);
       expect(response[0].ID).toEqual("1234");
-      expect(response[0].name).toEqual("Fede");
-      expect(response[0].company).toEqual("Beezwax");
+      expect(response[0].NAME).toEqual("Fede");
+      expect(response[0].COMPANY).toEqual("Beezwax");
     });
   });
 
@@ -204,18 +128,18 @@ describe("getRecords", () => {
     test("limits the number of results", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$top=5"),
         data: {
           value: [
-            { ID: "1", name: "Person 1", company: "Company 1" },
-            { ID: "2", name: "Person 2", company: "Company 2" },
+            { ID: "1", NAME: "Person 1", COMPANY: "Company 1" },
+            { ID: "2", NAME: "Person 2", COMPANY: "Company 2" },
           ],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $top: 5,
       });
       expect(response.length).toEqual(2);
@@ -226,15 +150,15 @@ describe("getRecords", () => {
     test("skips the specified number of records", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$skip=10"),
         data: {
-          value: [{ ID: "11", name: "Person 11", company: "Company 11" }],
+          value: [{ ID: "11", NAME: "Person 11", COMPANY: "Company 11" }],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $skip: 10,
       });
       expect(response.length).toEqual(1);
@@ -246,19 +170,19 @@ describe("getRecords", () => {
     test("filters records based on criteria", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$filter=name eq 'Fede'"),
         data: {
-          value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
+          value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $filter: "name eq 'Fede'",
       });
       expect(response.length).toEqual(1);
-      expect(response[0].name).toEqual("Fede");
+      expect(response[0].NAME).toEqual("Fede");
     });
   });
 
@@ -266,15 +190,15 @@ describe("getRecords", () => {
     test("expands related entities", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$expand=orders"),
         data: {
-          value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
+          value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $expand: "orders",
       });
       expect(response.length).toEqual(1);
@@ -285,45 +209,45 @@ describe("getRecords", () => {
     test("orders results in ascending order", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$orderby=name%20asc"),
         data: {
           value: [
-            { ID: "1", name: "Alice", company: "Company A" },
-            { ID: "2", name: "Bob", company: "Company B" },
+            { ID: "1", NAME: "Alice", COMPANY: "Company A" },
+            { ID: "2", NAME: "Bob", COMPANY: "Company B" },
           ],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $orderby: ["name", "asc"],
       });
       expect(response.length).toEqual(2);
-      expect(response[0].name).toEqual("Alice");
-      expect(response[1].name).toEqual("Bob");
+      expect(response[0].NAME).toEqual("Alice");
+      expect(response[1].NAME).toEqual("Bob");
     });
 
     test("orders results in descending order", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$orderby=name%20desc"),
         data: {
           value: [
-            { ID: "2", name: "Bob", company: "Company B" },
-            { ID: "1", name: "Alice", company: "Company A" },
+            { ID: "2", NAME: "Bob", COMPANY: "Company B" },
+            { ID: "1", NAME: "Alice", COMPANY: "Company A" },
           ],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $orderby: ["name", "desc"],
       });
       expect(response.length).toEqual(2);
-      expect(response[0].name).toEqual("Bob");
-      expect(response[1].name).toEqual("Alice");
+      expect(response[0].NAME).toEqual("Bob");
+      expect(response[1].NAME).toEqual("Alice");
     });
   });
 
@@ -331,15 +255,15 @@ describe("getRecords", () => {
     test("includes count parameter when true", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$count=true"),
         data: {
-          value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
+          value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $count: true,
       });
       expect(response.length).toEqual(1);
@@ -348,15 +272,15 @@ describe("getRecords", () => {
     test("includes count parameter when false", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: MockPerson[] }>({
+      request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
         url: fm.url("people?$count=false"),
         data: {
-          value: [{ ID: "1234", name: "Fede", company: "Beezwax" }],
+          value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $count: false,
       });
       expect(response.length).toEqual(1);
@@ -367,17 +291,17 @@ describe("getRecords", () => {
     test("handles multiple options together", async () => {
       const { fm, request } = fixtures();
 
-      request.mock<{ value: Partial<MockPerson>[] }>({
+      request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
         url: fm.url(
           "people?$select=name,company&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=name%20asc",
         ),
         data: {
-          value: [{ name: "Fede", company: "Beezwax" }],
+          value: [{ NAME: "Fede", COMPANY: "Beezwax" }],
         },
       });
 
-      const response = await fm.getRecords<MockPerson>("people", {
+      const response = await fm.getRecords<MockPersonRecord>("people", {
         $select: ["name", "company"],
         $top: 10,
         $skip: 5,
@@ -385,8 +309,8 @@ describe("getRecords", () => {
         $orderby: ["name", "asc"],
       });
       expect(response.length).toEqual(1);
-      expect(response[0].name).toEqual("Fede");
-      expect(response[0].company).toEqual("Beezwax");
+      expect(response[0].NAME).toEqual("Fede");
+      expect(response[0].COMPANY).toEqual("Beezwax");
     });
   });
 });
@@ -395,37 +319,37 @@ describe("getRecord", () => {
   test("fetches a single record by ID", async () => {
     const { fm, request } = fixtures();
 
-    request.mock<MockPerson>({
+    request.mock<MockPersonRecord>({
       type: "GET",
       url: fm.url("people('1234')"),
-      data: { ID: "1234", name: "Fede", company: "Beezwax" },
+      data: { ID: "1234", NAME: "Fede", COMPANY: "Beezwax" },
     });
 
-    const response = await fm.getRecord<MockPerson>("people", "1234");
+    const response = await fm.getRecord<MockPersonRecord>("people", "1234");
     expect(response.ID).toEqual("1234");
-    expect(response.name).toEqual("Fede");
-    expect(response.company).toEqual("Beezwax");
+    expect(response.NAME).toEqual("Fede");
+    expect(response.COMPANY).toEqual("Beezwax");
   });
 
   test("properly encodes special characters in ID", async () => {
     const { fm, request } = fixtures();
 
-    request.mock<MockPerson>({
+    request.mock<MockPersonRecord>({
       type: "GET",
       url: fm.url("people('test%40example.com')"),
       data: {
         ID: "test@example.com",
-        name: "Test User",
-        company: "Test Corp",
+        NAME: "Test User",
+        COMPANY: "Test Corp",
       },
     });
 
-    const response = await fm.getRecord<MockPerson>(
+    const response = await fm.getRecord<MockPersonRecord>(
       "people",
       "test@example.com",
     );
     expect(response.ID).toEqual("test@example.com");
-    expect(response.name).toEqual("Test User");
-    expect(response.company).toEqual("Test Corp");
+    expect(response.NAME).toEqual("Test User");
+    expect(response.COMPANY).toEqual("Test Corp");
   });
 });
