@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { FileMaker, type FileMakerConfig, Logger } from "../src/file-maker";
+import { FileMaker, Logger } from "../src/file-maker";
 import { MockRequest } from "./mocks";
 
 interface MockPersonRecord {
@@ -9,13 +9,14 @@ interface MockPersonRecord {
 }
 
 const fixtures = () => {
-  const config: FileMakerConfig = {
-    server: "demo.server.beezwax.net",
-    database: "test",
-  };
   const request = new MockRequest();
   const logger = new Logger();
-  const fm = new FileMaker({ config, logger, request });
+  const fm = new FileMaker({
+    server: "demo.server.beezwax.net",
+    database: "test",
+    logger,
+    request,
+  });
 
   return { fm, request };
 };

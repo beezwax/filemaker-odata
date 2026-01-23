@@ -35,7 +35,7 @@ interface QueryOptions<T> {
   $count?: boolean;
 }
 
-export interface FileMakerConfig {
+interface FileMakerConfig {
   server: string;
   database: string;
 }
@@ -46,15 +46,17 @@ export class FileMaker {
   private request: IRequest;
 
   constructor({
-    config,
+    server,
+    database,
     logger,
     request,
   }: {
-    config: FileMakerConfig;
+    server: string;
+    database: string;
     logger: Logger;
     request: IRequest;
   }) {
-    this.config = config;
+    this.config = { server, database };
     this.logger = logger;
     this.request = request;
   }
