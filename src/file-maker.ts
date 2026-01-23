@@ -1,5 +1,5 @@
-import { OperationBuilder } from "./operations/builder";
 import { isRequestError, type IRequest } from "./request";
+import { OperationBuilder } from "./operations/builder";
 
 export class Logger {
   log(message: unknown) {
