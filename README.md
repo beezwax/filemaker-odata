@@ -32,6 +32,8 @@ const fm = client.withBasicAuth({
 const records = await fm.getRecords("myTable");
 ```
 
+For documentation on the `fm` instance see the [API](./API.md) documentation.
+
 ## OAuth Authentication
 
 ```typescript
