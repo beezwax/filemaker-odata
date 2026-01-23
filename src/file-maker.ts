@@ -1,11 +1,6 @@
 import { isRequestError, type IRequest } from "./request";
 import { OperationBuilder } from "./operations/builder";
-
-export class Logger {
-  log(message: unknown) {
-    console.log(message);
-  }
-}
+import type { ILogger } from "./logger";
 
 interface FileMakerScriptResponse<T> {
   scriptResult: { code: number; resultParameter?: T };
@@ -35,14 +30,14 @@ interface QueryOptions<T> {
   $count?: boolean;
 }
 
-interface FileMakerConfig {
+export interface FileMakerConfig {
   server: string;
   database: string;
 }
 
 export class FileMaker {
   private config: FileMakerConfig;
-  private logger: Logger;
+  private logger: ILogger;
   private request: IRequest;
 
   constructor({
@@ -53,7 +48,7 @@ export class FileMaker {
   }: {
     server: string;
     database: string;
-    logger: Logger;
+    logger: ILogger;
     request: IRequest;
   }) {
     this.config = { server, database };

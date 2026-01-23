@@ -12,90 +12,142 @@ You can install it with:
 Once installed, you can import it with:
 
 ```typescript
-import { FileMaker } from "beezwax/filemaker-odata";
+import { FileMakerClient } from "beezwax/filemaker-odata";
 ```
 
-TODO: Improve assembly
+## Basic Authentication
 
 ```typescript
-// Basic auth
-const credentials = new FileMakerBasicCredentials({
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+});
+
+const fm = client.withBasicAuth({
   username: "my-user",
-  username: "my-pass",
+  password: "my-pass",
 });
-const request = new AuthenticatedRequest(credentials);
-const filemaker = new FileMaker({
-  server: "demo.server.beezwax.net",
-  database: "test",
-  logger,
-  request,
-});
+
+// Now use the fm instance to make requests
+const records = await fm.getRecords("myTable");
 ```
 
+## OAuth Authentication
+
 ```typescript
-// OAuth
-const authenticator = new FileMakerAuthenticator({
+const client = new FileMakerClient({
   server: "demo.server.beezwax.net",
   database: "test",
 });
 
-const { redirectUrl, requestId } = authenticator.getOAuthUrl({
-  // This can be anything, it will be passed back in the redirection
-  trackingId: "foo",
-  // Whatever OAuth provider FileMaker is configured to use
-  provider: "Google",
-  // If your FileMaker server is on a different host than the web app, see
-  // oauth-handler section in the documentation
-  returnUrl: "https://my-filemaker-server.com/my-web-app/oauth",
+// Step 1: Get OAuth URL
+const { redirectUrl, requestId } = await client.getOAuthUrl({
+  trackingId: "unique-tracking-id", // Can be anything, passed back in redirect
+  provider: "Google", // Whatever OAuth provider FileMaker is configured to use
+  // If your FileMaker server is on a different server than the web app, see
+  // section on "oauth-handler"
+  returnUrl: "https://demo.server.beezwax.net/my-web-app/oauth-callback",
 });
 
-// Save `requestId` somewhere. For example, for a regular backend route you
-// could use sessions. The actual implementation will depend on
-// framework/library.
+// Step 2: Save requestId (e.g., in session storage)
 const session = getSession();
 session.requestId = requestId;
 await session.save();
 
-// Redirect user to `redirectUrl`...
+// Step 3: Redirect user to redirectUrl
+// User authenticates with OAuth provider...
 
-// ... back in our app, in the /my-web-app/oath route
+// Step 4: In your OAuth callback route
 const session = await getSession();
-// Read `identifier` from query string, this assumes Next.js
-const identifier = req.nextUrl.searchParams.get("identifier");
-// Get `requestId` back
+const identifier = req.query.get("identifier"); // From OAuth redirect
 const requestId = session.requestId;
 
-// Some assertions
-if (!requestId) throw new Error("Request ID not in session");
-if (typeof identifier !== "string") throw new Error("Identifier is invalid");
+// Step 5: Create authenticated FileMaker instance
+const fm = client.withOAuth({ requestId, identifier });
 
-// Set up sessions and redirect to index
-session.identifier = identifier;
-await session.save();
+// Now use the fm instance to make requests
+const records = await fm.getRecords("myTable");
+```
 
-// You can now use the identifier from session to create authorized requests.
-// In this case, both `requestId` and `identifier` are fetched from the
-// session.
-const credentials = new FileMakerOAuthCredentials({
-  requestId,
-  identifier,
+## Custom HTTPS Agent
+
+Some servers might have self-signed certificates. If you trust them you can
+bypass the server-side authorization check by passing in a custom `Agent`:
+
+```typescript
+import { Agent } from "https";
+
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  // Pass custom agent here
+  agent: new Agent({ rejectUnauthorized: false }),
 });
-const request = new AuthenticatedRequest(credentials);
-const filemaker = new FileMaker({
+```
+
+## Custom Logger
+
+It's very common to have the need for custom logging, for example, you might
+want to write the logs to a special file. You can create your own logger by
+implementing `ILogger`:
+
+```typescript
+import { ILogger, FileMakerClient } from "beezwax/filemaker-odata";
+
+class CustomLogger implements ILogger {
+  log(message: unknown) {
+    console.log("[FileMaker]", message);
+    // Write to a file...
+  }
+}
+
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  logger: new CustomLogger(),
+});
+```
+
+You can also use `NullLogger` to disable logging:
+
+```typescript
+import { NullLogger, FileMakerClient } from "beezwax/filemaker-odata";
+
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  logger: new NullLogger(),
+});
+```
+
+## Advanced Usage: Manual Composition
+
+If you need more control, you can still manually create FileMaker instances:
+
+```typescript
+import {
+  FileMaker,
+  FileMakerBasicCredentials,
+  Request,
+  Logger,
+} from "beezwax/filemaker-odata";
+import { Agent } from "https";
+
+const credentials = new FileMakerBasicCredentials({
+  username: "my-user",
+  password: "my-pass",
+});
+
+const agent = new Agent({ rejectUnauthorized: false });
+const request = new Request(credentials, agent);
+
+const logger = new Logger();
+const fm = new FileMaker({
   server: "demo.server.beezwax.net",
   database: "test",
   logger,
   request,
 });
-
-// Alternatively, you can create an access token
-const authenticator = new FileMakerAuthenticator({
-  server: "demo.server.beezwax.net",
-  database: "test",
-});
-const token = authenticator.getTokenUsingOAuth({ requestId, identifier });
-const credentials = new FileMakerRawCredentials(`Basic ${token}`);
-// ... same as before
 ```
 
 # Development

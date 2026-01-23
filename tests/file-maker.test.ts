@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { FileMaker, Logger } from "../src/file-maker";
+import { FileMaker, Logger } from "../src/index";
 import { MockRequest } from "./mocks";
 
 interface MockPersonRecord {
