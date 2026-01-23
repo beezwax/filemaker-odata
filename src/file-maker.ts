@@ -16,7 +16,6 @@ const uuid = () =>
 
 // A wrapper around FileMaker's OData API
 // =============================================================================
-// const agent = new Agent({ rejectUnauthorized: false });
 
 // For more information on FileMaker's available query options, see:
 // https://help.claris.com/en/odata-guide/content/query-option-filter.html
