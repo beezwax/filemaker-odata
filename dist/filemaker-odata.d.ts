@@ -191,11 +191,12 @@ export declare class FileMakerClient {
         requestId: string;
     }>;
     /**
-     * Detects the authentication type supported by the FileMaker server.
+     * Detects the available authentication types supported by the FileMaker
+     * server.
      *
-     * @returns The authentication type (e.g., "Google", "Microsoft", "basic")
+     * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
      */
-    getAuthType(): Promise<string>;
+    getAuthTypes(): Promise<string[]>;
     /**
      * Helper method to construct a FileMaker OData URL.
      *

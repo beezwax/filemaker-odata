@@ -6054,11 +6054,12 @@ class H1 {
     return { redirectUrl: x, requestId: C };
   }
   /**
-   * Detects the authentication type supported by the FileMaker server.
+   * Detects the available authentication types supported by the FileMaker
+   * server.
    *
-   * @returns The authentication type (e.g., "Google", "Microsoft", "basic")
+   * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
-  async getAuthType() {
+  async getAuthTypes() {
     const a = (await new Bn(new Rs(), this.agent).get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
@@ -6067,7 +6068,7 @@ class H1 {
         }
       }
     )).data.data;
-    return a !== void 0 ? a.Provider[0].Name : "basic";
+    return a !== void 0 ? a.Provider.map((c) => c.Name) : ["basic"];
   }
   /**
    * Helper method to construct a FileMaker OData URL.
