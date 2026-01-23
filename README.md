@@ -71,7 +71,10 @@ const fm = client.withOAuth({ requestId, identifier });
 const records = await fm.getRecords("myTable");
 ```
 
-You can see all available authentication types with:
+## Get Available Authentication Types
+
+If you need to perform some logic depending on which authentication providers
+are available, you can use `client.getAuthTypes()`:
 
 ```typescript
 // types will be something like ["basic", "Google"]
