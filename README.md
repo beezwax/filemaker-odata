@@ -12,7 +12,7 @@ You can install it with:
 Once installed, you can import it with:
 
 ```typescript
-import { FileMakerClient } from "beezwax/filemaker-odata";
+import { FileMakerClient } from "filemaker-odata";
 ```
 
 ## Basic Authentication
@@ -94,7 +94,7 @@ want to write the logs to a special file. You can create your own logger by
 implementing `ILogger`:
 
 ```typescript
-import { ILogger, FileMakerClient } from "beezwax/filemaker-odata";
+import { ILogger, FileMakerClient } from "filemaker-odata";
 
 class CustomLogger implements ILogger {
   log(message: unknown) {
@@ -113,7 +113,7 @@ const client = new FileMakerClient({
 You can also use `NullLogger` to disable logging:
 
 ```typescript
-import { NullLogger, FileMakerClient } from "beezwax/filemaker-odata";
+import { NullLogger, FileMakerClient } from "filemaker-odata";
 
 const client = new FileMakerClient({
   server: "demo.server.beezwax.net",
@@ -132,7 +132,7 @@ import {
   FileMakerBasicCredentials,
   Request,
   Logger,
-} from "beezwax/filemaker-odata";
+} from "filemaker-odata";
 import { Agent } from "https";
 
 const credentials = new FileMakerBasicCredentials({
