@@ -99,23 +99,32 @@ async getRecords<T>(table: string, options?: QueryOptions<T>): Promise<T[]>
 **Example:**
 
 ```typescript
+interface CustomerRecord {
+  ID: string;
+  NAME: string;
+  EMAIL: string;
+  PHONE: string;
+  AGE: number;
+  CREATED_DATE: string;
+}
+
 // Get all records
-const allRecords = await fm.getRecords("Customers");
+const allRecords = await fm.getRecords<CustomerRecord>("Customers");
 
 // Get with filtering
-const filteredRecords = await fm.getRecords("Customers", {
+const filteredRecords = await fm.getRecords<CustomerRecord>("Customers", {
   $filter: "Age gt 25",
   $top: 10,
 });
 
 // Get specific fields only
-const specificFields = await fm.getRecords("Customers", {
-  $select: ["Name", "Email", "Phone"],
+const specificFields = await fm.getRecords<CustomerRecord>("Customers", {
+  $select: ["NAME", "EMAIL", "PHONE"],
 });
 
 // Get with ordering
-const orderedRecords = await fm.getRecords("Customers", {
-  $orderby: ["CreatedDate", "desc"],
+const orderedRecords = await fm.getRecords<CustomerRecord>("Customers", {
+  $orderby: ["CREATED_DATE", "desc"],
   $top: 20,
 });
 ```
@@ -148,7 +157,13 @@ async getRecordsWithCount<T>(
 **Example:**
 
 ```typescript
-const result = await fm.getRecordsWithCount("Products", {
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
+const result = await fm.getRecordsWithCount<ProductRecord>("Products", {
   $filter: "Price gt 100",
   $top: 10,
   $skip: 0,
@@ -180,11 +195,22 @@ async getRecord<T>(table: string, id: string): Promise<T>
 **Example:**
 
 ```typescript
-const customer = await fm.getRecord("Customers", "CUST-12345");
-console.log(customer.Name);
+interface CustomerRecord {
+  ID: string;
+  NAME: string;
+  EMAIL: string;
+}
+
+const customer = await fm.getRecord<CustomerRecord>("Customers", "CUST-12345");
+console.log(customer.NAME);
 
 // IDs with special characters are automatically URL-encoded
-const user = await fm.getRecord("Users", "user@example.com");
+interface UserRecord {
+  ID: string;
+  USERNAME: string;
+}
+
+const user = await fm.getRecord<UserRecord>("Users", "user@example.com");
 // Internally encoded as: people('user%40example.com')
 ```
 
@@ -248,22 +274,29 @@ async subquery<T>(params: {
 **Example:**
 
 ```typescript
+interface OrderRecord {
+  ID: string;
+  ORDER_DATE: string;
+  TOTAL: number;
+  STATUS: string;
+}
+
 // Get all orders for a specific customer
-const orders = await fm.subquery({
+const orders = await fm.subquery<OrderRecord>({
   table: "Customers",
   recordId: "CUST-12345",
   path: "Orders",
 });
 
 // Get with filtering and limiting
-const recentOrders = await fm.subquery({
+const recentOrders = await fm.subquery<OrderRecord>({
   table: "Customers",
   recordId: "CUST-12345",
   path: "Orders",
   options: {
     $filter: "OrderDate gt 2024-01-01",
     $top: 5,
-    $orderby: ["OrderDate", "desc"],
+    $orderby: ["ORDER_DATE", "desc"],
   },
 });
 ```
@@ -327,21 +360,32 @@ batch(): OperationBuilder
 **Example:**
 
 ```typescript
+interface CustomerRecord {
+  ID: string;
+  NAME: string;
+  EMAIL: string;
+}
+
+interface OrderRecord {
+  ID: string;
+  STATUS: string;
+}
+
 // Execute multiple operations in a transaction
 const results = await fm
   .batch()
-  .create({
+  .create<CustomerRecord>({
     table: "Customers",
     record: {
-      Name: "John Doe",
-      Email: "john@example.com",
+      NAME: "John Doe",
+      EMAIL: "john@example.com",
     },
   })
-  .update({
+  .update<OrderRecord>({
     table: "Orders",
     record: {
       ID: "ORDER-123",
-      Status: "Shipped",
+      STATUS: "Shipped",
     },
   })
   .delete({
@@ -359,11 +403,16 @@ console.log(results[2]); // Delete result
 **Transaction Behavior:**
 
 ```typescript
+interface CustomerRecord {
+  ID: string;
+  NAME: string;
+}
+
 // If any operation fails, ALL operations are rolled back
 try {
   const results = await fm
     .batch()
-    .create({ table: "Customers", record: { Name: "Jane" } })
+    .create<CustomerRecord>({ table: "Customers", record: { NAME: "Jane" } })
     .delete({ table: "Orders", id: "INVALID-ID" }) // This fails
     .execute();
 } catch (error) {
@@ -401,28 +450,32 @@ async script<T>(
 
 ```typescript
 // Run a script without parameters
-const result = await fm.script("CalculateTotals");
+const result = await fm.script<void>("CalculateTotals");
 if (result.success) {
   console.log("Script completed successfully");
 }
 
 // Run a script with parameters
-const emailResult = await fm.script<{ sent: number }>("SendEmail", {
+interface EmailResult {
+  SENT: number;
+}
+
+const emailResult = await fm.script<EmailResult>("SendEmail", {
   recipient: "customer@example.com",
   subject: "Order Confirmation",
   orderId: "ORDER-123",
 });
 
 if (emailResult.success) {
-  console.log(`Sent ${emailResult.data.sent} emails`);
+  console.log(`Sent ${emailResult.data.SENT} emails`);
 } else {
   console.error("Failed to send email");
 }
 
 // Script with complex return data
 interface ValidationResult {
-  valid: boolean;
-  errors: string[];
+  VALID: boolean;
+  ERRORS: string[];
 }
 
 const validation = await fm.script<ValidationResult>("ValidateOrder", {
@@ -430,10 +483,10 @@ const validation = await fm.script<ValidationResult>("ValidateOrder", {
 });
 
 if (validation.success && validation.data) {
-  if (validation.data.valid) {
+  if (validation.data.VALID) {
     console.log("Order is valid");
   } else {
-    console.log("Validation errors:", validation.data.errors);
+    console.log("Validation errors:", validation.data.ERRORS);
   }
 }
 ```
@@ -461,10 +514,16 @@ interface QueryOptions<T> {
 Select specific fields to return (reduces payload size).
 
 ```typescript
-const records = await fm.getRecords("Customers", {
-  $select: ["ID", "Name", "Email"],
+interface CustomerRecord {
+  ID: string;
+  NAME: string;
+  EMAIL: string;
+}
+
+const records = await fm.getRecords<CustomerRecord>("Customers", {
+  $select: ["ID", "NAME", "EMAIL"],
 });
-// The "ID" field is automatically quoted in the URL: $select="ID",Name,Email
+// The "ID" field is automatically quoted in the URL: $select="ID",NAME,EMAIL
 ```
 
 **Note:** The `ID` field is a reserved keyword in OData and is automatically quoted when used in `$select`.
@@ -474,7 +533,13 @@ const records = await fm.getRecords("Customers", {
 Limit the number of records returned.
 
 ```typescript
-const records = await fm.getRecords("Products", {
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
+const records = await fm.getRecords<ProductRecord>("Products", {
   $top: 20,
 });
 ```
@@ -484,8 +549,14 @@ const records = await fm.getRecords("Products", {
 Skip a number of records (useful for pagination).
 
 ```typescript
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
 // Get page 3 (records 41-60)
-const records = await fm.getRecords("Products", {
+const records = await fm.getRecords<ProductRecord>("Products", {
   $skip: 40,
   $top: 20,
 });
@@ -496,23 +567,40 @@ const records = await fm.getRecords("Products", {
 Filter records using OData filter syntax. See [FileMaker's OData documentation](https://help.claris.com/en/odata-guide/content/query-option-filter.html) for complete filter syntax.
 
 ```typescript
+interface UserRecord {
+  ID: string;
+  AGE: number;
+  EMAIL: string;
+}
+
 // Comparison operators
-const adults = await fm.getRecords("Users", {
+const adults = await fm.getRecords<UserRecord>("Users", {
   $filter: "Age ge 18",
 });
 
 // String functions
-const gmailUsers = await fm.getRecords("Users", {
+const gmailUsers = await fm.getRecords<UserRecord>("Users", {
   $filter: "contains(Email, 'gmail.com')",
 });
 
+interface CustomerRecord {
+  ID: string;
+  STATUS: string;
+  TOTAL_PURCHASES: number;
+}
+
 // Logical operators
-const activeCustomers = await fm.getRecords("Customers", {
+const activeCustomers = await fm.getRecords<CustomerRecord>("Customers", {
   $filter: "Status eq 'Active' and TotalPurchases gt 1000",
 });
 
+interface OrderRecord {
+  ID: string;
+  ORDER_DATE: string;
+}
+
 // Date comparisons
-const recentOrders = await fm.getRecords("Orders", {
+const recentOrders = await fm.getRecords<OrderRecord>("Orders", {
   $filter: "OrderDate gt 2024-01-01",
 });
 ```
@@ -522,8 +610,21 @@ const recentOrders = await fm.getRecords("Orders", {
 Include related records in the response.
 
 ```typescript
-const customers = await fm.getRecords("Customers", {
-  $expand: "Orders",
+interface CustomerRecord {
+  ID: string;
+  NAME: string;
+  EMAIL: string;
+}
+
+interface OrderRecord {
+  ID: string;
+  TOTAL: number;
+}
+
+type CustomerWithOrdersRecord = CustomerRecord & { ORDERS: OrderRecord[] };
+
+const customers = await fm.getRecords<CustomerWithOrdersRecord>("Customers", {
+  $expand: "ORDERS",
 });
 ```
 
@@ -532,12 +633,23 @@ const customers = await fm.getRecords("Customers", {
 Sort results by a field in ascending or descending order.
 
 ```typescript
-const products = await fm.getRecords("Products", {
-  $orderby: ["Price", "desc"],
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
+const products = await fm.getRecords<ProductRecord>("Products", {
+  $orderby: ["PRICE", "desc"],
 });
 
-const customers = await fm.getRecords("Customers", {
-  $orderby: ["Name", "asc"],
+interface CustomerRecord {
+  ID: string;
+  NAME: string;
+}
+
+const customers = await fm.getRecords<CustomerRecord>("Customers", {
+  $orderby: ["NAME", "asc"],
 });
 ```
 
@@ -546,7 +658,13 @@ const customers = await fm.getRecords("Customers", {
 Include the total count of matching records (automatically enabled in `getRecordsWithCount`).
 
 ```typescript
-const records = await fm.getRecords("Products", {
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
+const records = await fm.getRecords<ProductRecord>("Products", {
   $count: true,
   $top: 10,
 });
@@ -557,10 +675,17 @@ const records = await fm.getRecords("Products", {
 All query options can be combined for complex queries.
 
 ```typescript
-const result = await fm.getRecordsWithCount("Products", {
-  $select: ["ID", "Name", "Price", "Category"],
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+  CATEGORY: string;
+}
+
+const result = await fm.getRecordsWithCount<ProductRecord>("Products", {
+  $select: ["ID", "NAME", "PRICE", "CATEGORY"],
   $filter: "Price gt 50 and Category eq 'Electronics'",
-  $orderby: ["Price", "desc"],
+  $orderby: ["PRICE", "desc"],
   $top: 20,
   $skip: 0,
 });
