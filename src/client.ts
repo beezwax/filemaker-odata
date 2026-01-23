@@ -156,11 +156,12 @@ export class FileMakerClient {
   }
 
   /**
-   * Detects the authentication type supported by the FileMaker server.
+   * Detects the available authentication types supported by the FileMaker
+   * server.
    *
-   * @returns The authentication type (e.g., "Google", "Microsoft", "basic")
+   * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
-  async getAuthType(): Promise<string> {
+  async getAuthTypes(): Promise<string[]> {
     const request = new Request(new NullFileMakerCredentials(), this.agent);
 
     const response = await request.get<OAuthResponse>(
@@ -173,9 +174,10 @@ export class FileMakerClient {
     );
 
     const json = response.data.data;
-    if (json !== undefined) return json.Provider[0].Name;
+    if (json !== undefined)
+      return json.Provider.map((provider) => provider.Name);
 
-    return "basic";
+    return ["basic"];
   }
 
   /**

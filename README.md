@@ -71,6 +71,13 @@ const fm = client.withOAuth({ requestId, identifier });
 const records = await fm.getRecords("myTable");
 ```
 
+You can see all available authentication types with:
+
+```typescript
+// types will be something like ["basic", "Google"]
+const types = await client.getAuthTypes();
+```
+
 ## Custom HTTPS Agent
 
 Some servers might have self-signed certificates. If you trust them you can
