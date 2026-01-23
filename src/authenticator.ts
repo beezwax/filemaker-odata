@@ -47,16 +47,18 @@ export class FileMakerAuthenticator {
   async getOAuthUrl({
     trackingId,
     provider,
+    returnUrl,
   }: {
     trackingId: string;
     provider: string;
+    returnUrl?: string;
   }) {
     const url = `https://${this.server}/oauth/getoauthurl?trackingID=${trackingId}&provider=${provider}&address=${this.server}&X-FMS-OAuth-AuthType=2`;
     const response = await this.request.get(url, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
-        "X-FMS-Return-URL": `https://${this.server}/oauth-handler`,
+        "X-FMS-Return-URL": returnUrl ?? `https://${this.server}/oauth-handler`,
       },
     });
 
