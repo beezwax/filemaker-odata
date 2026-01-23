@@ -1,5 +1,5 @@
 import { Request, type IRequest } from "./request";
-import { NullFileMakerCredentials } from "./file-maker";
+import { NullFileMakerCredentials } from "./credentials";
 
 interface OAuthResponse {
   data?: {

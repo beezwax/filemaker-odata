@@ -19,76 +19,6 @@ const uuid = () =>
     return v.toString(16);
   });
 
-export interface FileMakerCredentials {
-  get authorizationHeaders(): Record<string, string>;
-}
-
-export class NullFileMakerCredentials implements FileMakerCredentials {
-  get authorizationHeaders() {
-    return {};
-  }
-}
-
-export class FileMakerOAuthCredentials implements FileMakerCredentials {
-  private requestId: string;
-  private identifier: string;
-
-  constructor({
-    requestId,
-    identifier,
-  }: {
-    requestId: string;
-    identifier: string;
-  }) {
-    this.requestId = requestId;
-    this.identifier = identifier;
-  }
-
-  get authorizationHeaders() {
-    return {
-      "OData-Version": "4.0",
-      "OData-MaxVersion": "4.0",
-      "X-FM-Data-OAuth-Request-Id": this.requestId,
-      "X-FM-Data-OAuth-Identifier": this.identifier,
-    };
-  }
-}
-
-export class FileMakerBasicCredentials implements FileMakerCredentials {
-  private username: string;
-  private password: string;
-
-  constructor({ username, password }: { username: string; password: string }) {
-    this.username = username;
-    this.password = password;
-  }
-
-  get authorizationHeaders() {
-    return {
-      Authorization: `Basic ${btoa(`${this.username}:${this.password}`)}`,
-    };
-  }
-}
-
-// An authorization strategy using the raw string which will be passed to
-// `Authorization` header. Eg:
-//
-//   new FileMakerRawCredentials('Basic <access-token>');
-//
-export class FileMakerRawCredentials implements FileMakerCredentials {
-  private authorization: string;
-
-  constructor(authorization: string) {
-    this.authorization = authorization;
-  }
-
-  get authorizationHeaders() {
-    return {
-      Authorization: this.authorization,
-    };
-  }
-}
-
 // A wrapper around FileMaker's OData API
 // =============================================================================
 // const agent = new Agent({ rejectUnauthorized: false });
@@ -108,7 +38,6 @@ interface QueryOptions<T> {
 export interface FileMakerConfig {
   server: string;
   database: string;
-  credentials: FileMakerCredentials;
 }
 
 export class FileMaker {
@@ -150,8 +79,6 @@ export class FileMaker {
     this.log(
       `URL: ${this.url(`${params.table}('${params.recordId}')/${params.path}`)}?${this.parameterize(params.options)}`,
     );
-    // this.log("Headers:");
-    // this.log(this.credentials.authorizationHeaders);
 
     try {
       const response = await this.request.get<{ value: T[] }>(
@@ -173,8 +100,6 @@ export class FileMaker {
     this.log("Options:");
     this.log(options);
     this.log(`URL: ${this.url(table)}?${this.parameterize(options)}`);
-    // this.log("Headers:");
-    // this.log(this.credentials.authorizationHeaders);
 
     try {
       const response = await this.request.get<{
@@ -225,8 +150,6 @@ export class FileMaker {
   async getRecord<T>(table: string, id: string) {
     this.log(`[FileMaker Service] Get records from ${table}`);
     this.log(`ID: ${id}`);
-    // this.log("Headers:");
-    // this.log(this.credentials.authorizationHeaders);
 
     try {
       const response = await this.request.get<T>(

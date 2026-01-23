@@ -1,10 +1,5 @@
 import { expect, test, describe } from "vitest";
-import {
-  FileMaker,
-  type FileMakerConfig,
-  FileMakerBasicCredentials,
-  Logger,
-} from "../src/file-maker";
+import { FileMaker, type FileMakerConfig, Logger } from "../src/file-maker";
 import { MockRequest } from "./mocks";
 
 interface MockPersonRecord {
@@ -14,18 +9,12 @@ interface MockPersonRecord {
 }
 
 const fixtures = () => {
-  const credentials = new FileMakerBasicCredentials({
-    username: "test",
-    password: "demo",
-  });
   const config: FileMakerConfig = {
     server: "demo.server.beezwax.net",
     database: "test",
-    credentials,
   };
-  const logger = new Logger();
   const request = new MockRequest();
-
+  const logger = new Logger();
   const fm = new FileMaker({ config, logger, request });
 
   return { fm, request };
@@ -76,12 +65,12 @@ describe("getRecords", () => {
 
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
-        url: fm.url("people?$select=name"),
+        url: fm.url("people?$select=NAME"),
         data: { value: [{ NAME: "Fede" }] },
       });
 
       const response = await fm.getRecords<MockPersonRecord>("people", {
-        $select: ["name"],
+        $select: ["NAME"],
       });
       expect(response.length).toEqual(1);
       expect(response[0].NAME).toEqual("Fede");
@@ -108,14 +97,14 @@ describe("getRecords", () => {
 
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
-        url: fm.url('people?$select="ID",name,company'),
+        url: fm.url('people?$select="ID",NAME,COMPANY'),
         data: {
           value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
       });
 
       const response = await fm.getRecords<MockPersonRecord>("people", {
-        $select: ["ID", "name", "company"],
+        $select: ["ID", "NAME", "COMPANY"],
       });
       expect(response.length).toEqual(1);
       expect(response[0].ID).toEqual("1234");
@@ -211,7 +200,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$orderby=name%20asc"),
+        url: fm.url("people?$orderby=NAME%20asc"),
         data: {
           value: [
             { ID: "1", NAME: "Alice", COMPANY: "Company A" },
@@ -221,7 +210,7 @@ describe("getRecords", () => {
       });
 
       const response = await fm.getRecords<MockPersonRecord>("people", {
-        $orderby: ["name", "asc"],
+        $orderby: ["NAME", "asc"],
       });
       expect(response.length).toEqual(2);
       expect(response[0].NAME).toEqual("Alice");
@@ -233,7 +222,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$orderby=name%20desc"),
+        url: fm.url("people?$orderby=NAME%20desc"),
         data: {
           value: [
             { ID: "2", NAME: "Bob", COMPANY: "Company B" },
@@ -243,7 +232,7 @@ describe("getRecords", () => {
       });
 
       const response = await fm.getRecords<MockPersonRecord>("people", {
-        $orderby: ["name", "desc"],
+        $orderby: ["NAME", "desc"],
       });
       expect(response.length).toEqual(2);
       expect(response[0].NAME).toEqual("Bob");
@@ -294,7 +283,7 @@ describe("getRecords", () => {
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
         url: fm.url(
-          "people?$select=name,company&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=name%20asc",
+          "people?$select=NAME,COMPANY&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=NAME%20asc",
         ),
         data: {
           value: [{ NAME: "Fede", COMPANY: "Beezwax" }],
@@ -302,11 +291,11 @@ describe("getRecords", () => {
       });
 
       const response = await fm.getRecords<MockPersonRecord>("people", {
-        $select: ["name", "company"],
+        $select: ["NAME", "COMPANY"],
         $top: 10,
         $skip: 5,
         $filter: "company eq 'Beezwax'",
-        $orderby: ["name", "asc"],
+        $orderby: ["NAME", "asc"],
       });
       expect(response.length).toEqual(1);
       expect(response[0].NAME).toEqual("Fede");

@@ -4,7 +4,7 @@ import axios, {
   type ResponseType,
   type AxiosResponse,
 } from "axios";
-import type { FileMakerCredentials } from "./file-maker";
+import type { FileMakerCredentials } from "./credentials";
 
 // This `IRequest` implementation uses types from axios. If we ever need
 // another implementation (unlikely, but for example, using fetch instead) we
