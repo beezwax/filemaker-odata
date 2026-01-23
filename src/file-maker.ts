@@ -69,7 +69,7 @@ export class FileMaker {
     path: string;
     options?: QueryOptions<T>;
   }) {
-    this.log(`[FileMaker Service] Get records from ${params.table}`);
+    this.log(`[FileMaker] Get records from ${params.table}`);
     this.log("Options:");
     this.log(params.options);
     this.log(
@@ -92,7 +92,7 @@ export class FileMaker {
   }
 
   async getRecords<T>(table: string, options?: QueryOptions<T>) {
-    this.log(`[FileMaker Service] Get records from ${table}`);
+    this.log(`[FileMaker] Get records from ${table}`);
     this.log("Options:");
     this.log(options);
     this.log(`URL: ${this.url(table)}?${this.parameterize(options)}`);
@@ -114,7 +114,7 @@ export class FileMaker {
   }
 
   async getRecordsWithCount<T>(table: string, options?: QueryOptions<T>) {
-    this.log(`[FileMaker Service] Get records with count from ${table}`);
+    this.log(`[FileMaker] Get records with count from ${table}`);
     this.log("Options:");
     this.log(options);
 
@@ -144,7 +144,7 @@ export class FileMaker {
   }
 
   async getRecord<T>(table: string, id: string) {
-    this.log(`[FileMaker Service] Get records from ${table}`);
+    this.log(`[FileMaker] Get records from ${table}`);
     this.log(`ID: ${id}`);
 
     try {
@@ -289,7 +289,7 @@ export class FileMaker {
   }
 
   async script<T>(name: string, params?: Record<string, unknown>) {
-    this.log(`[FileMaker Service] Running script ${name} with parameters:`);
+    this.log(`[FileMaker] Running script ${name} with parameters:`);
     this.log({ scriptParameterValue: params });
 
     const response = await this.request.post<FileMakerScriptResponse<T>>(
@@ -302,7 +302,7 @@ export class FileMaker {
       },
     );
 
-    this.log(`[FileMaker Service] Script ${name} finished. Response:`);
+    this.log(`[FileMaker] Script ${name} finished. Response:`);
     this.log(response);
 
     const success = response.data.scriptResult.code === 0;

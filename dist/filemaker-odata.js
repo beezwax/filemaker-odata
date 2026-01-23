@@ -5799,7 +5799,7 @@ class Ta {
     return (await this.request.get(this.url("$metadata"))).data;
   }
   async subquery(s) {
-    this.log(`[FileMaker Service] Get records from ${s.table}`), this.log("Options:"), this.log(s.options), this.log(
+    this.log(`[FileMaker] Get records from ${s.table}`), this.log("Options:"), this.log(s.options), this.log(
       `URL: ${this.url(`${s.table}('${s.recordId}')/${s.path}`)}?${this.parameterize(s.options)}`
     );
     try {
@@ -5811,7 +5811,7 @@ class Ta {
     }
   }
   async getRecords(s, r) {
-    this.log(`[FileMaker Service] Get records from ${s}`), this.log("Options:"), this.log(r), this.log(`URL: ${this.url(s)}?${this.parameterize(r)}`);
+    this.log(`[FileMaker] Get records from ${s}`), this.log("Options:"), this.log(r), this.log(`URL: ${this.url(s)}?${this.parameterize(r)}`);
     try {
       return (await this.request.get(`${this.url(s)}?${this.parameterize(r)}`)).data.value;
     } catch (a) {
@@ -5819,7 +5819,7 @@ class Ta {
     }
   }
   async getRecordsWithCount(s, r) {
-    this.log(`[FileMaker Service] Get records with count from ${s}`), this.log("Options:"), this.log(r);
+    this.log(`[FileMaker] Get records with count from ${s}`), this.log("Options:"), this.log(r);
     const a = { ...r, $count: !0 };
     this.log(`URL: ${this.url(s)}?${this.parameterize(a)}`);
     try {
@@ -5833,7 +5833,7 @@ class Ta {
     }
   }
   async getRecord(s, r) {
-    this.log(`[FileMaker Service] Get records from ${s}`), this.log(`ID: ${r}`);
+    this.log(`[FileMaker] Get records from ${s}`), this.log(`ID: ${r}`);
     try {
       return (await this.request.get(
         `${this.url(s)}('${encodeURIComponent(r)}')`
@@ -5937,7 +5937,7 @@ Content-Type: multipart/mixed; boundary=${a}\r
     });
   }
   async script(s, r) {
-    this.log(`[FileMaker Service] Running script ${s} with parameters:`), this.log({ scriptParameterValue: r });
+    this.log(`[FileMaker] Running script ${s} with parameters:`), this.log({ scriptParameterValue: r });
     const a = await this.request.post(
       this.url(`Script.${encodeURIComponent(s)}`),
       r === void 0 ? null : { scriptParameterValue: r },
@@ -5947,7 +5947,7 @@ Content-Type: multipart/mixed; boundary=${a}\r
         }
       }
     );
-    this.log(`[FileMaker Service] Script ${s} finished. Response:`), this.log(a);
+    this.log(`[FileMaker] Script ${s} finished. Response:`), this.log(a);
     const c = a.data.scriptResult.code === 0;
     return {
       success: c,
