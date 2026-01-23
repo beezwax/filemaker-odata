@@ -261,6 +261,10 @@ export declare class NullFileMakerCredentials implements FileMakerCredentials {
     get authorizationHeaders(): {};
 }
 
+export declare class NullLogger implements ILogger {
+    log(): void;
+}
+
 declare class OperationBuilder {
     private operations;
     private callback;

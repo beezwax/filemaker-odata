@@ -5484,7 +5484,125 @@ class Bn {
     }
   }
 }
+class Rs {
+  get authorizationHeaders() {
+    return {};
+  }
+}
 class g1 {
+  requestId;
+  identifier;
+  constructor({
+    requestId: s,
+    identifier: r
+  }) {
+    this.requestId = s, this.identifier = r;
+  }
+  get authorizationHeaders() {
+    return {
+      "OData-Version": "4.0",
+      "OData-MaxVersion": "4.0",
+      "X-FM-Data-OAuth-Request-Id": this.requestId,
+      "X-FM-Data-OAuth-Identifier": this.identifier
+    };
+  }
+}
+class _1 {
+  username;
+  password;
+  constructor({ username: s, password: r }) {
+    this.username = s, this.password = r;
+  }
+  get authorizationHeaders() {
+    return {
+      Authorization: `Basic ${btoa(`${this.username}:${this.password}`)}`
+    };
+  }
+}
+class M1 {
+  authorization;
+  constructor(s) {
+    this.authorization = s;
+  }
+  get authorizationHeaders() {
+    return {
+      Authorization: this.authorization
+    };
+  }
+}
+class q1 {
+  server;
+  database;
+  request;
+  constructor({ server: s, database: r }) {
+    this.server = s, this.database = r, this.request = new Bn(new Rs());
+  }
+  url(s) {
+    return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${s}`;
+  }
+  async getAuthType() {
+    const r = (await this.request.get(
+      `https://${this.server}/fmws/oauthproviderinfo`,
+      {
+        headers: {
+          "Content-Type": "application/json"
+        }
+      }
+    )).data.data;
+    return r !== void 0 ? r.Provider[0].Name : "basic";
+  }
+  async getOAuthUrl({
+    trackingId: s,
+    provider: r,
+    returnUrl: a
+  }) {
+    const c = `https://${this.server}/oauth/getoauthurl?trackingID=${s}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`, g = await this.request.get(c, {
+      headers: {
+        "X-FMS-Application-Type": "9",
+        "X-FMS-Application-Version": "15",
+        "X-FMS-Return-URL": a ?? `https://${this.server}/oauth-handler`
+      }
+    }), p = g.data, x = g.headers["x-fms-request-id"] ?? "";
+    if (x === void 0 || x === "")
+      throw new Error(
+        'Did not get back an "X-FMS-Request-ID" header from FileMaker'
+      );
+    return { redirectUrl: p, requestId: x };
+  }
+  // Uses a requestId and an identifier (OAuth) to return an authentication
+  // token which can be used for subsequent requests.
+  async getTokenUsingOAuth({
+    requestId: s,
+    identifier: r
+  }) {
+    return (await this.request.post(this.url("sessions"), {
+      headers: {
+        "Content-Type": "application/json",
+        "X-FM-Data-OAuth-Request-Id": s,
+        "X-FM-Data-OAuth-Identifier": r
+      }
+    })).headers["X-FM-Data-Access-Token"];
+  }
+  /**
+   * Uses the given credentials to return an authentication token which can be
+  /* used for subsequent requests.
+   */
+  async getTokenUsingCredentials({
+    username: s,
+    password: r
+  }) {
+    return (await this.request.post(
+      this.url("sessions"),
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${btoa(`${s}:${r}`)}`
+        }
+      }
+    )).data.response.token ?? null;
+  }
+}
+class w1 {
   config;
   table;
   record;
@@ -5531,7 +5649,7 @@ Content-Length: ${this.byteLength(g)}\r
     return new TextEncoder().encode(s).byteLength;
   }
 }
-class _1 {
+class m1 {
   config;
   table;
   record;
@@ -5577,7 +5695,7 @@ Content-Length: ${this.byteLength(a)}\r
     return new TextEncoder().encode(s).byteLength;
   }
 }
-class w1 {
+class v1 {
   config;
   table;
   id;
@@ -5617,7 +5735,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${s}`;
   }
 }
-class m1 {
+class y1 {
   operations;
   callback;
   config;
@@ -5629,7 +5747,7 @@ class m1 {
     record: r
   }) {
     return this.operations.push(
-      new g1({
+      new w1({
         config: this.config,
         table: s,
         record: r
@@ -5638,7 +5756,7 @@ class m1 {
   }
   create({ table: s, record: r }) {
     return this.operations.push(
-      new _1({
+      new m1({
         config: this.config,
         table: s,
         record: r
@@ -5647,7 +5765,7 @@ class m1 {
   }
   delete({ table: s, id: r }) {
     return this.operations.push(
-      new w1({
+      new v1({
         config: this.config,
         table: s,
         id: r
@@ -5786,7 +5904,7 @@ class Ta {
   //     ];
   //
   batch() {
-    return new m1(this.config, async (s) => {
+    return new y1(this.config, async (s) => {
       const r = `batch_${Sa()}`, a = `changeset_${Sa()}`, c = `--${r}\r
 Content-Type: multipart/mixed; boundary=${a}\r
 \r
@@ -5845,130 +5963,16 @@ Content-Type: multipart/mixed; boundary=${a}\r
     return this.logger.log(s);
   }
 }
-class Rs {
-  get authorizationHeaders() {
-    return {};
-  }
-}
-class v1 {
-  requestId;
-  identifier;
-  constructor({
-    requestId: s,
-    identifier: r
-  }) {
-    this.requestId = s, this.identifier = r;
-  }
-  get authorizationHeaders() {
-    return {
-      "OData-Version": "4.0",
-      "OData-MaxVersion": "4.0",
-      "X-FM-Data-OAuth-Request-Id": this.requestId,
-      "X-FM-Data-OAuth-Identifier": this.identifier
-    };
-  }
-}
-class y1 {
-  username;
-  password;
-  constructor({ username: s, password: r }) {
-    this.username = s, this.password = r;
-  }
-  get authorizationHeaders() {
-    return {
-      Authorization: `Basic ${btoa(`${this.username}:${this.password}`)}`
-    };
-  }
-}
-class M1 {
-  authorization;
-  constructor(s) {
-    this.authorization = s;
-  }
-  get authorizationHeaders() {
-    return {
-      Authorization: this.authorization
-    };
-  }
-}
-class q1 {
-  server;
-  database;
-  request;
-  constructor({ server: s, database: r }) {
-    this.server = s, this.database = r, this.request = new Bn(new Rs());
-  }
-  url(s) {
-    return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${s}`;
-  }
-  async getAuthType() {
-    const r = (await this.request.get(
-      `https://${this.server}/fmws/oauthproviderinfo`,
-      {
-        headers: {
-          "Content-Type": "application/json"
-        }
-      }
-    )).data.data;
-    return r !== void 0 ? r.Provider[0].Name : "basic";
-  }
-  async getOAuthUrl({
-    trackingId: s,
-    provider: r,
-    returnUrl: a
-  }) {
-    const c = `https://${this.server}/oauth/getoauthurl?trackingID=${s}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`, g = await this.request.get(c, {
-      headers: {
-        "X-FMS-Application-Type": "9",
-        "X-FMS-Application-Version": "15",
-        "X-FMS-Return-URL": a ?? `https://${this.server}/oauth-handler`
-      }
-    }), p = g.data, x = g.headers["x-fms-request-id"] ?? "";
-    if (x === void 0 || x === "")
-      throw new Error(
-        'Did not get back an "X-FMS-Request-ID" header from FileMaker'
-      );
-    return { redirectUrl: p, requestId: x };
-  }
-  // Uses a requestId and an identifier (OAuth) to return an authentication
-  // token which can be used for subsequent requests.
-  async getTokenUsingOAuth({
-    requestId: s,
-    identifier: r
-  }) {
-    return (await this.request.post(this.url("sessions"), {
-      headers: {
-        "Content-Type": "application/json",
-        "X-FM-Data-OAuth-Request-Id": s,
-        "X-FM-Data-OAuth-Identifier": r
-      }
-    })).headers["X-FM-Data-Access-Token"];
-  }
-  /**
-   * Uses the given credentials to return an authentication token which can be
-  /* used for subsequent requests.
-   */
-  async getTokenUsingCredentials({
-    username: s,
-    password: r
-  }) {
-    return (await this.request.post(
-      this.url("sessions"),
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${btoa(`${s}:${r}`)}`
-        }
-      }
-    )).data.response.token ?? null;
-  }
-}
 class x1 {
   log(s) {
     console.log(s);
   }
 }
 class W1 {
+  log() {
+  }
+}
+class H1 {
   server;
   database;
   agent;
@@ -5992,7 +5996,7 @@ class W1 {
     username: s,
     password: r
   }) {
-    const a = new y1({ username: s, password: r }), c = new Bn(a, this.agent);
+    const a = new _1({ username: s, password: r }), c = new Bn(a, this.agent);
     return new Ta({
       server: this.server,
       database: this.database,
@@ -6011,7 +6015,7 @@ class W1 {
     requestId: s,
     identifier: r
   }) {
-    const a = new v1({
+    const a = new g1({
       requestId: s,
       identifier: r
     }), c = new Bn(a, this.agent);
@@ -6078,10 +6082,11 @@ class W1 {
 export {
   Ta as FileMaker,
   q1 as FileMakerAuthenticator,
-  y1 as FileMakerBasicCredentials,
-  W1 as FileMakerClient,
-  v1 as FileMakerOAuthCredentials,
+  _1 as FileMakerBasicCredentials,
+  H1 as FileMakerClient,
+  g1 as FileMakerOAuthCredentials,
   M1 as FileMakerRawCredentials,
   x1 as Logger,
-  Rs as NullFileMakerCredentials
+  Rs as NullFileMakerCredentials,
+  W1 as NullLogger
 };

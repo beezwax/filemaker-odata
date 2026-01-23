@@ -7,3 +7,7 @@ export class Logger implements ILogger {
     console.log(message);
   }
 }
+
+export class NullLogger implements ILogger {
+  log() {}
+}
