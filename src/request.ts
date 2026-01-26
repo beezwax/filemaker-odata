@@ -61,6 +61,19 @@ export class Request implements IRequest {
 
   async get<T>(url: string, options?: RequestOptions) {
     try {
+      // TODO: Use logger
+      console.log(
+        "GET",
+        url,
+        merge(
+          { ...options },
+          {
+            httpsAgent: this.agent,
+            headers: this.credentials.authorizationHeaders,
+          },
+        ),
+      );
+
       const response = await axios.get<T>(
         url,
         merge(
