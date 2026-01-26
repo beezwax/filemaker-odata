@@ -21,8 +21,9 @@ export interface RequestOptions {
 class RequestError extends Error {
   data?: unknown;
 
-  constructor(data?: unknown) {
-    super();
+  constructor(message: string, data?: unknown) {
+    super(message);
+    this.name = "RequestError";
     this.data = data;
   }
 }
@@ -76,6 +77,7 @@ export class Request implements IRequest {
       // TODO: Refactor
       console.error(error);
       throw new RequestError(
+        error instanceof Error ? error.message : String(error),
         isAxiosError(error) && error.response ? error.response.data : undefined,
       );
     }
@@ -104,6 +106,7 @@ export class Request implements IRequest {
       // TODO: Refactor
       console.error(error);
       throw new RequestError(
+        error instanceof Error ? error.message : String(error),
         isAxiosError(error) && error.response ? error.response.data : undefined,
       );
     }
