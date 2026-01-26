@@ -73,6 +73,8 @@ export class Request implements IRequest {
 
       return response;
     } catch (error) {
+      // TODO: Refactor
+      console.error(error);
       throw new RequestError(
         isAxiosError(error) && error.response ? error.response.data : undefined,
       );
@@ -99,6 +101,8 @@ export class Request implements IRequest {
 
       return response;
     } catch (error) {
+      // TODO: Refactor
+      console.error(error);
       throw new RequestError(
         isAxiosError(error) && error.response ? error.response.data : undefined,
       );
