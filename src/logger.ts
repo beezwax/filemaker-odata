@@ -4,7 +4,7 @@ export interface ILogger {
 
 export class Logger implements ILogger {
   log(message: unknown) {
-    console.log(message);
+    console.dir(message, { depth: null });
   }
 }
 

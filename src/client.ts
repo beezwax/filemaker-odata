@@ -173,6 +173,7 @@ export class FileMakerClient {
       },
     );
 
+    this.logger.log(response);
     const json = response.data.data;
     if (json !== undefined)
       return json.Provider.map((provider) => provider.Name);
