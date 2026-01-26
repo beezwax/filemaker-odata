@@ -5452,8 +5452,8 @@ const {
 } = ue;
 class As extends Error {
   data;
-  constructor(s) {
-    super(), this.data = s;
+  constructor(s, r) {
+    super(s), this.name = "RequestError", this.data = r;
   }
 }
 const qt = (o) => o instanceof As;
@@ -5477,6 +5477,7 @@ class Bn {
       );
     } catch (a) {
       throw new As(
+        a instanceof Error ? a.message : String(a),
         Ea(a) && a.response ? a.response.data : void 0
       );
     }
@@ -5496,6 +5497,7 @@ class Bn {
       );
     } catch (c) {
       throw new As(
+        c instanceof Error ? c.message : String(c),
         Ea(c) && c.response ? c.response.data : void 0
       );
     }
@@ -5982,7 +5984,7 @@ Content-Type: multipart/mixed; boundary=${a}\r
 }
 class x1 {
   log(s) {
-    console.log(s);
+    console.dir(s, { depth: null });
   }
 }
 class W1 {
@@ -6077,14 +6079,16 @@ class H1 {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes() {
-    const a = (await new Bn(new Rs(), this.agent).get(
+    const r = await new Bn(new Rs(), this.agent).get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
         headers: {
           "Content-Type": "application/json"
         }
       }
-    )).data.data;
+    );
+    this.logger.log(r);
+    const a = r.data.data;
     return a !== void 0 ? a.Provider.map((c) => c.Name) : ["basic"];
   }
   /**
