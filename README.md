@@ -104,7 +104,7 @@ const { redirectUrl, requestId } = await client.getOAuthUrl({
   trackingId: "unique-tracking-id",
   provider: "MyProvider",
   // Won't work! Different servers
-  returnUrl: "https://my-web-app.com",
+  returnUrl: "https://my-web-app.com/sessions/oauth",
 });
 ```
 
@@ -116,7 +116,7 @@ const { redirectUrl, requestId } = await client.getOAuthUrl({
   trackingId: "https://my-web-app.com/sessions/oauth",
   provider: "MyProvider",
   // Redirect back to oauth-handler first
-  returnUrl: "https://filemaker.server.beezwax.net/oauth-handler",
+  returnUrl: "https://my.filemaker.server.com/oauth-handler",
 });
 ```
 
