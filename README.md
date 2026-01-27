@@ -127,15 +127,16 @@ What's nice about `oauth-handler` is that you will be able to do auth in
 
 ## Custom HTTPS Agent
 
-Some servers might have self-signed certificates. If you trust them you can
-bypass the server-side authorization check by passing in a custom `Agent`:
+Some FileMaker servers might have self-signed certificates. If you trust them
+you can bypass the server-side authorization check by passing in a custom
+`Agent`:
 
 ```typescript
 import { Agent } from "https";
 
 const client = new FileMakerClient({
   server: "demo.server.beezwax.net",
-  database: "test",
+  database: "example",
   // Pass custom agent here
   agent: new Agent({ rejectUnauthorized: false }),
 });
