@@ -71,7 +71,7 @@ const fm = client.withOAuth({ requestId, identifier });
 const records = await fm.getRecords("MY_TABLE");
 ```
 
-## Get Available Authentication Types
+### Get Available Authentication Types
 
 If you need to perform some logic depending on which authentication providers
 are available, you can use `client.getAuthTypes()`:
@@ -81,7 +81,7 @@ are available, you can use `client.getAuthTypes()`:
 const types = await client.getAuthTypes();
 ```
 
-## OAuth-Handler
+### OAuth-Handler
 
 When the FileMaker server and the web server are on different hosts, FileMaker
 won't allow to redirect back to the web server in the OAuth redirection step.
