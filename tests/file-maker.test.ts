@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { FileMaker, Logger } from "../src/index";
+import { FileMaker, NullLogger } from "../src/index";
 import { MockRequest } from "./mocks";
 
 interface MockPersonRecord {
@@ -10,7 +10,7 @@ interface MockPersonRecord {
 
 const fixtures = () => {
   const request = new MockRequest();
-  const logger = new Logger();
+  const logger = new NullLogger();
   const fm = new FileMaker({
     server: "demo.server.beezwax.net",
     database: "test",
