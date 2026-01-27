@@ -113,7 +113,7 @@ You'll need to do this:
 ```typescript
 const { redirectUrl, requestId } = await client.getOAuthUrl({
   // OAuth Handler will use this to redirect
-  trackingId: "https://my-web-app.com",
+  trackingId: "https://my-web-app.com/sessions/oauth",
   provider: "MyProvider",
   // Redirect back to oauth-handler first
   returnUrl: "https://filemaker.server.beezwax.net/oauth-handler",
