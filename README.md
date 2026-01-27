@@ -173,36 +173,6 @@ const client = new FileMakerClient({
 });
 ```
 
-## Advanced Usage: Manual Composition
-
-If you need more control, you can still manually create FileMaker instances:
-
-```typescript
-import {
-  FileMaker,
-  FileMakerBasicCredentials,
-  Request,
-  Logger,
-} from "filemaker-odata";
-import { Agent } from "https";
-
-const credentials = new FileMakerBasicCredentials({
-  username: "my-user",
-  password: "my-pass",
-});
-
-const agent = new Agent({ rejectUnauthorized: false });
-const request = new Request(credentials, agent);
-
-const logger = new Logger();
-const fm = new FileMaker({
-  server: "demo.server.beezwax.net",
-  database: "test",
-  logger,
-  request,
-});
-```
-
 # Development
 
     npm i
