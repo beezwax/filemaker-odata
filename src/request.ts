@@ -74,16 +74,10 @@ export class Request implements IRequest {
         ),
       );
 
-      const response = await axios.get<T>(
-        url,
-        merge(
-          { ...options },
-          {
-            httpsAgent: this.agent,
-            headers: this.credentials.authorizationHeaders,
-          },
-        ),
-      );
+      const response = await axios.get<T>(url, {
+        httpsAgent: this.agent,
+        headers: this.credentials.authorizationHeaders,
+      });
 
       return response;
     } catch (error) {
