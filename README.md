@@ -32,7 +32,7 @@ const fm = client.withBasicAuth({
 });
 
 // Now use the fm instance to make requests
-const records = await fm.getRecords("myTable");
+const records = await fm.getRecords("MY_TABLE");
 ```
 
 For documentation on the `fm` instance see the [API](./API.md) documentation.
