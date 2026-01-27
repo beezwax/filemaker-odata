@@ -3,6 +3,9 @@
 This is a TypeScript/JavaScript library to connect to FileMaker's OData API
 for both Node and Browser usage.
 
+This is an **unstable** version, things will move fast and backwards
+compatibility might break.
+
 # Usage
 
 You can install it with:
