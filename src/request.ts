@@ -61,9 +61,7 @@ export class Request implements IRequest {
 
   async get<T>(url: string, options?: RequestOptions) {
     try {
-      // TODO: Use logger
-      console.log(
-        "GET",
+      const response = await axios.get<T>(
         url,
         merge(
           { ...options },
@@ -74,14 +72,8 @@ export class Request implements IRequest {
         ),
       );
 
-      const response = await axios.get<T>(url, {
-        httpsAgent: this.agent,
-        headers: this.credentials.authorizationHeaders,
-      });
-
       return response;
     } catch (error) {
-      // TODO: Refactor
       throw new RequestError(
         error instanceof Error ? error.message : String(error),
         isAxiosError(error) && error.response ? error.response.data : undefined,
@@ -109,7 +101,6 @@ export class Request implements IRequest {
 
       return response;
     } catch (error) {
-      // TODO: Refactor
       throw new RequestError(
         error instanceof Error ? error.message : String(error),
         isAxiosError(error) && error.response ? error.response.data : undefined,
