@@ -68,7 +68,7 @@ const requestId = session.requestId;
 const fm = client.withOAuth({ requestId, identifier });
 
 // Now use the fm instance to make requests
-const records = await fm.getRecords("myTable");
+const records = await fm.getRecords("MY_TABLE");
 ```
 
 ## Get Available Authentication Types
@@ -80,6 +80,47 @@ are available, you can use `client.getAuthTypes()`:
 // types will be something like ["basic", "Google"]
 const types = await client.getAuthTypes();
 ```
+
+## OAuth-Handler
+
+When the FileMaker server and the web server are on different hosts, FileMaker
+won't allow to redirect back to the web server in the OAuth redirection step.
+
+To bypass this, you can use `oauth-handler` (TODO: Link to repo). It's a
+simple proxy that sits on your FileMaker server and can redirect back to any
+other host.
+
+So instead of: `WEB -> FileMaker -> WEB` the authentication flow will be `WEB
+-> FileMaker -> FileMaker oauth-handler -> WEB`.
+
+To do this, the handler uses the `trackingId` as the URL to redirect back to,
+so instead of doing this:
+
+```typescript
+const { redirectUrl, requestId } = await client.getOAuthUrl({
+  trackingId: "unique-tracking-id",
+  provider: "MyProvider",
+  // Won't work! Different servers
+  returnUrl: "https://my-web-app.com",
+});
+```
+
+You'll need to do this:
+
+```typescript
+const { redirectUrl, requestId } = await client.getOAuthUrl({
+  // OAuth Handler will use this to redirect
+  trackingId: "https://my-web-app.com",
+  provider: "MyProvider",
+  // Redirect back to oauth-handler first
+  returnUrl: "https://filemaker.server.beezwax.net/oauth-handler",
+});
+```
+
+For instructions on how to set up `oauth-handler` see the repository's README.
+
+What's nice about `oauth-handler` is that you will be able to do auth in
+`localhost` when developing.
 
 ## Custom HTTPS Agent
 
