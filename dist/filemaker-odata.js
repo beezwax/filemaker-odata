@@ -1,43 +1,1142 @@
-import { merge as p } from "lodash";
-import g, { isAxiosError as $ } from "axios";
-class d extends Error {
-  data;
-  constructor(t, e) {
-    super(t), this.name = "RequestError", this.data = e;
-  }
+import Lr, { isAxiosError as Er } from "axios";
+var F = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
+function Va(a) {
+  return a && a.__esModule && Object.prototype.hasOwnProperty.call(a, "default") ? a.default : a;
 }
-const h = (o) => o instanceof d;
-class c {
-  credentials;
-  agent;
-  constructor(t, e) {
-    this.credentials = t, this.agent = e;
+var z, Gr;
+function Ka() {
+  if (Gr) return z;
+  Gr = 1;
+  function a() {
+    this.__data__ = [], this.size = 0;
   }
-  async get(t, e) {
-    try {
-      return await g.get(
-        t,
-        p(
-          { ...e },
-          {
-            httpsAgent: this.agent,
-            headers: this.credentials.authorizationHeaders
-          }
-        )
-      );
-    } catch (r) {
-      throw new d(
-        r instanceof Error ? r.message : String(r),
-        $(r) && r.response ? r.response.data : void 0
-      );
+  return z = a, z;
+}
+var V, kr;
+function L() {
+  if (kr) return V;
+  kr = 1;
+  function a(e, r) {
+    return e === r || e !== e && r !== r;
+  }
+  return V = a, V;
+}
+var K, Hr;
+function E() {
+  if (Hr) return K;
+  Hr = 1;
+  var a = L();
+  function e(r, t) {
+    for (var n = r.length; n--; )
+      if (a(r[n][0], t))
+        return n;
+    return -1;
+  }
+  return K = e, K;
+}
+var X, Ur;
+function Xa() {
+  if (Ur) return X;
+  Ur = 1;
+  var a = E(), e = Array.prototype, r = e.splice;
+  function t(n) {
+    var i = this.__data__, s = a(i, n);
+    if (s < 0)
+      return !1;
+    var o = i.length - 1;
+    return s == o ? i.pop() : r.call(i, s, 1), --this.size, !0;
+  }
+  return X = t, X;
+}
+var J, Nr;
+function Ja() {
+  if (Nr) return J;
+  Nr = 1;
+  var a = E();
+  function e(r) {
+    var t = this.__data__, n = a(t, r);
+    return n < 0 ? void 0 : t[n][1];
+  }
+  return J = e, J;
+}
+var W, Br;
+function Wa() {
+  if (Br) return W;
+  Br = 1;
+  var a = E();
+  function e(r) {
+    return a(this.__data__, r) > -1;
+  }
+  return W = e, W;
+}
+var Y, zr;
+function Ya() {
+  if (zr) return Y;
+  zr = 1;
+  var a = E();
+  function e(r, t) {
+    var n = this.__data__, i = a(n, r);
+    return i < 0 ? (++this.size, n.push([r, t])) : n[i][1] = t, this;
+  }
+  return Y = e, Y;
+}
+var Z, Vr;
+function G() {
+  if (Vr) return Z;
+  Vr = 1;
+  var a = Ka(), e = Xa(), r = Ja(), t = Wa(), n = Ya();
+  function i(s) {
+    var o = -1, u = s == null ? 0 : s.length;
+    for (this.clear(); ++o < u; ) {
+      var c = s[o];
+      this.set(c[0], c[1]);
     }
   }
-  async post(t, e, r) {
+  return i.prototype.clear = a, i.prototype.delete = e, i.prototype.get = r, i.prototype.has = t, i.prototype.set = n, Z = i, Z;
+}
+var Q, Kr;
+function Za() {
+  if (Kr) return Q;
+  Kr = 1;
+  var a = G();
+  function e() {
+    this.__data__ = new a(), this.size = 0;
+  }
+  return Q = e, Q;
+}
+var ee, Xr;
+function Qa() {
+  if (Xr) return ee;
+  Xr = 1;
+  function a(e) {
+    var r = this.__data__, t = r.delete(e);
+    return this.size = r.size, t;
+  }
+  return ee = a, ee;
+}
+var re, Jr;
+function en() {
+  if (Jr) return re;
+  Jr = 1;
+  function a(e) {
+    return this.__data__.get(e);
+  }
+  return re = a, re;
+}
+var te, Wr;
+function rn() {
+  if (Wr) return te;
+  Wr = 1;
+  function a(e) {
+    return this.__data__.has(e);
+  }
+  return te = a, te;
+}
+var ae, Yr;
+function Ia() {
+  if (Yr) return ae;
+  Yr = 1;
+  var a = typeof F == "object" && F && F.Object === Object && F;
+  return ae = a, ae;
+}
+var ne, Zr;
+function m() {
+  if (Zr) return ne;
+  Zr = 1;
+  var a = Ia(), e = typeof self == "object" && self && self.Object === Object && self, r = a || e || Function("return this")();
+  return ne = r, ne;
+}
+var ie, Qr;
+function xa() {
+  if (Qr) return ie;
+  Qr = 1;
+  var a = m(), e = a.Symbol;
+  return ie = e, ie;
+}
+var se, et;
+function tn() {
+  if (et) return se;
+  et = 1;
+  var a = xa(), e = Object.prototype, r = e.hasOwnProperty, t = e.toString, n = a ? a.toStringTag : void 0;
+  function i(s) {
+    var o = r.call(s, n), u = s[n];
     try {
-      return await g.post(
-        t,
+      s[n] = void 0;
+      var c = !0;
+    } catch {
+    }
+    var h = t.call(s);
+    return c && (o ? s[n] = u : delete s[n]), h;
+  }
+  return se = i, se;
+}
+var oe, rt;
+function an() {
+  if (rt) return oe;
+  rt = 1;
+  var a = Object.prototype, e = a.toString;
+  function r(t) {
+    return e.call(t);
+  }
+  return oe = r, oe;
+}
+var ue, tt;
+function k() {
+  if (tt) return ue;
+  tt = 1;
+  var a = xa(), e = tn(), r = an(), t = "[object Null]", n = "[object Undefined]", i = a ? a.toStringTag : void 0;
+  function s(o) {
+    return o == null ? o === void 0 ? n : t : i && i in Object(o) ? e(o) : r(o);
+  }
+  return ue = s, ue;
+}
+var ce, at;
+function A() {
+  if (at) return ce;
+  at = 1;
+  function a(e) {
+    var r = typeof e;
+    return e != null && (r == "object" || r == "function");
+  }
+  return ce = a, ce;
+}
+var he, nt;
+function Sr() {
+  if (nt) return he;
+  nt = 1;
+  var a = k(), e = A(), r = "[object AsyncFunction]", t = "[object Function]", n = "[object GeneratorFunction]", i = "[object Proxy]";
+  function s(o) {
+    if (!e(o))
+      return !1;
+    var u = a(o);
+    return u == t || u == n || u == r || u == i;
+  }
+  return he = s, he;
+}
+var fe, it;
+function nn() {
+  if (it) return fe;
+  it = 1;
+  var a = m(), e = a["__core-js_shared__"];
+  return fe = e, fe;
+}
+var le, st;
+function sn() {
+  if (st) return le;
+  st = 1;
+  var a = nn(), e = (function() {
+    var t = /[^.]+$/.exec(a && a.keys && a.keys.IE_PROTO || "");
+    return t ? "Symbol(src)_1." + t : "";
+  })();
+  function r(t) {
+    return !!e && e in t;
+  }
+  return le = r, le;
+}
+var de, ot;
+function on() {
+  if (ot) return de;
+  ot = 1;
+  var a = Function.prototype, e = a.toString;
+  function r(t) {
+    if (t != null) {
+      try {
+        return e.call(t);
+      } catch {
+      }
+      try {
+        return t + "";
+      } catch {
+      }
+    }
+    return "";
+  }
+  return de = r, de;
+}
+var pe, ut;
+function un() {
+  if (ut) return pe;
+  ut = 1;
+  var a = Sr(), e = sn(), r = A(), t = on(), n = /[\\^$.*+?()[\]{}|]/g, i = /^\[object .+?Constructor\]$/, s = Function.prototype, o = Object.prototype, u = s.toString, c = o.hasOwnProperty, h = RegExp(
+    "^" + u.call(c).replace(n, "\\$&").replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
+  );
+  function l(d) {
+    if (!r(d) || e(d))
+      return !1;
+    var _ = a(d) ? h : i;
+    return _.test(t(d));
+  }
+  return pe = l, pe;
+}
+var ve, ct;
+function cn() {
+  if (ct) return ve;
+  ct = 1;
+  function a(e, r) {
+    return e?.[r];
+  }
+  return ve = a, ve;
+}
+var ge, ht;
+function Pr() {
+  if (ht) return ge;
+  ht = 1;
+  var a = un(), e = cn();
+  function r(t, n) {
+    var i = e(t, n);
+    return a(i) ? i : void 0;
+  }
+  return ge = r, ge;
+}
+var _e, ft;
+function Sa() {
+  if (ft) return _e;
+  ft = 1;
+  var a = Pr(), e = m(), r = a(e, "Map");
+  return _e = r, _e;
+}
+var ye, lt;
+function H() {
+  if (lt) return ye;
+  lt = 1;
+  var a = Pr(), e = a(Object, "create");
+  return ye = e, ye;
+}
+var be, dt;
+function hn() {
+  if (dt) return be;
+  dt = 1;
+  var a = H();
+  function e() {
+    this.__data__ = a ? a(null) : {}, this.size = 0;
+  }
+  return be = e, be;
+}
+var qe, pt;
+function fn() {
+  if (pt) return qe;
+  pt = 1;
+  function a(e) {
+    var r = this.has(e) && delete this.__data__[e];
+    return this.size -= r ? 1 : 0, r;
+  }
+  return qe = a, qe;
+}
+var Te, vt;
+function ln() {
+  if (vt) return Te;
+  vt = 1;
+  var a = H(), e = "__lodash_hash_undefined__", r = Object.prototype, t = r.hasOwnProperty;
+  function n(i) {
+    var s = this.__data__;
+    if (a) {
+      var o = s[i];
+      return o === e ? void 0 : o;
+    }
+    return t.call(s, i) ? s[i] : void 0;
+  }
+  return Te = n, Te;
+}
+var Re, gt;
+function dn() {
+  if (gt) return Re;
+  gt = 1;
+  var a = H(), e = Object.prototype, r = e.hasOwnProperty;
+  function t(n) {
+    var i = this.__data__;
+    return a ? i[n] !== void 0 : r.call(i, n);
+  }
+  return Re = t, Re;
+}
+var Ce, _t;
+function pn() {
+  if (_t) return Ce;
+  _t = 1;
+  var a = H(), e = "__lodash_hash_undefined__";
+  function r(t, n) {
+    var i = this.__data__;
+    return this.size += this.has(t) ? 0 : 1, i[t] = a && n === void 0 ? e : n, this;
+  }
+  return Ce = r, Ce;
+}
+var Oe, yt;
+function vn() {
+  if (yt) return Oe;
+  yt = 1;
+  var a = hn(), e = fn(), r = ln(), t = dn(), n = pn();
+  function i(s) {
+    var o = -1, u = s == null ? 0 : s.length;
+    for (this.clear(); ++o < u; ) {
+      var c = s[o];
+      this.set(c[0], c[1]);
+    }
+  }
+  return i.prototype.clear = a, i.prototype.delete = e, i.prototype.get = r, i.prototype.has = t, i.prototype.set = n, Oe = i, Oe;
+}
+var Ae, bt;
+function gn() {
+  if (bt) return Ae;
+  bt = 1;
+  var a = vn(), e = G(), r = Sa();
+  function t() {
+    this.size = 0, this.__data__ = {
+      hash: new a(),
+      map: new (r || e)(),
+      string: new a()
+    };
+  }
+  return Ae = t, Ae;
+}
+var we, qt;
+function _n() {
+  if (qt) return we;
+  qt = 1;
+  function a(e) {
+    var r = typeof e;
+    return r == "string" || r == "number" || r == "symbol" || r == "boolean" ? e !== "__proto__" : e === null;
+  }
+  return we = a, we;
+}
+var me, Tt;
+function U() {
+  if (Tt) return me;
+  Tt = 1;
+  var a = _n();
+  function e(r, t) {
+    var n = r.__data__;
+    return a(t) ? n[typeof t == "string" ? "string" : "hash"] : n.map;
+  }
+  return me = e, me;
+}
+var $e, Rt;
+function yn() {
+  if (Rt) return $e;
+  Rt = 1;
+  var a = U();
+  function e(r) {
+    var t = a(this, r).delete(r);
+    return this.size -= t ? 1 : 0, t;
+  }
+  return $e = e, $e;
+}
+var je, Ct;
+function bn() {
+  if (Ct) return je;
+  Ct = 1;
+  var a = U();
+  function e(r) {
+    return a(this, r).get(r);
+  }
+  return je = e, je;
+}
+var Ie, Ot;
+function qn() {
+  if (Ot) return Ie;
+  Ot = 1;
+  var a = U();
+  function e(r) {
+    return a(this, r).has(r);
+  }
+  return Ie = e, Ie;
+}
+var xe, At;
+function Tn() {
+  if (At) return xe;
+  At = 1;
+  var a = U();
+  function e(r, t) {
+    var n = a(this, r), i = n.size;
+    return n.set(r, t), this.size += n.size == i ? 0 : 1, this;
+  }
+  return xe = e, xe;
+}
+var Se, wt;
+function Rn() {
+  if (wt) return Se;
+  wt = 1;
+  var a = gn(), e = yn(), r = bn(), t = qn(), n = Tn();
+  function i(s) {
+    var o = -1, u = s == null ? 0 : s.length;
+    for (this.clear(); ++o < u; ) {
+      var c = s[o];
+      this.set(c[0], c[1]);
+    }
+  }
+  return i.prototype.clear = a, i.prototype.delete = e, i.prototype.get = r, i.prototype.has = t, i.prototype.set = n, Se = i, Se;
+}
+var Pe, mt;
+function Cn() {
+  if (mt) return Pe;
+  mt = 1;
+  var a = G(), e = Sa(), r = Rn(), t = 200;
+  function n(i, s) {
+    var o = this.__data__;
+    if (o instanceof a) {
+      var u = o.__data__;
+      if (!e || u.length < t - 1)
+        return u.push([i, s]), this.size = ++o.size, this;
+      o = this.__data__ = new r(u);
+    }
+    return o.set(i, s), this.size = o.size, this;
+  }
+  return Pe = n, Pe;
+}
+var Me, $t;
+function On() {
+  if ($t) return Me;
+  $t = 1;
+  var a = G(), e = Za(), r = Qa(), t = en(), n = rn(), i = Cn();
+  function s(o) {
+    var u = this.__data__ = new a(o);
+    this.size = u.size;
+  }
+  return s.prototype.clear = e, s.prototype.delete = r, s.prototype.get = t, s.prototype.has = n, s.prototype.set = i, Me = s, Me;
+}
+var De, jt;
+function Pa() {
+  if (jt) return De;
+  jt = 1;
+  var a = Pr(), e = (function() {
+    try {
+      var r = a(Object, "defineProperty");
+      return r({}, "", {}), r;
+    } catch {
+    }
+  })();
+  return De = e, De;
+}
+var Fe, It;
+function Mr() {
+  if (It) return Fe;
+  It = 1;
+  var a = Pa();
+  function e(r, t, n) {
+    t == "__proto__" && a ? a(r, t, {
+      configurable: !0,
+      enumerable: !0,
+      value: n,
+      writable: !0
+    }) : r[t] = n;
+  }
+  return Fe = e, Fe;
+}
+var Le, xt;
+function Ma() {
+  if (xt) return Le;
+  xt = 1;
+  var a = Mr(), e = L();
+  function r(t, n, i) {
+    (i !== void 0 && !e(t[n], i) || i === void 0 && !(n in t)) && a(t, n, i);
+  }
+  return Le = r, Le;
+}
+var Ee, St;
+function An() {
+  if (St) return Ee;
+  St = 1;
+  function a(e) {
+    return function(r, t, n) {
+      for (var i = -1, s = Object(r), o = n(r), u = o.length; u--; ) {
+        var c = o[e ? u : ++i];
+        if (t(s[c], c, s) === !1)
+          break;
+      }
+      return r;
+    };
+  }
+  return Ee = a, Ee;
+}
+var Ge, Pt;
+function wn() {
+  if (Pt) return Ge;
+  Pt = 1;
+  var a = An(), e = a();
+  return Ge = e, Ge;
+}
+var I = { exports: {} };
+I.exports;
+var Mt;
+function mn() {
+  return Mt || (Mt = 1, (function(a, e) {
+    var r = m(), t = e && !e.nodeType && e, n = t && !0 && a && !a.nodeType && a, i = n && n.exports === t, s = i ? r.Buffer : void 0, o = s ? s.allocUnsafe : void 0;
+    function u(c, h) {
+      if (h)
+        return c.slice();
+      var l = c.length, d = o ? o(l) : new c.constructor(l);
+      return c.copy(d), d;
+    }
+    a.exports = u;
+  })(I, I.exports)), I.exports;
+}
+var ke, Dt;
+function $n() {
+  if (Dt) return ke;
+  Dt = 1;
+  var a = m(), e = a.Uint8Array;
+  return ke = e, ke;
+}
+var He, Ft;
+function jn() {
+  if (Ft) return He;
+  Ft = 1;
+  var a = $n();
+  function e(r) {
+    var t = new r.constructor(r.byteLength);
+    return new a(t).set(new a(r)), t;
+  }
+  return He = e, He;
+}
+var Ue, Lt;
+function In() {
+  if (Lt) return Ue;
+  Lt = 1;
+  var a = jn();
+  function e(r, t) {
+    var n = t ? a(r.buffer) : r.buffer;
+    return new r.constructor(n, r.byteOffset, r.length);
+  }
+  return Ue = e, Ue;
+}
+var Ne, Et;
+function xn() {
+  if (Et) return Ne;
+  Et = 1;
+  function a(e, r) {
+    var t = -1, n = e.length;
+    for (r || (r = Array(n)); ++t < n; )
+      r[t] = e[t];
+    return r;
+  }
+  return Ne = a, Ne;
+}
+var Be, Gt;
+function Sn() {
+  if (Gt) return Be;
+  Gt = 1;
+  var a = A(), e = Object.create, r = /* @__PURE__ */ (function() {
+    function t() {
+    }
+    return function(n) {
+      if (!a(n))
+        return {};
+      if (e)
+        return e(n);
+      t.prototype = n;
+      var i = new t();
+      return t.prototype = void 0, i;
+    };
+  })();
+  return Be = r, Be;
+}
+var ze, kt;
+function Pn() {
+  if (kt) return ze;
+  kt = 1;
+  function a(e, r) {
+    return function(t) {
+      return e(r(t));
+    };
+  }
+  return ze = a, ze;
+}
+var Ve, Ht;
+function Da() {
+  if (Ht) return Ve;
+  Ht = 1;
+  var a = Pn(), e = a(Object.getPrototypeOf, Object);
+  return Ve = e, Ve;
+}
+var Ke, Ut;
+function Fa() {
+  if (Ut) return Ke;
+  Ut = 1;
+  var a = Object.prototype;
+  function e(r) {
+    var t = r && r.constructor, n = typeof t == "function" && t.prototype || a;
+    return r === n;
+  }
+  return Ke = e, Ke;
+}
+var Xe, Nt;
+function Mn() {
+  if (Nt) return Xe;
+  Nt = 1;
+  var a = Sn(), e = Da(), r = Fa();
+  function t(n) {
+    return typeof n.constructor == "function" && !r(n) ? a(e(n)) : {};
+  }
+  return Xe = t, Xe;
+}
+var Je, Bt;
+function M() {
+  if (Bt) return Je;
+  Bt = 1;
+  function a(e) {
+    return e != null && typeof e == "object";
+  }
+  return Je = a, Je;
+}
+var We, zt;
+function Dn() {
+  if (zt) return We;
+  zt = 1;
+  var a = k(), e = M(), r = "[object Arguments]";
+  function t(n) {
+    return e(n) && a(n) == r;
+  }
+  return We = t, We;
+}
+var Ye, Vt;
+function La() {
+  if (Vt) return Ye;
+  Vt = 1;
+  var a = Dn(), e = M(), r = Object.prototype, t = r.hasOwnProperty, n = r.propertyIsEnumerable, i = a(/* @__PURE__ */ (function() {
+    return arguments;
+  })()) ? a : function(s) {
+    return e(s) && t.call(s, "callee") && !n.call(s, "callee");
+  };
+  return Ye = i, Ye;
+}
+var Ze, Kt;
+function Ea() {
+  if (Kt) return Ze;
+  Kt = 1;
+  var a = Array.isArray;
+  return Ze = a, Ze;
+}
+var Qe, Xt;
+function Ga() {
+  if (Xt) return Qe;
+  Xt = 1;
+  var a = 9007199254740991;
+  function e(r) {
+    return typeof r == "number" && r > -1 && r % 1 == 0 && r <= a;
+  }
+  return Qe = e, Qe;
+}
+var er, Jt;
+function Dr() {
+  if (Jt) return er;
+  Jt = 1;
+  var a = Sr(), e = Ga();
+  function r(t) {
+    return t != null && e(t.length) && !a(t);
+  }
+  return er = r, er;
+}
+var rr, Wt;
+function Fn() {
+  if (Wt) return rr;
+  Wt = 1;
+  var a = Dr(), e = M();
+  function r(t) {
+    return e(t) && a(t);
+  }
+  return rr = r, rr;
+}
+var x = { exports: {} }, tr, Yt;
+function Ln() {
+  if (Yt) return tr;
+  Yt = 1;
+  function a() {
+    return !1;
+  }
+  return tr = a, tr;
+}
+x.exports;
+var Zt;
+function ka() {
+  return Zt || (Zt = 1, (function(a, e) {
+    var r = m(), t = Ln(), n = e && !e.nodeType && e, i = n && !0 && a && !a.nodeType && a, s = i && i.exports === n, o = s ? r.Buffer : void 0, u = o ? o.isBuffer : void 0, c = u || t;
+    a.exports = c;
+  })(x, x.exports)), x.exports;
+}
+var ar, Qt;
+function En() {
+  if (Qt) return ar;
+  Qt = 1;
+  var a = k(), e = Da(), r = M(), t = "[object Object]", n = Function.prototype, i = Object.prototype, s = n.toString, o = i.hasOwnProperty, u = s.call(Object);
+  function c(h) {
+    if (!r(h) || a(h) != t)
+      return !1;
+    var l = e(h);
+    if (l === null)
+      return !0;
+    var d = o.call(l, "constructor") && l.constructor;
+    return typeof d == "function" && d instanceof d && s.call(d) == u;
+  }
+  return ar = c, ar;
+}
+var nr, ea;
+function Gn() {
+  if (ea) return nr;
+  ea = 1;
+  var a = k(), e = Ga(), r = M(), t = "[object Arguments]", n = "[object Array]", i = "[object Boolean]", s = "[object Date]", o = "[object Error]", u = "[object Function]", c = "[object Map]", h = "[object Number]", l = "[object Object]", d = "[object RegExp]", _ = "[object Set]", b = "[object String]", q = "[object WeakMap]", T = "[object ArrayBuffer]", w = "[object DataView]", p = "[object Float32Array]", N = "[object Float64Array]", B = "[object Int8Array]", $ = "[object Int16Array]", R = "[object Int32Array]", y = "[object Uint8Array]", v = "[object Uint8ClampedArray]", D = "[object Uint16Array]", g = "[object Uint32Array]", f = {};
+  f[p] = f[N] = f[B] = f[$] = f[R] = f[y] = f[v] = f[D] = f[g] = !0, f[t] = f[n] = f[T] = f[i] = f[w] = f[s] = f[o] = f[u] = f[c] = f[h] = f[l] = f[d] = f[_] = f[b] = f[q] = !1;
+  function j(C) {
+    return r(C) && e(C.length) && !!f[a(C)];
+  }
+  return nr = j, nr;
+}
+var ir, ra;
+function kn() {
+  if (ra) return ir;
+  ra = 1;
+  function a(e) {
+    return function(r) {
+      return e(r);
+    };
+  }
+  return ir = a, ir;
+}
+var S = { exports: {} };
+S.exports;
+var ta;
+function Hn() {
+  return ta || (ta = 1, (function(a, e) {
+    var r = Ia(), t = e && !e.nodeType && e, n = t && !0 && a && !a.nodeType && a, i = n && n.exports === t, s = i && r.process, o = (function() {
+      try {
+        var u = n && n.require && n.require("util").types;
+        return u || s && s.binding && s.binding("util");
+      } catch {
+      }
+    })();
+    a.exports = o;
+  })(S, S.exports)), S.exports;
+}
+var sr, aa;
+function Ha() {
+  if (aa) return sr;
+  aa = 1;
+  var a = Gn(), e = kn(), r = Hn(), t = r && r.isTypedArray, n = t ? e(t) : a;
+  return sr = n, sr;
+}
+var or, na;
+function Ua() {
+  if (na) return or;
+  na = 1;
+  function a(e, r) {
+    if (!(r === "constructor" && typeof e[r] == "function") && r != "__proto__")
+      return e[r];
+  }
+  return or = a, or;
+}
+var ur, ia;
+function Un() {
+  if (ia) return ur;
+  ia = 1;
+  var a = Mr(), e = L(), r = Object.prototype, t = r.hasOwnProperty;
+  function n(i, s, o) {
+    var u = i[s];
+    (!(t.call(i, s) && e(u, o)) || o === void 0 && !(s in i)) && a(i, s, o);
+  }
+  return ur = n, ur;
+}
+var cr, sa;
+function Nn() {
+  if (sa) return cr;
+  sa = 1;
+  var a = Un(), e = Mr();
+  function r(t, n, i, s) {
+    var o = !i;
+    i || (i = {});
+    for (var u = -1, c = n.length; ++u < c; ) {
+      var h = n[u], l = s ? s(i[h], t[h], h, i, t) : void 0;
+      l === void 0 && (l = t[h]), o ? e(i, h, l) : a(i, h, l);
+    }
+    return i;
+  }
+  return cr = r, cr;
+}
+var hr, oa;
+function Bn() {
+  if (oa) return hr;
+  oa = 1;
+  function a(e, r) {
+    for (var t = -1, n = Array(e); ++t < e; )
+      n[t] = r(t);
+    return n;
+  }
+  return hr = a, hr;
+}
+var fr, ua;
+function Na() {
+  if (ua) return fr;
+  ua = 1;
+  var a = 9007199254740991, e = /^(?:0|[1-9]\d*)$/;
+  function r(t, n) {
+    var i = typeof t;
+    return n = n ?? a, !!n && (i == "number" || i != "symbol" && e.test(t)) && t > -1 && t % 1 == 0 && t < n;
+  }
+  return fr = r, fr;
+}
+var lr, ca;
+function zn() {
+  if (ca) return lr;
+  ca = 1;
+  var a = Bn(), e = La(), r = Ea(), t = ka(), n = Na(), i = Ha(), s = Object.prototype, o = s.hasOwnProperty;
+  function u(c, h) {
+    var l = r(c), d = !l && e(c), _ = !l && !d && t(c), b = !l && !d && !_ && i(c), q = l || d || _ || b, T = q ? a(c.length, String) : [], w = T.length;
+    for (var p in c)
+      (h || o.call(c, p)) && !(q && // Safari 9 has enumerable `arguments.length` in strict mode.
+      (p == "length" || // Node.js 0.10 has enumerable non-index properties on buffers.
+      _ && (p == "offset" || p == "parent") || // PhantomJS 2 has enumerable non-index properties on typed arrays.
+      b && (p == "buffer" || p == "byteLength" || p == "byteOffset") || // Skip index properties.
+      n(p, w))) && T.push(p);
+    return T;
+  }
+  return lr = u, lr;
+}
+var dr, ha;
+function Vn() {
+  if (ha) return dr;
+  ha = 1;
+  function a(e) {
+    var r = [];
+    if (e != null)
+      for (var t in Object(e))
+        r.push(t);
+    return r;
+  }
+  return dr = a, dr;
+}
+var pr, fa;
+function Kn() {
+  if (fa) return pr;
+  fa = 1;
+  var a = A(), e = Fa(), r = Vn(), t = Object.prototype, n = t.hasOwnProperty;
+  function i(s) {
+    if (!a(s))
+      return r(s);
+    var o = e(s), u = [];
+    for (var c in s)
+      c == "constructor" && (o || !n.call(s, c)) || u.push(c);
+    return u;
+  }
+  return pr = i, pr;
+}
+var vr, la;
+function Ba() {
+  if (la) return vr;
+  la = 1;
+  var a = zn(), e = Kn(), r = Dr();
+  function t(n) {
+    return r(n) ? a(n, !0) : e(n);
+  }
+  return vr = t, vr;
+}
+var gr, da;
+function Xn() {
+  if (da) return gr;
+  da = 1;
+  var a = Nn(), e = Ba();
+  function r(t) {
+    return a(t, e(t));
+  }
+  return gr = r, gr;
+}
+var _r, pa;
+function Jn() {
+  if (pa) return _r;
+  pa = 1;
+  var a = Ma(), e = mn(), r = In(), t = xn(), n = Mn(), i = La(), s = Ea(), o = Fn(), u = ka(), c = Sr(), h = A(), l = En(), d = Ha(), _ = Ua(), b = Xn();
+  function q(T, w, p, N, B, $, R) {
+    var y = _(T, p), v = _(w, p), D = R.get(v);
+    if (D) {
+      a(T, p, D);
+      return;
+    }
+    var g = $ ? $(y, v, p + "", T, w, R) : void 0, f = g === void 0;
+    if (f) {
+      var j = s(v), C = !j && u(v), Fr = !j && !C && d(v);
+      g = v, j || C || Fr ? s(y) ? g = y : o(y) ? g = t(y) : C ? (f = !1, g = e(v, !0)) : Fr ? (f = !1, g = r(v, !0)) : g = [] : l(v) || i(v) ? (g = y, i(y) ? g = b(y) : (!h(y) || c(y)) && (g = n(v))) : f = !1;
+    }
+    f && (R.set(v, g), B(g, v, N, $, R), R.delete(v)), a(T, p, g);
+  }
+  return _r = q, _r;
+}
+var yr, va;
+function Wn() {
+  if (va) return yr;
+  va = 1;
+  var a = On(), e = Ma(), r = wn(), t = Jn(), n = A(), i = Ba(), s = Ua();
+  function o(u, c, h, l, d) {
+    u !== c && r(c, function(_, b) {
+      if (d || (d = new a()), n(_))
+        t(u, c, b, h, o, l, d);
+      else {
+        var q = l ? l(s(u, b), _, b + "", u, c, d) : void 0;
+        q === void 0 && (q = _), e(u, b, q);
+      }
+    }, i);
+  }
+  return yr = o, yr;
+}
+var br, ga;
+function za() {
+  if (ga) return br;
+  ga = 1;
+  function a(e) {
+    return e;
+  }
+  return br = a, br;
+}
+var qr, _a;
+function Yn() {
+  if (_a) return qr;
+  _a = 1;
+  function a(e, r, t) {
+    switch (t.length) {
+      case 0:
+        return e.call(r);
+      case 1:
+        return e.call(r, t[0]);
+      case 2:
+        return e.call(r, t[0], t[1]);
+      case 3:
+        return e.call(r, t[0], t[1], t[2]);
+    }
+    return e.apply(r, t);
+  }
+  return qr = a, qr;
+}
+var Tr, ya;
+function Zn() {
+  if (ya) return Tr;
+  ya = 1;
+  var a = Yn(), e = Math.max;
+  function r(t, n, i) {
+    return n = e(n === void 0 ? t.length - 1 : n, 0), function() {
+      for (var s = arguments, o = -1, u = e(s.length - n, 0), c = Array(u); ++o < u; )
+        c[o] = s[n + o];
+      o = -1;
+      for (var h = Array(n + 1); ++o < n; )
+        h[o] = s[o];
+      return h[n] = i(c), a(t, this, h);
+    };
+  }
+  return Tr = r, Tr;
+}
+var Rr, ba;
+function Qn() {
+  if (ba) return Rr;
+  ba = 1;
+  function a(e) {
+    return function() {
+      return e;
+    };
+  }
+  return Rr = a, Rr;
+}
+var Cr, qa;
+function ei() {
+  if (qa) return Cr;
+  qa = 1;
+  var a = Qn(), e = Pa(), r = za(), t = e ? function(n, i) {
+    return e(n, "toString", {
+      configurable: !0,
+      enumerable: !1,
+      value: a(i),
+      writable: !0
+    });
+  } : r;
+  return Cr = t, Cr;
+}
+var Or, Ta;
+function ri() {
+  if (Ta) return Or;
+  Ta = 1;
+  var a = 800, e = 16, r = Date.now;
+  function t(n) {
+    var i = 0, s = 0;
+    return function() {
+      var o = r(), u = e - (o - s);
+      if (s = o, u > 0) {
+        if (++i >= a)
+          return arguments[0];
+      } else
+        i = 0;
+      return n.apply(void 0, arguments);
+    };
+  }
+  return Or = t, Or;
+}
+var Ar, Ra;
+function ti() {
+  if (Ra) return Ar;
+  Ra = 1;
+  var a = ei(), e = ri(), r = e(a);
+  return Ar = r, Ar;
+}
+var wr, Ca;
+function ai() {
+  if (Ca) return wr;
+  Ca = 1;
+  var a = za(), e = Zn(), r = ti();
+  function t(n, i) {
+    return r(e(n, i, a), n + "");
+  }
+  return wr = t, wr;
+}
+var mr, Oa;
+function ni() {
+  if (Oa) return mr;
+  Oa = 1;
+  var a = L(), e = Dr(), r = Na(), t = A();
+  function n(i, s, o) {
+    if (!t(o))
+      return !1;
+    var u = typeof s;
+    return (u == "number" ? e(o) && r(s, o.length) : u == "string" && s in o) ? a(o[s], i) : !1;
+  }
+  return mr = n, mr;
+}
+var $r, Aa;
+function ii() {
+  if (Aa) return $r;
+  Aa = 1;
+  var a = ai(), e = ni();
+  function r(t) {
+    return a(function(n, i) {
+      var s = -1, o = i.length, u = o > 1 ? i[o - 1] : void 0, c = o > 2 ? i[2] : void 0;
+      for (u = t.length > 3 && typeof u == "function" ? (o--, u) : void 0, c && e(i[0], i[1], c) && (u = o < 3 ? void 0 : u, o = 1), n = Object(n); ++s < o; ) {
+        var h = i[s];
+        h && t(n, h, s, u);
+      }
+      return n;
+    });
+  }
+  return $r = r, $r;
+}
+var jr, wa;
+function si() {
+  if (wa) return jr;
+  wa = 1;
+  var a = Wn(), e = ii(), r = e(function(t, n, i) {
+    a(t, n, i);
+  });
+  return jr = r, jr;
+}
+var oi = si();
+const ma = /* @__PURE__ */ Va(oi);
+class Ir extends Error {
+  data;
+  constructor(e, r) {
+    super(e), this.name = "RequestError", this.data = r;
+  }
+}
+const O = (a) => a instanceof Ir;
+class P {
+  credentials;
+  agent;
+  constructor(e, r) {
+    this.credentials = e, this.agent = r;
+  }
+  async get(e, r) {
+    try {
+      return await Lr.get(
         e,
-        p(
+        ma(
           { ...r },
           {
             httpsAgent: this.agent,
@@ -45,27 +1144,47 @@ class c {
           }
         )
       );
-    } catch (s) {
-      throw new d(
-        s instanceof Error ? s.message : String(s),
-        $(s) && s.response ? s.response.data : void 0
+    } catch (t) {
+      throw new Ir(
+        t instanceof Error ? t.message : String(t),
+        Er(t) && t.response ? t.response.data : void 0
+      );
+    }
+  }
+  async post(e, r, t) {
+    try {
+      return await Lr.post(
+        e,
+        r,
+        ma(
+          { ...t },
+          {
+            httpsAgent: this.agent,
+            headers: this.credentials.authorizationHeaders
+          }
+        )
+      );
+    } catch (n) {
+      throw new Ir(
+        n instanceof Error ? n.message : String(n),
+        Er(n) && n.response ? n.response.data : void 0
       );
     }
   }
 }
-class l {
+class xr {
   get authorizationHeaders() {
     return {};
   }
 }
-class m {
+class ui {
   requestId;
   identifier;
   constructor({
-    requestId: t,
-    identifier: e
+    requestId: e,
+    identifier: r
   }) {
-    this.requestId = t, this.identifier = e;
+    this.requestId = e, this.identifier = r;
   }
   get authorizationHeaders() {
     return {
@@ -76,11 +1195,11 @@ class m {
     };
   }
 }
-class x {
+class ci {
   username;
   password;
-  constructor({ username: t, password: e }) {
-    this.username = t, this.password = e;
+  constructor({ username: e, password: r }) {
+    this.username = e, this.password = r;
   }
   get authorizationHeaders() {
     return {
@@ -88,10 +1207,10 @@ class x {
     };
   }
 }
-class I {
+class gi {
   authorization;
-  constructor(t) {
-    this.authorization = t;
+  constructor(e) {
+    this.authorization = e;
   }
   get authorizationHeaders() {
     return {
@@ -99,18 +1218,18 @@ class I {
     };
   }
 }
-class M {
+class _i {
   server;
   database;
   request;
-  constructor({ server: t, database: e }) {
-    this.server = t, this.database = e, this.request = new c(new l());
+  constructor({ server: e, database: r }) {
+    this.server = e, this.database = r, this.request = new P(new xr());
   }
-  url(t) {
-    return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${t}`;
+  url(e) {
+    return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${e}`;
   }
   async getAuthType() {
-    const e = (await this.request.get(
+    const r = (await this.request.get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
         headers: {
@@ -118,37 +1237,37 @@ class M {
         }
       }
     )).data.data;
-    return e !== void 0 ? e.Provider[0].Name : "basic";
+    return r !== void 0 ? r.Provider[0].Name : "basic";
   }
   async getOAuthUrl({
-    trackingId: t,
-    provider: e,
-    returnUrl: r
+    trackingId: e,
+    provider: r,
+    returnUrl: t
   }) {
-    const s = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, a = await this.request.get(s, {
+    const n = `https://${this.server}/oauth/getoauthurl?trackingID=${e}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`, i = await this.request.get(n, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
-        "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
+        "X-FMS-Return-URL": t ?? `https://${this.server}/oauth-handler`
       }
-    }), i = a.data, n = a.headers["x-fms-request-id"] ?? "";
-    if (n === void 0 || n === "")
+    }), s = i.data, o = i.headers["x-fms-request-id"] ?? "";
+    if (o === void 0 || o === "")
       throw new Error(
         'Did not get back an "X-FMS-Request-ID" header from FileMaker'
       );
-    return { redirectUrl: i, requestId: n };
+    return { redirectUrl: s, requestId: o };
   }
   // Uses a requestId and an identifier (OAuth) to return an authentication
   // token which can be used for subsequent requests.
   async getTokenUsingOAuth({
-    requestId: t,
-    identifier: e
+    requestId: e,
+    identifier: r
   }) {
     return (await this.request.post(this.url("sessions"), {
       headers: {
         "Content-Type": "application/json",
-        "X-FM-Data-OAuth-Request-Id": t,
-        "X-FM-Data-OAuth-Identifier": e
+        "X-FM-Data-OAuth-Request-Id": e,
+        "X-FM-Data-OAuth-Identifier": r
       }
     })).headers["X-FM-Data-Access-Token"];
   }
@@ -157,187 +1276,187 @@ class M {
   /* used for subsequent requests.
    */
   async getTokenUsingCredentials({
-    username: t,
-    password: e
+    username: e,
+    password: r
   }) {
     return (await this.request.post(
       this.url("sessions"),
       {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Basic ${btoa(`${t}:${e}`)}`
+          Authorization: `Basic ${btoa(`${e}:${r}`)}`
         }
       }
     )).data.response.token ?? null;
   }
 }
-class v {
+class hi {
   config;
   table;
   record;
   constructor({
-    config: t,
-    table: e,
-    record: r
+    config: e,
+    table: r,
+    record: t
   }) {
-    this.config = t, this.table = e, this.record = r;
+    this.config = e, this.table = r, this.record = t;
   }
   toRequestBody({
-    boundary: t,
-    changeId: e
+    boundary: e,
+    changeId: r
   }) {
-    const { ID: r, ...s } = this.record, a = JSON.stringify(s);
-    return `--${t}\r
+    const { ID: t, ...n } = this.record, i = JSON.stringify(n);
+    return `--${e}\r
 Content-Type: application/http\r
-Content-ID: ${e}\r
+Content-ID: ${r}\r
 \r
 PATCH ${this.url(this.table)}('${this.record.ID}') HTTP/1.1\r
 Content-Type: application/json\r
-Content-Length: ${this.byteLength(a)}\r
+Content-Length: ${this.byteLength(i)}\r
 \r
-` + a + `\r
+` + i + `\r
 `;
   }
-  parseResponse(t) {
-    const e = /HTTP\/1.1\s+(\d+)\s/.exec(t);
-    if (e === null) throw new Error("Could not find status in response");
-    const r = Number(e[1]);
-    if (r >= 300) {
-      const { error: a } = JSON.parse(
-        t.substring(t.indexOf("{")).trim()
+  parseResponse(e) {
+    const r = /HTTP\/1.1\s+(\d+)\s/.exec(e);
+    if (r === null) throw new Error("Could not find status in response");
+    const t = Number(r[1]);
+    if (t >= 300) {
+      const { error: i } = JSON.parse(
+        e.substring(e.indexOf("{")).trim()
       );
-      throw new Error(`[UPDATE OPERATION: ${this.table}] ${a.message}`);
+      throw new Error(`[UPDATE OPERATION: ${this.table}] ${i.message}`);
     }
-    const s = JSON.parse(t.substring(t.indexOf("{")).trim());
-    return { status: r, body: s };
+    const n = JSON.parse(e.substring(e.indexOf("{")).trim());
+    return { status: t, body: n };
   }
-  url(t) {
-    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
+  url(e) {
+    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${e}`;
   }
-  byteLength(t) {
-    return new TextEncoder().encode(t).byteLength;
+  byteLength(e) {
+    return new TextEncoder().encode(e).byteLength;
   }
 }
-class T {
+class fi {
   config;
   table;
   record;
   constructor({
-    config: t,
-    table: e,
-    record: r
+    config: e,
+    table: r,
+    record: t
   }) {
-    this.config = t, this.table = e, this.record = r;
+    this.config = e, this.table = r, this.record = t;
   }
   toRequestBody({
-    boundary: t,
-    changeId: e
+    boundary: e,
+    changeId: r
   }) {
-    const r = JSON.stringify(this.record);
-    return `--${t}\r
+    const t = JSON.stringify(this.record);
+    return `--${e}\r
 Content-Type: application/http\r
-Content-ID: ${e}\r
+Content-ID: ${r}\r
 \r
 POST ${this.url(this.table)} HTTP/1.1\r
 Content-Type: application/json\r
-Content-Length: ${this.byteLength(r)}\r
+Content-Length: ${this.byteLength(t)}\r
 \r
-` + r + `\r
+` + t + `\r
 `;
   }
-  parseResponse(t) {
-    const e = /HTTP\/1.1\s+(\d+)\s/.exec(t);
-    if (e === null) throw new Error("Could not find status in response");
-    const r = Number(e[1]);
-    if (r >= 300) {
-      const { error: s } = JSON.parse(
-        t.substring(t.indexOf("{")).trim()
+  parseResponse(e) {
+    const r = /HTTP\/1.1\s+(\d+)\s/.exec(e);
+    if (r === null) throw new Error("Could not find status in response");
+    const t = Number(r[1]);
+    if (t >= 300) {
+      const { error: n } = JSON.parse(
+        e.substring(e.indexOf("{")).trim()
       );
-      throw new Error(`[CREATE OPERATION: ${this.table}] ${s.message}`);
+      throw new Error(`[CREATE OPERATION: ${this.table}] ${n.message}`);
     }
-    return { status: r, body: null };
+    return { status: t, body: null };
   }
-  url(t) {
-    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
+  url(e) {
+    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${e}`;
   }
-  byteLength(t) {
-    return new TextEncoder().encode(t).byteLength;
+  byteLength(e) {
+    return new TextEncoder().encode(e).byteLength;
   }
 }
-class q {
+class li {
   config;
   table;
   id;
   constructor({
-    config: t,
-    table: e,
-    id: r
+    config: e,
+    table: r,
+    id: t
   }) {
-    this.config = t, this.table = e, this.id = r;
+    this.config = e, this.table = r, this.id = t;
   }
   toRequestBody({
-    boundary: t,
-    changeId: e
+    boundary: e,
+    changeId: r
   }) {
-    return `--${t}\r
+    return `--${e}\r
 Content-Type: application/http\r
-Content-ID: ${e}\r
+Content-ID: ${r}\r
 \r
 DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
 \r
 \r
 `;
   }
-  parseResponse(t) {
-    const e = /HTTP\/1.1\s+(\d+)\s/.exec(t);
-    if (e === null) throw new Error("Could not find status in response");
-    const r = Number(e[1]);
-    if (r >= 300) {
-      const { error: s } = JSON.parse(
-        t.substring(t.indexOf("{")).trim()
+  parseResponse(e) {
+    const r = /HTTP\/1.1\s+(\d+)\s/.exec(e);
+    if (r === null) throw new Error("Could not find status in response");
+    const t = Number(r[1]);
+    if (t >= 300) {
+      const { error: n } = JSON.parse(
+        e.substring(e.indexOf("{")).trim()
       );
-      throw new Error(`[DELETE OPERATION: ${this.table}] ${s.message}`);
+      throw new Error(`[DELETE OPERATION: ${this.table}] ${n.message}`);
     }
-    return { status: r, body: null };
+    return { status: t, body: null };
   }
-  url(t) {
-    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
+  url(e) {
+    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${e}`;
   }
 }
-class R {
+class di {
   operations;
   callback;
   config;
-  constructor(t, e) {
-    this.config = t, this.callback = e, this.operations = [];
+  constructor(e, r) {
+    this.config = e, this.callback = r, this.operations = [];
   }
   update({
-    table: t,
-    record: e
+    table: e,
+    record: r
   }) {
     return this.operations.push(
-      new v({
+      new hi({
         config: this.config,
-        table: t,
-        record: e
+        table: e,
+        record: r
       })
     ), this;
   }
-  create({ table: t, record: e }) {
+  create({ table: e, record: r }) {
     return this.operations.push(
-      new T({
+      new fi({
         config: this.config,
-        table: t,
-        record: e
+        table: e,
+        record: r
       })
     ), this;
   }
-  delete({ table: t, id: e }) {
+  delete({ table: e, id: r }) {
     return this.operations.push(
-      new q({
+      new li({
         config: this.config,
-        table: t,
-        id: e
+        table: e,
+        id: r
       })
     ), this;
   }
@@ -345,100 +1464,100 @@ class R {
     return this.callback(this.operations);
   }
 }
-const f = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (o) => {
-  const t = Math.random() * 16 | 0;
-  return (o == "x" ? t : t & 3 | 8).toString(16);
+const $a = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (a) => {
+  const e = Math.random() * 16 | 0;
+  return (a == "x" ? e : e & 3 | 8).toString(16);
 });
-class w {
+class ja {
   config;
   logger;
   request;
   constructor({
-    server: t,
-    database: e,
-    logger: r,
-    request: s
+    server: e,
+    database: r,
+    logger: t,
+    request: n
   }) {
-    this.config = { server: t, database: e }, this.logger = r, this.request = s;
+    this.config = { server: e, database: r }, this.logger = t, this.request = n;
   }
-  url(t) {
-    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
+  url(e) {
+    return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${e}`;
   }
   async metadata() {
     return (await this.request.get(this.url("$metadata"))).data;
   }
-  async subquery(t) {
-    this.log(`[FileMaker] Get records from ${t.table}`), this.log("Options:"), this.log(t.options), this.log(
-      `URL: ${this.url(`${t.table}('${t.recordId}')/${t.path}`)}?${this.parameterize(t.options)}`
+  async subquery(e) {
+    this.log(`[FileMaker] Get records from ${e.table}`), this.log("Options:"), this.log(e.options), this.log(
+      `URL: ${this.url(`${e.table}('${e.recordId}')/${e.path}`)}?${this.parameterize(e.options)}`
     );
     try {
       return (await this.request.get(
-        `${this.url(`${t.table}('${t.recordId}')/${t.path}`)}?${this.parameterize(t.options)}`
+        `${this.url(`${e.table}('${e.recordId}')/${e.path}`)}?${this.parameterize(e.options)}`
       )).data.value;
-    } catch (e) {
-      throw h(e) && (this.log("Get records HTTP error"), this.log(e.data)), e;
-    }
-  }
-  async getRecords(t, e) {
-    this.log(`[FileMaker] Get records from ${t}`), this.log("Options:"), this.log(e), this.log(`URL: ${this.url(t)}?${this.parameterize(e)}`);
-    try {
-      return (await this.request.get(`${this.url(t)}?${this.parameterize(e)}`)).data.value;
     } catch (r) {
-      throw h(r) && (this.log("Get records HTTP error"), this.log(r.data)), r;
+      throw O(r) && (this.log("Get records HTTP error"), this.log(r.data)), r;
     }
   }
-  async getRecordsWithCount(t, e) {
-    this.log(`[FileMaker] Get records with count from ${t}`), this.log("Options:"), this.log(e);
-    const r = { ...e, $count: !0 };
-    this.log(`URL: ${this.url(t)}?${this.parameterize(r)}`);
+  async getRecords(e, r) {
+    this.log(`[FileMaker] Get records from ${e}`), this.log("Options:"), this.log(r), this.log(`URL: ${this.url(e)}?${this.parameterize(r)}`);
     try {
-      const s = await this.request.get(`${this.url(t)}?${this.parameterize(r)}`);
+      return (await this.request.get(`${this.url(e)}?${this.parameterize(r)}`)).data.value;
+    } catch (t) {
+      throw O(t) && (this.log("Get records HTTP error"), this.log(t.data)), t;
+    }
+  }
+  async getRecordsWithCount(e, r) {
+    this.log(`[FileMaker] Get records with count from ${e}`), this.log("Options:"), this.log(r);
+    const t = { ...r, $count: !0 };
+    this.log(`URL: ${this.url(e)}?${this.parameterize(t)}`);
+    try {
+      const n = await this.request.get(`${this.url(e)}?${this.parameterize(t)}`);
       return {
-        data: s.data.value,
-        count: s.data["@odata.count"] ?? 0
+        data: n.data.value,
+        count: n.data["@odata.count"] ?? 0
       };
-    } catch (s) {
-      throw h(s) && (this.log("Get records with count HTTP error"), this.log(s.data)), s;
+    } catch (n) {
+      throw O(n) && (this.log("Get records with count HTTP error"), this.log(n.data)), n;
     }
   }
-  async getRecord(t, e) {
-    this.log(`[FileMaker] Get records from ${t}`), this.log(`ID: ${e}`);
+  async getRecord(e, r) {
+    this.log(`[FileMaker] Get records from ${e}`), this.log(`ID: ${r}`);
     try {
       return (await this.request.get(
-        `${this.url(t)}('${encodeURIComponent(e)}')`
+        `${this.url(e)}('${encodeURIComponent(r)}')`
       )).data;
-    } catch (r) {
-      throw h(r) && this.log(r.data), r;
+    } catch (t) {
+      throw O(t) && this.log(t.data), t;
     }
   }
-  async getValue(t, e, r) {
+  async getValue(e, r, t) {
     try {
       return (await this.request.get(
-        `${this.url(t)}('${encodeURIComponent(e)}')/${encodeURIComponent(r)}/$value`,
+        `${this.url(e)}('${encodeURIComponent(r)}')/${encodeURIComponent(t)}/$value`,
         {
           responseType: "arraybuffer"
         }
       )).data;
-    } catch (s) {
-      throw h(s) && this.log(s.data), s;
+    } catch (n) {
+      throw O(n) && this.log(n.data), n;
     }
   }
   async crossjoin({
-    tables: t,
-    $filter: e,
-    $expand: r
+    tables: e,
+    $filter: r,
+    $expand: t
   }) {
     try {
       return (await this.request.get(
-        `${this.url("$crossjoin")}(${t.join(",")})?$filter=${e}&$expand=${r}`,
+        `${this.url("$crossjoin")}(${e.join(",")})?$filter=${r}&$expand=${t}`,
         {
           headers: {
             Accept: "application/atom+xml"
           }
         }
       )).data;
-    } catch (s) {
-      throw h(s) && this.log(s.data), s;
+    } catch (n) {
+      throw O(n) && this.log(n.data), n;
     }
   }
   // Performs a "$batch" request, executing the given operations
@@ -473,86 +1592,86 @@ class w {
   //     ];
   //
   batch() {
-    return new R(this.config, async (t) => {
-      const e = `batch_${f()}`, r = `changeset_${f()}`, s = `--${e}\r
-Content-Type: multipart/mixed; boundary=${r}\r
+    return new di(this.config, async (e) => {
+      const r = `batch_${$a()}`, t = `changeset_${$a()}`, n = `--${r}\r
+Content-Type: multipart/mixed; boundary=${t}\r
 \r
-` + t.map(
-        (a, i) => a.toRequestBody({
-          boundary: r,
-          changeId: i + 1
+` + e.map(
+        (i, s) => i.toRequestBody({
+          boundary: t,
+          changeId: s + 1
         })
-      ).join("") + `--${r}--\r
---${e}--\r
+      ).join("") + `--${t}--\r
+--${r}--\r
 `;
       try {
-        const a = await this.request.post(
+        const i = await this.request.post(
           this.url("$batch"),
-          s,
+          n,
           {
             headers: {
-              "Content-Type": `multipart/mixed; boundary=${e}`
+              "Content-Type": `multipart/mixed; boundary=${r}`
             }
           }
-        ), i = /boundary=(.+?)\r\n/.exec(a.data);
-        if (i === null) throw new Error("Could not find changeset");
-        const n = i[0].split("=")[1].trim();
-        return a.data.split(`--${n}`).slice(1, -1).map(
-          (y, b) => t[b].parseResponse(y)
+        ), s = /boundary=(.+?)\r\n/.exec(i.data);
+        if (s === null) throw new Error("Could not find changeset");
+        const o = s[0].split("=")[1].trim();
+        return i.data.split(`--${o}`).slice(1, -1).map(
+          (c, h) => e[h].parseResponse(c)
         );
-      } catch (a) {
-        throw h(a) && this.log(a.data), a;
+      } catch (i) {
+        throw O(i) && this.log(i.data), i;
       }
     });
   }
-  async script(t, e) {
-    this.log(`[FileMaker] Running script ${t} with parameters:`), this.log({ scriptParameterValue: e });
-    const r = await this.request.post(
-      this.url(`Script.${encodeURIComponent(t)}`),
-      e === void 0 ? null : { scriptParameterValue: e },
+  async script(e, r) {
+    this.log(`[FileMaker] Running script ${e} with parameters:`), this.log({ scriptParameterValue: r });
+    const t = await this.request.post(
+      this.url(`Script.${encodeURIComponent(e)}`),
+      r === void 0 ? null : { scriptParameterValue: r },
       {
         headers: {
           "Content-Type": "application/json"
         }
       }
     );
-    this.log(`[FileMaker] Script ${t} finished. Response:`), this.log(r);
-    const s = r.data.scriptResult.code === 0;
+    this.log(`[FileMaker] Script ${e} finished. Response:`), this.log(t);
+    const n = t.data.scriptResult.code === 0;
     return {
-      success: s,
-      data: s ? r.data.scriptResult.resultParameter : void 0
+      success: n,
+      data: n ? t.data.scriptResult.resultParameter : void 0
     };
   }
-  parameterize(t) {
-    if (t === void 0) return "";
-    const e = {};
-    return t.$select !== void 0 && (e.$select = t.$select.map((r) => r === "ID" ? '"ID"' : r).join(",")), t.$top !== void 0 && (e.$top = t.$top), t.$skip !== void 0 && (e.$skip = t.$skip), t.$filter !== void 0 && (e.$filter = t.$filter), t.$expand !== void 0 && (e.$expand = t.$expand), t.$orderby !== void 0 && (e.$orderby = encodeURIComponent(t.$orderby.join(" "))), t.$count !== void 0 && (e.$count = t.$count ? "true" : "false"), Object.entries(e).map(([r, s]) => `${r}=${s}`).join("&");
+  parameterize(e) {
+    if (e === void 0) return "";
+    const r = {};
+    return e.$select !== void 0 && (r.$select = e.$select.map((t) => t === "ID" ? '"ID"' : t).join(",")), e.$top !== void 0 && (r.$top = e.$top), e.$skip !== void 0 && (r.$skip = e.$skip), e.$filter !== void 0 && (r.$filter = e.$filter), e.$expand !== void 0 && (r.$expand = e.$expand), e.$orderby !== void 0 && (r.$orderby = encodeURIComponent(e.$orderby.join(" "))), e.$count !== void 0 && (r.$count = e.$count ? "true" : "false"), Object.entries(r).map(([t, n]) => `${t}=${n}`).join("&");
   }
-  log(t) {
-    return this.logger.log(t);
-  }
-}
-class C {
-  log(t) {
-    console.dir(t, { depth: null });
+  log(e) {
+    return this.logger.log(e);
   }
 }
-class E {
+class pi {
+  log(e) {
+    console.dir(e, { depth: null });
+  }
+}
+class yi {
   log() {
   }
 }
-class F {
+class bi {
   server;
   database;
   agent;
   logger;
   constructor({
-    server: t,
-    database: e,
-    agent: r,
-    logger: s
+    server: e,
+    database: r,
+    agent: t,
+    logger: n
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new C();
+    this.server = e, this.database = r, this.agent = t, this.logger = n ?? new pi();
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -562,15 +1681,15 @@ class F {
    * @returns A configured FileMaker instance ready to use
    */
   withBasicAuth({
-    username: t,
-    password: e
+    username: e,
+    password: r
   }) {
-    const r = new x({ username: t, password: e }), s = new c(r, this.agent);
-    return new w({
+    const t = new ci({ username: e, password: r }), n = new P(t, this.agent);
+    return new ja({
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request: s
+      request: n
     });
   }
   /**
@@ -581,18 +1700,18 @@ class F {
    * @returns A configured FileMaker instance ready to use
    */
   withOAuth({
-    requestId: t,
-    identifier: e
+    requestId: e,
+    identifier: r
   }) {
-    const r = new m({
-      requestId: t,
-      identifier: e
-    }), s = new c(r, this.agent);
-    return new w({
+    const t = new ui({
+      requestId: e,
+      identifier: r
+    }), n = new P(t, this.agent);
+    return new ja({
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request: s
+      request: n
     });
   }
   /**
@@ -605,22 +1724,22 @@ class F {
    * @returns The OAuth redirect URL and request ID to store for later use
    */
   async getOAuthUrl({
-    trackingId: t,
-    provider: e,
-    returnUrl: r
+    trackingId: e,
+    provider: r,
+    returnUrl: t
   }) {
-    const s = new c(new l(), this.agent), a = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, i = await s.get(a, {
+    const n = new P(new xr(), this.agent), i = `https://${this.server}/oauth/getoauthurl?trackingID=${e}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`, s = await n.get(i, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
-        "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
+        "X-FMS-Return-URL": t ?? `https://${this.server}/oauth-handler`
       }
-    }), n = i.data, u = i.headers["x-fms-request-id"] ?? "";
+    }), o = s.data, u = s.headers["x-fms-request-id"] ?? "";
     if (u === void 0 || u === "")
       throw new Error(
         'Did not get back an "X-FMS-Request-ID" header from FileMaker'
       );
-    return { redirectUrl: n, requestId: u };
+    return { redirectUrl: o, requestId: u };
   }
   /**
    * Detects the available authentication types supported by the FileMaker
@@ -629,7 +1748,7 @@ class F {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes() {
-    const r = (await new c(new l(), this.agent).get(
+    const t = (await new P(new xr(), this.agent).get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
         headers: {
@@ -637,7 +1756,7 @@ class F {
         }
       }
     )).data.data;
-    return r !== void 0 ? r.Provider.map((s) => s.Name) : ["basic"];
+    return t !== void 0 ? t.Provider.map((n) => n.Name) : ["basic"];
   }
   /**
    * Helper method to construct a FileMaker OData URL.
@@ -645,18 +1764,18 @@ class F {
    * @param path - The path segment to append to the base URL
    * @returns The full OData URL
    */
-  url(t) {
-    return `https://${this.server}/fmi/odata/v4/${this.database}/${t}`;
+  url(e) {
+    return `https://${this.server}/fmi/odata/v4/${this.database}/${e}`;
   }
 }
 export {
-  w as FileMaker,
-  M as FileMakerAuthenticator,
-  x as FileMakerBasicCredentials,
-  F as FileMakerClient,
-  m as FileMakerOAuthCredentials,
-  I as FileMakerRawCredentials,
-  C as Logger,
-  l as NullFileMakerCredentials,
-  E as NullLogger
+  ja as FileMaker,
+  _i as FileMakerAuthenticator,
+  ci as FileMakerBasicCredentials,
+  bi as FileMakerClient,
+  ui as FileMakerOAuthCredentials,
+  gi as FileMakerRawCredentials,
+  pi as Logger,
+  xr as NullFileMakerCredentials,
+  yi as NullLogger
 };
