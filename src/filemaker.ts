@@ -29,6 +29,8 @@ interface QueryOptions<T> {
   $count?: boolean;
 }
 
+type GetRecordQueryOptions<T> = Pick<QueryOptions<T>, "$select" | "$expand">;
+
 export interface FileMakerConfig {
   server: string;
   database: string;
@@ -84,7 +86,7 @@ export class FileMaker {
       return response.data.value;
     } catch (error) {
       if (isRequestError(error)) {
-        this.log("Get records HTTP error");
+        this.log("[FileMaker] subquery: HTTP error");
         this.log(error.data);
       }
       throw error;
@@ -106,7 +108,7 @@ export class FileMaker {
       return response.data.value;
     } catch (error) {
       if (isRequestError(error)) {
-        this.log("Get records HTTP error");
+        this.log("[FileMaker] getRecords: HTTP error");
         this.log(error.data);
       }
       throw error;
@@ -136,25 +138,30 @@ export class FileMaker {
       };
     } catch (error) {
       if (isRequestError(error)) {
-        this.log("Get records with count HTTP error");
+        this.log("[FileMaker] getRecordsWithCount: HTTP error");
         this.log(error.data);
       }
       throw error;
     }
   }
 
-  async getRecord<T>(table: string, id: string) {
+  async getRecord<T>(
+    table: string,
+    id: string,
+    options?: GetRecordQueryOptions<T>,
+  ) {
     this.log(`[FileMaker] Get records from ${table}`);
     this.log(`ID: ${id}`);
 
     try {
       const response = await this.request.get<T>(
-        `${this.url(table)}('${encodeURIComponent(id)}')`,
+        `${this.url(table)}('${encodeURIComponent(id)}')?${this.parameterize(options)}`,
       );
 
       return response.data;
     } catch (error) {
       if (isRequestError(error)) {
+        this.log("[FileMaker] getRecord: HTTP error");
         this.log(error.data);
       }
       throw error;
@@ -173,6 +180,7 @@ export class FileMaker {
       return response.data;
     } catch (error) {
       if (isRequestError(error)) {
+        this.log("[FileMaker] getValue: HTTP error");
         this.log(error.data);
       }
       throw error;
@@ -201,6 +209,7 @@ export class FileMaker {
       return response.data;
     } catch (error) {
       if (isRequestError(error)) {
+        this.log("[FileMaker] crossjoin: HTTP error");
         this.log(error.data);
       }
       throw error;
@@ -281,6 +290,7 @@ export class FileMaker {
         );
       } catch (error) {
         if (isRequestError(error)) {
+          this.log("[FileMaker] batch: HTTP error");
           this.log(error.data);
         }
         throw error;
@@ -292,24 +302,32 @@ export class FileMaker {
     this.log(`[FileMaker] Running script ${name} with parameters:`);
     this.log({ scriptParameterValue: params });
 
-    const response = await this.request.post<FileMakerScriptResponse<T>>(
-      this.url(`Script.${encodeURIComponent(name)}`),
-      params === undefined ? null : { scriptParameterValue: params },
-      {
-        headers: {
-          "Content-Type": "application/json",
+    try {
+      const response = await this.request.post<FileMakerScriptResponse<T>>(
+        this.url(`Script.${encodeURIComponent(name)}`),
+        params === undefined ? null : { scriptParameterValue: params },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
         },
-      },
-    );
+      );
 
-    this.log(`[FileMaker] Script ${name} finished. Response:`);
-    this.log(response);
+      this.log(`[FileMaker] Script ${name} finished. Response:`);
+      this.log(response);
 
-    const success = response.data.scriptResult.code === 0;
-    return {
-      success,
-      data: success ? response.data.scriptResult.resultParameter : undefined,
-    };
+      const success = response.data.scriptResult.code === 0;
+      return {
+        success,
+        data: success ? response.data.scriptResult.resultParameter : undefined,
+      };
+    } catch (error) {
+      if (isRequestError(error)) {
+        this.log("[FileMaker] script: HTTP error");
+        this.log(error.data);
+      }
+      throw error;
+    }
   }
 
   private parameterize<T>(options?: QueryOptions<T>) {
