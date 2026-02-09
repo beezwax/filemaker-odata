@@ -27,9 +27,19 @@ interface QueryOptions<T> {
   $expand?: string;
   $orderby?: [keyof T, "asc" | "desc"];
   $count?: boolean;
+  $format?: "json" | "xml";
+  $metadata?: boolean;
 }
 
-type GetRecordQueryOptions<T> = Pick<QueryOptions<T>, "$select" | "$expand">;
+type GetRecordQueryOptions<T> = Pick<
+  QueryOptions<T>,
+  "$select" | "$expand" | "$format" | "$metadata"
+>;
+
+type CrossJoinQueryOptions<T> = Pick<
+  QueryOptions<T>,
+  "$filter" | "$expand" | "$format" | "$metadata"
+>;
 
 export interface FileMakerConfig {
   server: string;
@@ -187,23 +197,16 @@ export class FileMaker {
     }
   }
 
-  async crossjoin({
+  async crossjoin<T>({
     tables,
-    $filter,
-    $expand,
+    options,
   }: {
     tables: string[];
-    $filter: string;
-    $expand: string;
+    options: CrossJoinQueryOptions<T>;
   }) {
     try {
       const response = await this.request.get<string>(
-        `${this.url("$crossjoin")}(${tables.join(",")})?$filter=${$filter}&$expand=${$expand}`,
-        {
-          headers: {
-            Accept: "application/atom+xml",
-          },
-        },
+        `${this.url("$crossjoin")}(${tables.join(",")})?${this.parameterize(options)}`,
       );
 
       return response.data;
@@ -331,39 +334,32 @@ export class FileMaker {
   }
 
   private parameterize<T>(options?: QueryOptions<T>) {
-    if (options === undefined) return "";
+    // When no options given, return a default option for the JSON format
+    if (options === undefined) return "$format=application/json";
 
     const params: Record<string, string | number> = {};
 
-    if (options.$select !== undefined) {
+    if (options.$select !== undefined)
       params.$select = options.$select
         .map((field) => `"${String(field).replaceAll('"', '""')}"`)
         .join(",");
-    }
 
-    if (options.$top !== undefined) {
-      params.$top = options.$top;
-    }
+    if (options.$top !== undefined) params.$top = options.$top;
 
-    if (options.$skip !== undefined) {
-      params.$skip = options.$skip;
-    }
+    if (options.$skip !== undefined) params.$skip = options.$skip;
 
-    if (options.$filter !== undefined) {
-      params.$filter = options.$filter;
-    }
+    if (options.$filter !== undefined) params.$filter = options.$filter;
 
-    if (options.$expand !== undefined) {
-      params.$expand = options.$expand;
-    }
+    if (options.$expand !== undefined) params.$expand = options.$expand;
 
-    if (options.$orderby !== undefined) {
+    if (options.$orderby !== undefined)
       params.$orderby = encodeURIComponent(options.$orderby.join(" "));
-    }
 
-    if (options.$count !== undefined) {
+    if (options.$count !== undefined)
       params.$count = options.$count ? "true" : "false";
-    }
+
+    const includeMetadata = options.$metadata ?? true;
+    params.$format = `${options.$format === "xml" ? "application/xml" : "application/json"}${includeMetadata ? "" : ";odata.metadata=none"}`;
 
     return Object.entries(params)
       .map(([key, value]) => `${key}=${value}`)

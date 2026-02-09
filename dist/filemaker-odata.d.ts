@@ -14,6 +14,8 @@ declare interface BatchOperationResponse<T> {
     body: T;
 }
 
+declare type CrossJoinQueryOptions<T> = Pick<QueryOptions<T>, "$filter" | "$expand" | "$format" | "$metadata">;
+
 export declare class FileMaker {
     private config;
     private logger;
@@ -39,10 +41,9 @@ export declare class FileMaker {
     }>;
     getRecord<T>(table: string, id: string, options?: GetRecordQueryOptions<T>): Promise<T>;
     getValue(table: string, id: string, field: string): Promise<string>;
-    crossjoin({ tables, $filter, $expand, }: {
+    crossjoin<T>({ tables, options, }: {
         tables: string[];
-        $filter: string;
-        $expand: string;
+        options: CrossJoinQueryOptions<T>;
     }): Promise<string>;
     batch(): OperationBuilder;
     script<T>(name: string, params?: Record<string, unknown>): Promise<{
@@ -238,7 +239,7 @@ export declare class FileMakerRawCredentials implements FileMakerCredentials {
     };
 }
 
-declare type GetRecordQueryOptions<T> = Pick<QueryOptions<T>, "$select" | "$expand">;
+declare type GetRecordQueryOptions<T> = Pick<QueryOptions<T>, "$select" | "$expand" | "$format" | "$metadata">;
 
 export declare interface ILogger {
     log(message: unknown): void;
@@ -300,6 +301,8 @@ declare interface QueryOptions<T> {
     $expand?: string;
     $orderby?: [keyof T, "asc" | "desc"];
     $count?: boolean;
+    $format?: "json" | "xml";
+    $metadata?: boolean;
 }
 
 declare interface RecordWithId {

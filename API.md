@@ -182,13 +182,18 @@ Retrieves a single record by its ID.
 **Signature:**
 
 ```typescript
-async getRecord<T>(table: string, id: string): Promise<T>
+async getRecord<T>(
+  table: string,
+  id: string,
+  options?: GetRecordQueryOptions<T>
+): Promise<T>
 ```
 
 **Parameters:**
 
 - `table` - The name of the table
 - `id` - The record ID (primary key value)
+- `options` - Optional query options (supports `$select`, `$expand`, `$format`, `$metadata`)
 
 **Returns:** A single record object
 
@@ -199,10 +204,30 @@ interface CustomerRecord {
   ID: string;
   NAME: string;
   EMAIL: string;
+  PHONE: string;
 }
 
+// Get a single record
 const customer = await fm.getRecord<CustomerRecord>("Customers", "CUST-12345");
 console.log(customer.NAME);
+
+// Get specific fields only
+const customerBasic = await fm.getRecord<CustomerRecord>(
+  "Customers",
+  "CUST-12345",
+  {
+    $select: ["NAME", "EMAIL"],
+  },
+);
+
+// Get record with expanded relationships
+const customerWithOrders = await fm.getRecord<CustomerRecord>(
+  "Customers",
+  "CUST-12345",
+  {
+    $expand: "Orders",
+  },
+);
 
 // IDs with special characters are automatically URL-encoded
 interface UserRecord {
@@ -305,36 +330,45 @@ const recentOrders = await fm.subquery<OrderRecord>({
 
 ### crossjoin()
 
-Performs a cross-join query across multiple tables. Returns data in ATOM XML format.
+Performs a cross-join query across multiple tables.
 
 **Signature:**
 
 ```typescript
-async crossjoin(params: {
+async crossjoin<T>(params: {
   tables: string[];
-  $filter: string;
-  $expand: string;
+  options: CrossJoinQueryOptions<T>;
 }): Promise<string>
 ```
 
 **Parameters:**
 
 - `tables` - Array of table names to join
-- `$filter` - Filter condition for the join
-- `$expand` - Expand expression for related data
+- `options` - Query options object (supports `$filter`, `$expand`, `$format`, `$metadata`)
 
-**Returns:** XML string in ATOM format
+**Returns:** Response data (JSON or XML depending on format option)
 
 **Example:**
 
 ```typescript
+// JSON format (default)
 const result = await fm.crossjoin({
   tables: ["Customers", "Orders"],
-  $filter: "Customers/ID eq Orders/CustomerID",
-  $expand: "Customers,Orders",
+  options: {
+    $filter: "Customers/ID eq Orders/CustomerID",
+    $expand: "Customers,Orders",
+  },
 });
 
-// Parse the XML result as needed
+// XML format
+const xmlResult = await fm.crossjoin({
+  tables: ["Customers", "Orders"],
+  options: {
+    $filter: "Customers/ID eq Orders/CustomerID",
+    $expand: "Customers,Orders",
+    $format: "xml",
+  },
+});
 ```
 
 ---
@@ -506,6 +540,8 @@ interface QueryOptions<T> {
   $expand?: string; // Expand related records
   $orderby?: [keyof T, "asc" | "desc"]; // Sort results
   $count?: boolean; // Include total count
+  $format?: "json" | "xml"; // Response format (default: json)
+  $metadata?: boolean; // Include OData metadata (default: true)
 }
 ```
 
@@ -668,6 +704,52 @@ const records = await fm.getRecords<ProductRecord>("Products", {
   $count: true,
   $top: 10,
 });
+```
+
+### $format
+
+Control the response format (JSON or XML).
+
+```typescript
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
+// Get records in JSON format (default)
+const jsonRecords = await fm.getRecords<ProductRecord>("Products", {
+  $format: "json",
+});
+
+// Get records in XML format
+const xmlRecords = await fm.getRecords<string>("Products", {
+  $format: "xml",
+});
+```
+
+### $metadata
+
+Control whether OData metadata is included in the response. When set to `false`, adds `;odata.metadata=none` to the format parameter, reducing response payload size.
+
+```typescript
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
+// Include metadata (default)
+const withMetadata = await fm.getRecords<ProductRecord>("Products", {
+  $metadata: true,
+});
+// Response includes @odata.context and other metadata fields
+
+// Exclude metadata for smaller payload
+const withoutMetadata = await fm.getRecords<ProductRecord>("Products", {
+  $metadata: false,
+});
+// Response contains only the raw data
 ```
 
 ### Combining Options

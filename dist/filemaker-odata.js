@@ -140,7 +140,7 @@ function Ia() {
   return ae = a, ae;
 }
 var ne, Zr;
-function m() {
+function w() {
   if (Zr) return ne;
   Zr = 1;
   var a = Ia(), e = typeof self == "object" && self && self.Object === Object && self, r = a || e || Function("return this")();
@@ -150,7 +150,7 @@ var ie, Qr;
 function xa() {
   if (Qr) return ie;
   Qr = 1;
-  var a = m(), e = a.Symbol;
+  var a = w(), e = a.Symbol;
   return ie = e, ie;
 }
 var se, et;
@@ -191,7 +191,7 @@ function H() {
   return ue = s, ue;
 }
 var ce, at;
-function A() {
+function m() {
   if (at) return ce;
   at = 1;
   function a(e) {
@@ -204,7 +204,7 @@ var he, nt;
 function Sr() {
   if (nt) return he;
   nt = 1;
-  var a = H(), e = A(), r = "[object AsyncFunction]", t = "[object Function]", n = "[object GeneratorFunction]", i = "[object Proxy]";
+  var a = H(), e = m(), r = "[object AsyncFunction]", t = "[object Function]", n = "[object GeneratorFunction]", i = "[object Proxy]";
   function s(o) {
     if (!e(o))
       return !1;
@@ -217,7 +217,7 @@ var fe, it;
 function nn() {
   if (it) return fe;
   it = 1;
-  var a = m(), e = a["__core-js_shared__"];
+  var a = w(), e = a["__core-js_shared__"];
   return fe = e, fe;
 }
 var le, st;
@@ -257,7 +257,7 @@ var pe, ut;
 function un() {
   if (ut) return pe;
   ut = 1;
-  var a = Sr(), e = sn(), r = A(), t = on(), n = /[\\^$.*+?()[\]{}|]/g, i = /^\[object .+?Constructor\]$/, s = Function.prototype, o = Object.prototype, u = s.toString, c = o.hasOwnProperty, h = RegExp(
+  var a = Sr(), e = sn(), r = m(), t = on(), n = /[\\^$.*+?()[\]{}|]/g, i = /^\[object .+?Constructor\]$/, s = Function.prototype, o = Object.prototype, u = s.toString, c = o.hasOwnProperty, h = RegExp(
     "^" + u.call(c).replace(n, "\\$&").replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, "$1.*?") + "$"
   );
   function l(d) {
@@ -292,7 +292,7 @@ var _e, ft;
 function Sa() {
   if (ft) return _e;
   ft = 1;
-  var a = Pr(), e = m(), r = a(e, "Map");
+  var a = Pr(), e = w(), r = a(e, "Map");
   return _e = r, _e;
 }
 var ye, lt;
@@ -373,9 +373,9 @@ function vn() {
   }
   return i.prototype.clear = a, i.prototype.delete = e, i.prototype.get = r, i.prototype.has = t, i.prototype.set = n, Oe = i, Oe;
 }
-var Ae, bt;
+var me, bt;
 function gn() {
-  if (bt) return Ae;
+  if (bt) return me;
   bt = 1;
   var a = vn(), e = k(), r = Sa();
   function t() {
@@ -385,28 +385,28 @@ function gn() {
       string: new a()
     };
   }
-  return Ae = t, Ae;
+  return me = t, me;
 }
-var we, qt;
+var Ae, qt;
 function _n() {
-  if (qt) return we;
+  if (qt) return Ae;
   qt = 1;
   function a(e) {
     var r = typeof e;
     return r == "string" || r == "number" || r == "symbol" || r == "boolean" ? e !== "__proto__" : e === null;
   }
-  return we = a, we;
+  return Ae = a, Ae;
 }
-var me, Tt;
+var we, Tt;
 function U() {
-  if (Tt) return me;
+  if (Tt) return we;
   Tt = 1;
   var a = _n();
   function e(r, t) {
     var n = r.__data__;
     return a(t) ? n[typeof t == "string" ? "string" : "hash"] : n.map;
   }
-  return me = e, me;
+  return we = e, we;
 }
 var $e, Rt;
 function yn() {
@@ -439,10 +439,10 @@ function qn() {
   }
   return Ie = e, Ie;
 }
-var xe, At;
+var xe, mt;
 function Tn() {
-  if (At) return xe;
-  At = 1;
+  if (mt) return xe;
+  mt = 1;
   var a = U();
   function e(r, t) {
     var n = a(this, r), i = n.size;
@@ -450,10 +450,10 @@ function Tn() {
   }
   return xe = e, xe;
 }
-var Se, wt;
+var Se, At;
 function Rn() {
-  if (wt) return Se;
-  wt = 1;
+  if (At) return Se;
+  At = 1;
   var a = gn(), e = yn(), r = bn(), t = qn(), n = Tn();
   function i(s) {
     var o = -1, u = s == null ? 0 : s.length;
@@ -464,10 +464,10 @@ function Rn() {
   }
   return i.prototype.clear = a, i.prototype.delete = e, i.prototype.get = r, i.prototype.has = t, i.prototype.set = n, Se = i, Se;
 }
-var Pe, mt;
+var Pe, wt;
 function Cn() {
-  if (mt) return Pe;
-  mt = 1;
+  if (wt) return Pe;
+  wt = 1;
   var a = k(), e = Sa(), r = Rn(), t = 200;
   function n(i, s) {
     var o = this.__data__;
@@ -531,7 +531,7 @@ function Ma() {
   return Le = r, Le;
 }
 var Ee, St;
-function An() {
+function mn() {
   if (St) return Ee;
   St = 1;
   function a(e) {
@@ -547,18 +547,18 @@ function An() {
   return Ee = a, Ee;
 }
 var ke, Pt;
-function wn() {
+function An() {
   if (Pt) return ke;
   Pt = 1;
-  var a = An(), e = a();
+  var a = mn(), e = a();
   return ke = e, ke;
 }
 var I = { exports: {} };
 I.exports;
 var Mt;
-function mn() {
+function wn() {
   return Mt || (Mt = 1, (function(a, e) {
-    var r = m(), t = e && !e.nodeType && e, n = t && !0 && a && !a.nodeType && a, i = n && n.exports === t, s = i ? r.Buffer : void 0, o = s ? s.allocUnsafe : void 0;
+    var r = w(), t = e && !e.nodeType && e, n = t && !0 && a && !a.nodeType && a, i = n && n.exports === t, s = i ? r.Buffer : void 0, o = s ? s.allocUnsafe : void 0;
     function u(c, h) {
       if (h)
         return c.slice();
@@ -572,7 +572,7 @@ var He, Ft;
 function $n() {
   if (Ft) return He;
   Ft = 1;
-  var a = m(), e = a.Uint8Array;
+  var a = w(), e = a.Uint8Array;
   return He = e, He;
 }
 var Ge, Dt;
@@ -613,7 +613,7 @@ var Be, kt;
 function Sn() {
   if (kt) return Be;
   kt = 1;
-  var a = A(), e = Object.create, r = /* @__PURE__ */ (function() {
+  var a = m(), e = Object.create, r = /* @__PURE__ */ (function() {
     function t() {
     }
     return function(n) {
@@ -747,7 +747,7 @@ x.exports;
 var Zt;
 function Ha() {
   return Zt || (Zt = 1, (function(a, e) {
-    var r = m(), t = Ln(), n = e && !e.nodeType && e, i = n && !0 && a && !a.nodeType && a, s = i && i.exports === n, o = s ? r.Buffer : void 0, u = o ? o.isBuffer : void 0, c = u || t;
+    var r = w(), t = Ln(), n = e && !e.nodeType && e, i = n && !0 && a && !a.nodeType && a, s = i && i.exports === n, o = s ? r.Buffer : void 0, u = o ? o.isBuffer : void 0, c = u || t;
     a.exports = c;
   })(x, x.exports)), x.exports;
 }
@@ -771,8 +771,8 @@ var nr, ea;
 function kn() {
   if (ea) return nr;
   ea = 1;
-  var a = H(), e = ka(), r = M(), t = "[object Arguments]", n = "[object Array]", i = "[object Boolean]", s = "[object Date]", o = "[object Error]", u = "[object Function]", c = "[object Map]", h = "[object Number]", l = "[object Object]", d = "[object RegExp]", _ = "[object Set]", b = "[object String]", q = "[object WeakMap]", T = "[object ArrayBuffer]", w = "[object DataView]", p = "[object Float32Array]", N = "[object Float64Array]", B = "[object Int8Array]", $ = "[object Int16Array]", C = "[object Int32Array]", y = "[object Uint8Array]", v = "[object Uint8ClampedArray]", F = "[object Uint16Array]", g = "[object Uint32Array]", f = {};
-  f[p] = f[N] = f[B] = f[$] = f[C] = f[y] = f[v] = f[F] = f[g] = !0, f[t] = f[n] = f[T] = f[i] = f[w] = f[s] = f[o] = f[u] = f[c] = f[h] = f[l] = f[d] = f[_] = f[b] = f[q] = !1;
+  var a = H(), e = ka(), r = M(), t = "[object Arguments]", n = "[object Array]", i = "[object Boolean]", s = "[object Date]", o = "[object Error]", u = "[object Function]", c = "[object Map]", h = "[object Number]", l = "[object Object]", d = "[object RegExp]", _ = "[object Set]", b = "[object String]", q = "[object WeakMap]", T = "[object ArrayBuffer]", A = "[object DataView]", p = "[object Float32Array]", N = "[object Float64Array]", B = "[object Int8Array]", $ = "[object Int16Array]", C = "[object Int32Array]", y = "[object Uint8Array]", v = "[object Uint8ClampedArray]", F = "[object Uint16Array]", g = "[object Uint32Array]", f = {};
+  f[p] = f[N] = f[B] = f[$] = f[C] = f[y] = f[v] = f[F] = f[g] = !0, f[t] = f[n] = f[T] = f[i] = f[A] = f[s] = f[o] = f[u] = f[c] = f[h] = f[l] = f[d] = f[_] = f[b] = f[q] = !1;
   function j(O) {
     return r(O) && e(O.length) && !!f[a(O)];
   }
@@ -876,13 +876,13 @@ function zn() {
   ca = 1;
   var a = Bn(), e = La(), r = Ea(), t = Ha(), n = Na(), i = Ga(), s = Object.prototype, o = s.hasOwnProperty;
   function u(c, h) {
-    var l = r(c), d = !l && e(c), _ = !l && !d && t(c), b = !l && !d && !_ && i(c), q = l || d || _ || b, T = q ? a(c.length, String) : [], w = T.length;
+    var l = r(c), d = !l && e(c), _ = !l && !d && t(c), b = !l && !d && !_ && i(c), q = l || d || _ || b, T = q ? a(c.length, String) : [], A = T.length;
     for (var p in c)
       (h || o.call(c, p)) && !(q && // Safari 9 has enumerable `arguments.length` in strict mode.
       (p == "length" || // Node.js 0.10 has enumerable non-index properties on buffers.
       _ && (p == "offset" || p == "parent") || // PhantomJS 2 has enumerable non-index properties on typed arrays.
       b && (p == "buffer" || p == "byteLength" || p == "byteOffset") || // Skip index properties.
-      n(p, w))) && T.push(p);
+      n(p, A))) && T.push(p);
     return T;
   }
   return lr = u, lr;
@@ -904,7 +904,7 @@ var pr, fa;
 function Kn() {
   if (fa) return pr;
   fa = 1;
-  var a = A(), e = Da(), r = Vn(), t = Object.prototype, n = t.hasOwnProperty;
+  var a = m(), e = Da(), r = Vn(), t = Object.prototype, n = t.hasOwnProperty;
   function i(s) {
     if (!a(s))
       return r(s);
@@ -939,14 +939,14 @@ var _r, pa;
 function Jn() {
   if (pa) return _r;
   pa = 1;
-  var a = Ma(), e = mn(), r = In(), t = xn(), n = Mn(), i = La(), s = Ea(), o = Dn(), u = Ha(), c = Sr(), h = A(), l = En(), d = Ga(), _ = Ua(), b = Xn();
-  function q(T, w, p, N, B, $, C) {
-    var y = _(T, p), v = _(w, p), F = C.get(v);
+  var a = Ma(), e = wn(), r = In(), t = xn(), n = Mn(), i = La(), s = Ea(), o = Dn(), u = Ha(), c = Sr(), h = m(), l = En(), d = Ga(), _ = Ua(), b = Xn();
+  function q(T, A, p, N, B, $, C) {
+    var y = _(T, p), v = _(A, p), F = C.get(v);
     if (F) {
       a(T, p, F);
       return;
     }
-    var g = $ ? $(y, v, p + "", T, w, C) : void 0, f = g === void 0;
+    var g = $ ? $(y, v, p + "", T, A, C) : void 0, f = g === void 0;
     if (f) {
       var j = s(v), O = !j && u(v), Dr = !j && !O && d(v);
       g = v, j || O || Dr ? s(y) ? g = y : o(y) ? g = t(y) : O ? (f = !1, g = e(v, !0)) : Dr ? (f = !1, g = r(v, !0)) : g = [] : l(v) || i(v) ? (g = y, i(y) ? g = b(y) : (!h(y) || c(y)) && (g = n(v))) : f = !1;
@@ -959,7 +959,7 @@ var yr, va;
 function Wn() {
   if (va) return yr;
   va = 1;
-  var a = On(), e = Ma(), r = wn(), t = Jn(), n = A(), i = Ba(), s = Ua();
+  var a = On(), e = Ma(), r = An(), t = Jn(), n = m(), i = Ba(), s = Ua();
   function o(u, c, h, l, d) {
     u !== c && r(c, function(_, b) {
       if (d || (d = new a()), n(_))
@@ -1061,40 +1061,40 @@ function ri() {
   }
   return Or = t, Or;
 }
-var Ar, Ra;
+var mr, Ra;
 function ti() {
-  if (Ra) return Ar;
+  if (Ra) return mr;
   Ra = 1;
   var a = ei(), e = ri(), r = e(a);
-  return Ar = r, Ar;
+  return mr = r, mr;
 }
-var wr, Ca;
+var Ar, Ca;
 function ai() {
-  if (Ca) return wr;
+  if (Ca) return Ar;
   Ca = 1;
   var a = za(), e = Zn(), r = ti();
   function t(n, i) {
     return r(e(n, i, a), n + "");
   }
-  return wr = t, wr;
+  return Ar = t, Ar;
 }
-var mr, Oa;
+var wr, Oa;
 function ni() {
-  if (Oa) return mr;
+  if (Oa) return wr;
   Oa = 1;
-  var a = L(), e = Fr(), r = Na(), t = A();
+  var a = L(), e = Fr(), r = Na(), t = m();
   function n(i, s, o) {
     if (!t(o))
       return !1;
     var u = typeof s;
     return (u == "number" ? e(o) && r(s, o.length) : u == "string" && s in o) ? a(o[s], i) : !1;
   }
-  return mr = n, mr;
+  return wr = n, wr;
 }
-var $r, Aa;
+var $r, ma;
 function ii() {
-  if (Aa) return $r;
-  Aa = 1;
+  if (ma) return $r;
+  ma = 1;
   var a = ai(), e = ni();
   function r(t) {
     return a(function(n, i) {
@@ -1108,17 +1108,17 @@ function ii() {
   }
   return $r = r, $r;
 }
-var jr, wa;
+var jr, Aa;
 function si() {
-  if (wa) return jr;
-  wa = 1;
+  if (Aa) return jr;
+  Aa = 1;
   var a = Wn(), e = ii(), r = e(function(t, n, i) {
     a(t, n, i);
   });
   return jr = r, jr;
 }
 var oi = si();
-const ma = /* @__PURE__ */ Va(oi);
+const wa = /* @__PURE__ */ Va(oi);
 class Ir extends Error {
   data;
   constructor(e, r) {
@@ -1136,7 +1136,7 @@ class P {
     try {
       return await Lr.get(
         e,
-        ma(
+        wa(
           { ...r },
           {
             httpsAgent: this.agent,
@@ -1156,7 +1156,7 @@ class P {
       return await Lr.post(
         e,
         r,
-        ma(
+        wa(
           { ...t },
           {
             httpsAgent: this.agent,
@@ -1544,20 +1544,14 @@ class ja {
   }
   async crossjoin({
     tables: e,
-    $filter: r,
-    $expand: t
+    options: r
   }) {
     try {
       return (await this.request.get(
-        `${this.url("$crossjoin")}(${e.join(",")})?$filter=${r}&$expand=${t}`,
-        {
-          headers: {
-            Accept: "application/atom+xml"
-          }
-        }
+        `${this.url("$crossjoin")}(${e.join(",")})?${this.parameterize(r)}`
       )).data;
-    } catch (n) {
-      throw R(n) && (this.log("[FileMaker] crossjoin: HTTP error"), this.log(n.data)), n;
+    } catch (t) {
+      throw R(t) && (this.log("[FileMaker] crossjoin: HTTP error"), this.log(t.data)), t;
     }
   }
   // Performs a "$batch" request, executing the given operations
@@ -1647,9 +1641,11 @@ Content-Type: multipart/mixed; boundary=${t}\r
     }
   }
   parameterize(e) {
-    if (e === void 0) return "";
+    if (e === void 0) return "$format=application/json";
     const r = {};
-    return e.$select !== void 0 && (r.$select = e.$select.map((t) => `"${String(t).replaceAll('"', '""')}"`).join(",")), e.$top !== void 0 && (r.$top = e.$top), e.$skip !== void 0 && (r.$skip = e.$skip), e.$filter !== void 0 && (r.$filter = e.$filter), e.$expand !== void 0 && (r.$expand = e.$expand), e.$orderby !== void 0 && (r.$orderby = encodeURIComponent(e.$orderby.join(" "))), e.$count !== void 0 && (r.$count = e.$count ? "true" : "false"), Object.entries(r).map(([t, n]) => `${t}=${n}`).join("&");
+    e.$select !== void 0 && (r.$select = e.$select.map((n) => `"${String(n).replaceAll('"', '""')}"`).join(",")), e.$top !== void 0 && (r.$top = e.$top), e.$skip !== void 0 && (r.$skip = e.$skip), e.$filter !== void 0 && (r.$filter = e.$filter), e.$expand !== void 0 && (r.$expand = e.$expand), e.$orderby !== void 0 && (r.$orderby = encodeURIComponent(e.$orderby.join(" "))), e.$count !== void 0 && (r.$count = e.$count ? "true" : "false");
+    const t = e.$metadata ?? !0;
+    return r.$format = `${e.$format === "xml" ? "application/xml" : "application/json"}${t ? "" : ";odata.metadata=none"}`, Object.entries(r).map(([n, i]) => `${n}=${i}`).join("&");
   }
   log(e) {
     return this.logger.log(e);
