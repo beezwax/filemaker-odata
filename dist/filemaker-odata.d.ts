@@ -37,7 +37,7 @@ export declare class FileMaker {
         data: T[];
         count: number;
     }>;
-    getRecord<T>(table: string, id: string): Promise<T>;
+    getRecord<T>(table: string, id: string, options?: GetRecordQueryOptions<T>): Promise<T>;
     getValue(table: string, id: string, field: string): Promise<string>;
     crossjoin({ tables, $filter, $expand, }: {
         tables: string[];
@@ -237,6 +237,8 @@ export declare class FileMakerRawCredentials implements FileMakerCredentials {
         Authorization: string;
     };
 }
+
+declare type GetRecordQueryOptions<T> = Pick<QueryOptions<T>, "$select" | "$expand">;
 
 export declare interface ILogger {
     log(message: unknown): void;

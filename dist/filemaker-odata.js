@@ -1,30 +1,30 @@
 import Lr, { isAxiosError as Er } from "axios";
-var F = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
+var D = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
 function Va(a) {
   return a && a.__esModule && Object.prototype.hasOwnProperty.call(a, "default") ? a.default : a;
 }
-var z, Gr;
+var z, kr;
 function Ka() {
-  if (Gr) return z;
-  Gr = 1;
+  if (kr) return z;
+  kr = 1;
   function a() {
     this.__data__ = [], this.size = 0;
   }
   return z = a, z;
 }
-var V, kr;
+var V, Hr;
 function L() {
-  if (kr) return V;
-  kr = 1;
+  if (Hr) return V;
+  Hr = 1;
   function a(e, r) {
     return e === r || e !== e && r !== r;
   }
   return V = a, V;
 }
-var K, Hr;
+var K, Gr;
 function E() {
-  if (Hr) return K;
-  Hr = 1;
+  if (Gr) return K;
+  Gr = 1;
   var a = L();
   function e(r, t) {
     for (var n = r.length; n--; )
@@ -81,7 +81,7 @@ function Ya() {
   return Y = e, Y;
 }
 var Z, Vr;
-function G() {
+function k() {
   if (Vr) return Z;
   Vr = 1;
   var a = Ka(), e = Xa(), r = Ja(), t = Wa(), n = Ya();
@@ -98,7 +98,7 @@ var Q, Kr;
 function Za() {
   if (Kr) return Q;
   Kr = 1;
-  var a = G();
+  var a = k();
   function e() {
     this.__data__ = new a(), this.size = 0;
   }
@@ -136,7 +136,7 @@ var ae, Yr;
 function Ia() {
   if (Yr) return ae;
   Yr = 1;
-  var a = typeof F == "object" && F && F.Object === Object && F;
+  var a = typeof D == "object" && D && D.Object === Object && D;
   return ae = a, ae;
 }
 var ne, Zr;
@@ -181,7 +181,7 @@ function an() {
   return oe = r, oe;
 }
 var ue, tt;
-function k() {
+function H() {
   if (tt) return ue;
   tt = 1;
   var a = xa(), e = tn(), r = an(), t = "[object Null]", n = "[object Undefined]", i = a ? a.toStringTag : void 0;
@@ -204,7 +204,7 @@ var he, nt;
 function Sr() {
   if (nt) return he;
   nt = 1;
-  var a = k(), e = A(), r = "[object AsyncFunction]", t = "[object Function]", n = "[object GeneratorFunction]", i = "[object Proxy]";
+  var a = H(), e = A(), r = "[object AsyncFunction]", t = "[object Function]", n = "[object GeneratorFunction]", i = "[object Proxy]";
   function s(o) {
     if (!e(o))
       return !1;
@@ -296,7 +296,7 @@ function Sa() {
   return _e = r, _e;
 }
 var ye, lt;
-function H() {
+function G() {
   if (lt) return ye;
   lt = 1;
   var a = Pr(), e = a(Object, "create");
@@ -306,7 +306,7 @@ var be, dt;
 function hn() {
   if (dt) return be;
   dt = 1;
-  var a = H();
+  var a = G();
   function e() {
     this.__data__ = a ? a(null) : {}, this.size = 0;
   }
@@ -326,7 +326,7 @@ var Te, vt;
 function ln() {
   if (vt) return Te;
   vt = 1;
-  var a = H(), e = "__lodash_hash_undefined__", r = Object.prototype, t = r.hasOwnProperty;
+  var a = G(), e = "__lodash_hash_undefined__", r = Object.prototype, t = r.hasOwnProperty;
   function n(i) {
     var s = this.__data__;
     if (a) {
@@ -341,7 +341,7 @@ var Re, gt;
 function dn() {
   if (gt) return Re;
   gt = 1;
-  var a = H(), e = Object.prototype, r = e.hasOwnProperty;
+  var a = G(), e = Object.prototype, r = e.hasOwnProperty;
   function t(n) {
     var i = this.__data__;
     return a ? i[n] !== void 0 : r.call(i, n);
@@ -352,7 +352,7 @@ var Ce, _t;
 function pn() {
   if (_t) return Ce;
   _t = 1;
-  var a = H(), e = "__lodash_hash_undefined__";
+  var a = G(), e = "__lodash_hash_undefined__";
   function r(t, n) {
     var i = this.__data__;
     return this.size += this.has(t) ? 0 : 1, i[t] = a && n === void 0 ? e : n, this;
@@ -377,7 +377,7 @@ var Ae, bt;
 function gn() {
   if (bt) return Ae;
   bt = 1;
-  var a = vn(), e = G(), r = Sa();
+  var a = vn(), e = k(), r = Sa();
   function t() {
     this.size = 0, this.__data__ = {
       hash: new a(),
@@ -468,7 +468,7 @@ var Pe, mt;
 function Cn() {
   if (mt) return Pe;
   mt = 1;
-  var a = G(), e = Sa(), r = Rn(), t = 200;
+  var a = k(), e = Sa(), r = Rn(), t = 200;
   function n(i, s) {
     var o = this.__data__;
     if (o instanceof a) {
@@ -485,16 +485,16 @@ var Me, $t;
 function On() {
   if ($t) return Me;
   $t = 1;
-  var a = G(), e = Za(), r = Qa(), t = en(), n = rn(), i = Cn();
+  var a = k(), e = Za(), r = Qa(), t = en(), n = rn(), i = Cn();
   function s(o) {
     var u = this.__data__ = new a(o);
     this.size = u.size;
   }
   return s.prototype.clear = e, s.prototype.delete = r, s.prototype.get = t, s.prototype.has = n, s.prototype.set = i, Me = s, Me;
 }
-var De, jt;
+var Fe, jt;
 function Pa() {
-  if (jt) return De;
+  if (jt) return Fe;
   jt = 1;
   var a = Pr(), e = (function() {
     try {
@@ -503,11 +503,11 @@ function Pa() {
     } catch {
     }
   })();
-  return De = e, De;
+  return Fe = e, Fe;
 }
-var Fe, It;
+var De, It;
 function Mr() {
-  if (It) return Fe;
+  if (It) return De;
   It = 1;
   var a = Pa();
   function e(r, t, n) {
@@ -518,7 +518,7 @@ function Mr() {
       writable: !0
     }) : r[t] = n;
   }
-  return Fe = e, Fe;
+  return De = e, De;
 }
 var Le, xt;
 function Ma() {
@@ -546,12 +546,12 @@ function An() {
   }
   return Ee = a, Ee;
 }
-var Ge, Pt;
+var ke, Pt;
 function wn() {
-  if (Pt) return Ge;
+  if (Pt) return ke;
   Pt = 1;
   var a = An(), e = a();
-  return Ge = e, Ge;
+  return ke = e, ke;
 }
 var I = { exports: {} };
 I.exports;
@@ -568,23 +568,23 @@ function mn() {
     a.exports = u;
   })(I, I.exports)), I.exports;
 }
-var ke, Dt;
-function $n() {
-  if (Dt) return ke;
-  Dt = 1;
-  var a = m(), e = a.Uint8Array;
-  return ke = e, ke;
-}
 var He, Ft;
-function jn() {
+function $n() {
   if (Ft) return He;
   Ft = 1;
+  var a = m(), e = a.Uint8Array;
+  return He = e, He;
+}
+var Ge, Dt;
+function jn() {
+  if (Dt) return Ge;
+  Dt = 1;
   var a = $n();
   function e(r) {
     var t = new r.constructor(r.byteLength);
     return new a(t).set(new a(r)), t;
   }
-  return He = e, He;
+  return Ge = e, Ge;
 }
 var Ue, Lt;
 function In() {
@@ -609,10 +609,10 @@ function xn() {
   }
   return Ne = a, Ne;
 }
-var Be, Gt;
+var Be, kt;
 function Sn() {
-  if (Gt) return Be;
-  Gt = 1;
+  if (kt) return Be;
+  kt = 1;
   var a = A(), e = Object.create, r = /* @__PURE__ */ (function() {
     function t() {
     }
@@ -628,10 +628,10 @@ function Sn() {
   })();
   return Be = r, Be;
 }
-var ze, kt;
+var ze, Ht;
 function Pn() {
-  if (kt) return ze;
-  kt = 1;
+  if (Ht) return ze;
+  Ht = 1;
   function a(e, r) {
     return function(t) {
       return e(r(t));
@@ -639,15 +639,15 @@ function Pn() {
   }
   return ze = a, ze;
 }
-var Ve, Ht;
-function Da() {
-  if (Ht) return Ve;
-  Ht = 1;
+var Ve, Gt;
+function Fa() {
+  if (Gt) return Ve;
+  Gt = 1;
   var a = Pn(), e = a(Object.getPrototypeOf, Object);
   return Ve = e, Ve;
 }
 var Ke, Ut;
-function Fa() {
+function Da() {
   if (Ut) return Ke;
   Ut = 1;
   var a = Object.prototype;
@@ -661,7 +661,7 @@ var Xe, Nt;
 function Mn() {
   if (Nt) return Xe;
   Nt = 1;
-  var a = Sn(), e = Da(), r = Fa();
+  var a = Sn(), e = Fa(), r = Da();
   function t(n) {
     return typeof n.constructor == "function" && !r(n) ? a(e(n)) : {};
   }
@@ -677,10 +677,10 @@ function M() {
   return Je = a, Je;
 }
 var We, zt;
-function Dn() {
+function Fn() {
   if (zt) return We;
   zt = 1;
-  var a = k(), e = M(), r = "[object Arguments]";
+  var a = H(), e = M(), r = "[object Arguments]";
   function t(n) {
     return e(n) && a(n) == r;
   }
@@ -690,7 +690,7 @@ var Ye, Vt;
 function La() {
   if (Vt) return Ye;
   Vt = 1;
-  var a = Dn(), e = M(), r = Object.prototype, t = r.hasOwnProperty, n = r.propertyIsEnumerable, i = a(/* @__PURE__ */ (function() {
+  var a = Fn(), e = M(), r = Object.prototype, t = r.hasOwnProperty, n = r.propertyIsEnumerable, i = a(/* @__PURE__ */ (function() {
     return arguments;
   })()) ? a : function(s) {
     return e(s) && t.call(s, "callee") && !n.call(s, "callee");
@@ -705,7 +705,7 @@ function Ea() {
   return Ze = a, Ze;
 }
 var Qe, Xt;
-function Ga() {
+function ka() {
   if (Xt) return Qe;
   Xt = 1;
   var a = 9007199254740991;
@@ -715,20 +715,20 @@ function Ga() {
   return Qe = e, Qe;
 }
 var er, Jt;
-function Dr() {
+function Fr() {
   if (Jt) return er;
   Jt = 1;
-  var a = Sr(), e = Ga();
+  var a = Sr(), e = ka();
   function r(t) {
     return t != null && e(t.length) && !a(t);
   }
   return er = r, er;
 }
 var rr, Wt;
-function Fn() {
+function Dn() {
   if (Wt) return rr;
   Wt = 1;
-  var a = Dr(), e = M();
+  var a = Fr(), e = M();
   function r(t) {
     return e(t) && a(t);
   }
@@ -745,7 +745,7 @@ function Ln() {
 }
 x.exports;
 var Zt;
-function ka() {
+function Ha() {
   return Zt || (Zt = 1, (function(a, e) {
     var r = m(), t = Ln(), n = e && !e.nodeType && e, i = n && !0 && a && !a.nodeType && a, s = i && i.exports === n, o = s ? r.Buffer : void 0, u = o ? o.isBuffer : void 0, c = u || t;
     a.exports = c;
@@ -755,7 +755,7 @@ var ar, Qt;
 function En() {
   if (Qt) return ar;
   Qt = 1;
-  var a = k(), e = Da(), r = M(), t = "[object Object]", n = Function.prototype, i = Object.prototype, s = n.toString, o = i.hasOwnProperty, u = s.call(Object);
+  var a = H(), e = Fa(), r = M(), t = "[object Object]", n = Function.prototype, i = Object.prototype, s = n.toString, o = i.hasOwnProperty, u = s.call(Object);
   function c(h) {
     if (!r(h) || a(h) != t)
       return !1;
@@ -768,18 +768,18 @@ function En() {
   return ar = c, ar;
 }
 var nr, ea;
-function Gn() {
+function kn() {
   if (ea) return nr;
   ea = 1;
-  var a = k(), e = Ga(), r = M(), t = "[object Arguments]", n = "[object Array]", i = "[object Boolean]", s = "[object Date]", o = "[object Error]", u = "[object Function]", c = "[object Map]", h = "[object Number]", l = "[object Object]", d = "[object RegExp]", _ = "[object Set]", b = "[object String]", q = "[object WeakMap]", T = "[object ArrayBuffer]", w = "[object DataView]", p = "[object Float32Array]", N = "[object Float64Array]", B = "[object Int8Array]", $ = "[object Int16Array]", R = "[object Int32Array]", y = "[object Uint8Array]", v = "[object Uint8ClampedArray]", D = "[object Uint16Array]", g = "[object Uint32Array]", f = {};
-  f[p] = f[N] = f[B] = f[$] = f[R] = f[y] = f[v] = f[D] = f[g] = !0, f[t] = f[n] = f[T] = f[i] = f[w] = f[s] = f[o] = f[u] = f[c] = f[h] = f[l] = f[d] = f[_] = f[b] = f[q] = !1;
-  function j(C) {
-    return r(C) && e(C.length) && !!f[a(C)];
+  var a = H(), e = ka(), r = M(), t = "[object Arguments]", n = "[object Array]", i = "[object Boolean]", s = "[object Date]", o = "[object Error]", u = "[object Function]", c = "[object Map]", h = "[object Number]", l = "[object Object]", d = "[object RegExp]", _ = "[object Set]", b = "[object String]", q = "[object WeakMap]", T = "[object ArrayBuffer]", w = "[object DataView]", p = "[object Float32Array]", N = "[object Float64Array]", B = "[object Int8Array]", $ = "[object Int16Array]", C = "[object Int32Array]", y = "[object Uint8Array]", v = "[object Uint8ClampedArray]", F = "[object Uint16Array]", g = "[object Uint32Array]", f = {};
+  f[p] = f[N] = f[B] = f[$] = f[C] = f[y] = f[v] = f[F] = f[g] = !0, f[t] = f[n] = f[T] = f[i] = f[w] = f[s] = f[o] = f[u] = f[c] = f[h] = f[l] = f[d] = f[_] = f[b] = f[q] = !1;
+  function j(O) {
+    return r(O) && e(O.length) && !!f[a(O)];
   }
   return nr = j, nr;
 }
 var ir, ra;
-function kn() {
+function Hn() {
   if (ra) return ir;
   ra = 1;
   function a(e) {
@@ -792,7 +792,7 @@ function kn() {
 var S = { exports: {} };
 S.exports;
 var ta;
-function Hn() {
+function Gn() {
   return ta || (ta = 1, (function(a, e) {
     var r = Ia(), t = e && !e.nodeType && e, n = t && !0 && a && !a.nodeType && a, i = n && n.exports === t, s = i && r.process, o = (function() {
       try {
@@ -805,10 +805,10 @@ function Hn() {
   })(S, S.exports)), S.exports;
 }
 var sr, aa;
-function Ha() {
+function Ga() {
   if (aa) return sr;
   aa = 1;
-  var a = Gn(), e = kn(), r = Hn(), t = r && r.isTypedArray, n = t ? e(t) : a;
+  var a = kn(), e = Hn(), r = Gn(), t = r && r.isTypedArray, n = t ? e(t) : a;
   return sr = n, sr;
 }
 var or, na;
@@ -874,7 +874,7 @@ var lr, ca;
 function zn() {
   if (ca) return lr;
   ca = 1;
-  var a = Bn(), e = La(), r = Ea(), t = ka(), n = Na(), i = Ha(), s = Object.prototype, o = s.hasOwnProperty;
+  var a = Bn(), e = La(), r = Ea(), t = Ha(), n = Na(), i = Ga(), s = Object.prototype, o = s.hasOwnProperty;
   function u(c, h) {
     var l = r(c), d = !l && e(c), _ = !l && !d && t(c), b = !l && !d && !_ && i(c), q = l || d || _ || b, T = q ? a(c.length, String) : [], w = T.length;
     for (var p in c)
@@ -904,7 +904,7 @@ var pr, fa;
 function Kn() {
   if (fa) return pr;
   fa = 1;
-  var a = A(), e = Fa(), r = Vn(), t = Object.prototype, n = t.hasOwnProperty;
+  var a = A(), e = Da(), r = Vn(), t = Object.prototype, n = t.hasOwnProperty;
   function i(s) {
     if (!a(s))
       return r(s);
@@ -919,7 +919,7 @@ var vr, la;
 function Ba() {
   if (la) return vr;
   la = 1;
-  var a = zn(), e = Kn(), r = Dr();
+  var a = zn(), e = Kn(), r = Fr();
   function t(n) {
     return r(n) ? a(n, !0) : e(n);
   }
@@ -939,19 +939,19 @@ var _r, pa;
 function Jn() {
   if (pa) return _r;
   pa = 1;
-  var a = Ma(), e = mn(), r = In(), t = xn(), n = Mn(), i = La(), s = Ea(), o = Fn(), u = ka(), c = Sr(), h = A(), l = En(), d = Ha(), _ = Ua(), b = Xn();
-  function q(T, w, p, N, B, $, R) {
-    var y = _(T, p), v = _(w, p), D = R.get(v);
-    if (D) {
-      a(T, p, D);
+  var a = Ma(), e = mn(), r = In(), t = xn(), n = Mn(), i = La(), s = Ea(), o = Dn(), u = Ha(), c = Sr(), h = A(), l = En(), d = Ga(), _ = Ua(), b = Xn();
+  function q(T, w, p, N, B, $, C) {
+    var y = _(T, p), v = _(w, p), F = C.get(v);
+    if (F) {
+      a(T, p, F);
       return;
     }
-    var g = $ ? $(y, v, p + "", T, w, R) : void 0, f = g === void 0;
+    var g = $ ? $(y, v, p + "", T, w, C) : void 0, f = g === void 0;
     if (f) {
-      var j = s(v), C = !j && u(v), Fr = !j && !C && d(v);
-      g = v, j || C || Fr ? s(y) ? g = y : o(y) ? g = t(y) : C ? (f = !1, g = e(v, !0)) : Fr ? (f = !1, g = r(v, !0)) : g = [] : l(v) || i(v) ? (g = y, i(y) ? g = b(y) : (!h(y) || c(y)) && (g = n(v))) : f = !1;
+      var j = s(v), O = !j && u(v), Dr = !j && !O && d(v);
+      g = v, j || O || Dr ? s(y) ? g = y : o(y) ? g = t(y) : O ? (f = !1, g = e(v, !0)) : Dr ? (f = !1, g = r(v, !0)) : g = [] : l(v) || i(v) ? (g = y, i(y) ? g = b(y) : (!h(y) || c(y)) && (g = n(v))) : f = !1;
     }
-    f && (R.set(v, g), B(g, v, N, $, R), R.delete(v)), a(T, p, g);
+    f && (C.set(v, g), B(g, v, N, $, C), C.delete(v)), a(T, p, g);
   }
   return _r = q, _r;
 }
@@ -1082,7 +1082,7 @@ var mr, Oa;
 function ni() {
   if (Oa) return mr;
   Oa = 1;
-  var a = L(), e = Dr(), r = Na(), t = A();
+  var a = L(), e = Fr(), r = Na(), t = A();
   function n(i, s, o) {
     if (!t(o))
       return !1;
@@ -1125,7 +1125,7 @@ class Ir extends Error {
     super(e), this.name = "RequestError", this.data = r;
   }
 }
-const O = (a) => a instanceof Ir;
+const R = (a) => a instanceof Ir;
 class P {
   credentials;
   agent;
@@ -1495,7 +1495,7 @@ class ja {
         `${this.url(`${e.table}('${e.recordId}')/${e.path}`)}?${this.parameterize(e.options)}`
       )).data.value;
     } catch (r) {
-      throw O(r) && (this.log("Get records HTTP error"), this.log(r.data)), r;
+      throw R(r) && (this.log("[FileMaker] subquery: HTTP error"), this.log(r.data)), r;
     }
   }
   async getRecords(e, r) {
@@ -1503,7 +1503,7 @@ class ja {
     try {
       return (await this.request.get(`${this.url(e)}?${this.parameterize(r)}`)).data.value;
     } catch (t) {
-      throw O(t) && (this.log("Get records HTTP error"), this.log(t.data)), t;
+      throw R(t) && (this.log("[FileMaker] getRecords: HTTP error"), this.log(t.data)), t;
     }
   }
   async getRecordsWithCount(e, r) {
@@ -1517,17 +1517,17 @@ class ja {
         count: n.data["@odata.count"] ?? 0
       };
     } catch (n) {
-      throw O(n) && (this.log("Get records with count HTTP error"), this.log(n.data)), n;
+      throw R(n) && (this.log("[FileMaker] getRecordsWithCount: HTTP error"), this.log(n.data)), n;
     }
   }
-  async getRecord(e, r) {
+  async getRecord(e, r, t) {
     this.log(`[FileMaker] Get records from ${e}`), this.log(`ID: ${r}`);
     try {
       return (await this.request.get(
-        `${this.url(e)}('${encodeURIComponent(r)}')`
+        `${this.url(e)}('${encodeURIComponent(r)}')?${this.parameterize(t)}`
       )).data;
-    } catch (t) {
-      throw O(t) && this.log(t.data), t;
+    } catch (n) {
+      throw R(n) && (this.log("[FileMaker] getRecord: HTTP error"), this.log(n.data)), n;
     }
   }
   async getValue(e, r, t) {
@@ -1539,7 +1539,7 @@ class ja {
         }
       )).data;
     } catch (n) {
-      throw O(n) && this.log(n.data), n;
+      throw R(n) && (this.log("[FileMaker] getValue: HTTP error"), this.log(n.data)), n;
     }
   }
   async crossjoin({
@@ -1557,7 +1557,7 @@ class ja {
         }
       )).data;
     } catch (n) {
-      throw O(n) && this.log(n.data), n;
+      throw R(n) && (this.log("[FileMaker] crossjoin: HTTP error"), this.log(n.data)), n;
     }
   }
   // Performs a "$batch" request, executing the given operations
@@ -1620,27 +1620,31 @@ Content-Type: multipart/mixed; boundary=${t}\r
           (c, h) => e[h].parseResponse(c)
         );
       } catch (i) {
-        throw O(i) && this.log(i.data), i;
+        throw R(i) && (this.log("[FileMaker] batch: HTTP error"), this.log(i.data)), i;
       }
     });
   }
   async script(e, r) {
     this.log(`[FileMaker] Running script ${e} with parameters:`), this.log({ scriptParameterValue: r });
-    const t = await this.request.post(
-      this.url(`Script.${encodeURIComponent(e)}`),
-      r === void 0 ? null : { scriptParameterValue: r },
-      {
-        headers: {
-          "Content-Type": "application/json"
+    try {
+      const t = await this.request.post(
+        this.url(`Script.${encodeURIComponent(e)}`),
+        r === void 0 ? null : { scriptParameterValue: r },
+        {
+          headers: {
+            "Content-Type": "application/json"
+          }
         }
-      }
-    );
-    this.log(`[FileMaker] Script ${e} finished. Response:`), this.log(t);
-    const n = t.data.scriptResult.code === 0;
-    return {
-      success: n,
-      data: n ? t.data.scriptResult.resultParameter : void 0
-    };
+      );
+      this.log(`[FileMaker] Script ${e} finished. Response:`), this.log(t);
+      const n = t.data.scriptResult.code === 0;
+      return {
+        success: n,
+        data: n ? t.data.scriptResult.resultParameter : void 0
+      };
+    } catch (t) {
+      throw R(t) && (this.log("[FileMaker] script: HTTP error"), this.log(t.data)), t;
+    }
   }
   parameterize(e) {
     if (e === void 0) return "";

@@ -311,7 +311,7 @@ describe("getRecord", () => {
 
     request.mock<MockPersonRecord>({
       type: "GET",
-      url: fm.url("people('1234')"),
+      url: fm.url("people('1234')?"),
       data: { ID: "1234", NAME: "Fede", COMPANY: "Beezwax" },
     });
 
@@ -326,7 +326,7 @@ describe("getRecord", () => {
 
     request.mock<MockPersonRecord>({
       type: "GET",
-      url: fm.url("people('test%40example.com')"),
+      url: fm.url("people('test%40example.com')?"),
       data: {
         ID: "test@example.com",
         NAME: "Test User",
