@@ -66,7 +66,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
-        url: fm.url("people?$select=NAME"),
+        url: fm.url('people?$select="NAME"'),
         data: { value: [{ NAME: "Fede" }] },
       });
 
@@ -98,7 +98,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
-        url: fm.url('people?$select="ID",NAME,COMPANY'),
+        url: fm.url('people?$select="ID","NAME","COMPANY"'),
         data: {
           value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
@@ -284,7 +284,7 @@ describe("getRecords", () => {
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
         url: fm.url(
-          "people?$select=NAME,COMPANY&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=NAME%20asc",
+          `people?$select="NAME","COMPANY"&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=NAME%20asc`,
         ),
         data: {
           value: [{ NAME: "Fede", COMPANY: "Beezwax" }],
