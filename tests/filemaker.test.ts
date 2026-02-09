@@ -50,7 +50,7 @@ describe("getRecords", () => {
 
     request.mock<{ value: MockPersonRecord[] }>({
       type: "GET",
-      url: fm.url("people?"),
+      url: fm.url("people?$format=application/json"),
       data: { value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }] },
     });
 
@@ -66,7 +66,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
-        url: fm.url('people?$select="NAME"'),
+        url: fm.url('people?$select="NAME"&$format=application/json'),
         data: { value: [{ NAME: "Fede" }] },
       });
 
@@ -82,7 +82,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: Pick<MockPersonRecord, "ID">[] }>({
         type: "GET",
-        url: fm.url('people?$select="ID"'),
+        url: fm.url('people?$select="ID"&$format=application/json'),
         data: { value: [{ ID: "1234" }] },
       });
 
@@ -98,7 +98,9 @@ describe("getRecords", () => {
 
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
-        url: fm.url('people?$select="ID","NAME","COMPANY"'),
+        url: fm.url(
+          'people?$select="ID","NAME","COMPANY"&$format=application/json',
+        ),
         data: {
           value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
@@ -120,7 +122,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$top=5"),
+        url: fm.url("people?$top=5&$format=application/json"),
         data: {
           value: [
             { ID: "1", NAME: "Person 1", COMPANY: "Company 1" },
@@ -142,7 +144,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$skip=10"),
+        url: fm.url("people?$skip=10&$format=application/json"),
         data: {
           value: [{ ID: "11", NAME: "Person 11", COMPANY: "Company 11" }],
         },
@@ -162,7 +164,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$filter=name eq 'Fede'"),
+        url: fm.url("people?$filter=name eq 'Fede'&$format=application/json"),
         data: {
           value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
@@ -182,7 +184,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$expand=orders"),
+        url: fm.url("people?$expand=orders&$format=application/json"),
         data: {
           value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
@@ -201,7 +203,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$orderby=NAME%20asc"),
+        url: fm.url("people?$orderby=NAME%20asc&$format=application/json"),
         data: {
           value: [
             { ID: "1", NAME: "Alice", COMPANY: "Company A" },
@@ -223,7 +225,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$orderby=NAME%20desc"),
+        url: fm.url("people?$orderby=NAME%20desc&$format=application/json"),
         data: {
           value: [
             { ID: "2", NAME: "Bob", COMPANY: "Company B" },
@@ -247,7 +249,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$count=true"),
+        url: fm.url("people?$count=true&$format=application/json"),
         data: {
           value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
@@ -264,7 +266,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$count=false"),
+        url: fm.url("people?$count=false&$format=application/json"),
         data: {
           value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
         },
@@ -284,7 +286,7 @@ describe("getRecords", () => {
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
         url: fm.url(
-          `people?$select="NAME","COMPANY"&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=NAME%20asc`,
+          `people?$select="NAME","COMPANY"&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=NAME%20asc&$format=application/json`,
         ),
         data: {
           value: [{ NAME: "Fede", COMPANY: "Beezwax" }],
@@ -311,7 +313,7 @@ describe("getRecord", () => {
 
     request.mock<MockPersonRecord>({
       type: "GET",
-      url: fm.url("people('1234')?"),
+      url: fm.url("people('1234')?$format=application/json"),
       data: { ID: "1234", NAME: "Fede", COMPANY: "Beezwax" },
     });
 
@@ -326,7 +328,7 @@ describe("getRecord", () => {
 
     request.mock<MockPersonRecord>({
       type: "GET",
-      url: fm.url("people('test%40example.com')?"),
+      url: fm.url("people('test%40example.com')?$format=application/json"),
       data: {
         ID: "test@example.com",
         NAME: "Test User",
