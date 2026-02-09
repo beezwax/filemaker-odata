@@ -1,4 +1,4 @@
-import { FileMaker } from "./file-maker";
+import { FileMaker } from "./filemaker";
 import { Request } from "./request";
 import { type ILogger, Logger } from "./logger";
 import {

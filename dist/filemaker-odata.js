@@ -1645,7 +1645,7 @@ Content-Type: multipart/mixed; boundary=${t}\r
   parameterize(e) {
     if (e === void 0) return "";
     const r = {};
-    return e.$select !== void 0 && (r.$select = e.$select.map((t) => t === "ID" ? '"ID"' : t).join(",")), e.$top !== void 0 && (r.$top = e.$top), e.$skip !== void 0 && (r.$skip = e.$skip), e.$filter !== void 0 && (r.$filter = e.$filter), e.$expand !== void 0 && (r.$expand = e.$expand), e.$orderby !== void 0 && (r.$orderby = encodeURIComponent(e.$orderby.join(" "))), e.$count !== void 0 && (r.$count = e.$count ? "true" : "false"), Object.entries(r).map(([t, n]) => `${t}=${n}`).join("&");
+    return e.$select !== void 0 && (r.$select = e.$select.map((t) => `"${String(t).replaceAll('"', '""')}"`).join(",")), e.$top !== void 0 && (r.$top = e.$top), e.$skip !== void 0 && (r.$skip = e.$skip), e.$filter !== void 0 && (r.$filter = e.$filter), e.$expand !== void 0 && (r.$expand = e.$expand), e.$orderby !== void 0 && (r.$orderby = encodeURIComponent(e.$orderby.join(" "))), e.$count !== void 0 && (r.$count = e.$count ? "true" : "false"), Object.entries(r).map(([t, n]) => `${t}=${n}`).join("&");
   }
   log(e) {
     return this.logger.log(e);

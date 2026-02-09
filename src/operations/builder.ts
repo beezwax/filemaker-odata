@@ -1,4 +1,4 @@
-import type { FileMakerConfig } from "../file-maker";
+import type { FileMakerConfig } from "../filemaker";
 import type {
   BatchOperation,
   BatchOperationResponse,

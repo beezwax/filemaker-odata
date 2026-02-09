@@ -319,7 +319,7 @@ export class FileMaker {
 
     if (options.$select !== undefined) {
       params.$select = options.$select
-        .map((field) => (field === "ID" ? '"ID"' : field))
+        .map((field) => `"${String(field).replaceAll('"', '""')}"`)
         .join(",");
     }
 
