@@ -212,9 +212,13 @@ const customer = await fm.getRecord<CustomerRecord>("Customers", "CUST-12345");
 console.log(customer.NAME);
 
 // Get specific fields only
-const customerBasic = await fm.getRecord<CustomerRecord>("Customers", "CUST-12345", {
-  $select: ["NAME", "EMAIL"],
-});
+const customerBasic = await fm.getRecord<CustomerRecord>(
+  "Customers",
+  "CUST-12345",
+  {
+    $select: ["NAME", "EMAIL"],
+  },
+);
 
 // Get record with expanded relationships
 const customerWithOrders = await fm.getRecord<CustomerRecord>(
@@ -222,7 +226,7 @@ const customerWithOrders = await fm.getRecord<CustomerRecord>(
   "CUST-12345",
   {
     $expand: "Orders",
-  }
+  },
 );
 
 // IDs with special characters are automatically URL-encoded
@@ -719,7 +723,7 @@ const jsonRecords = await fm.getRecords<ProductRecord>("Products", {
 });
 
 // Get records in XML format
-const xmlRecords = await fm.getRecords<ProductRecord>("Products", {
+const xmlRecords = await fm.getRecords<string>("Products", {
   $format: "xml",
 });
 ```
