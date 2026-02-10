@@ -127,6 +127,15 @@ const orderedRecords = await fm.getRecords<CustomerRecord>("Customers", {
   $orderby: ["CREATED_DATE", "desc"],
   $top: 20,
 });
+
+// Get with multi-column ordering
+const multiOrderedRecords = await fm.getRecords<CustomerRecord>("Customers", {
+  $orderby: [
+    ["AGE", "desc"],
+    ["NAME", "asc"],
+  ],
+  $top: 20,
+});
 ```
 
 ---
@@ -538,7 +547,7 @@ interface QueryOptions<T> {
   $skip?: number; // Skip first N results (pagination)
   $filter?: string; // Filter expression
   $expand?: string; // Expand related records
-  $orderby?: [keyof T, "asc" | "desc"]; // Sort results
+  $orderby?: [keyof T, "asc" | "desc"] | [keyof T, "asc" | "desc"][]; // Sort by one or multiple columns
   $count?: boolean; // Include total count
   $format?: "json" | "xml"; // Response format (default: json)
   $metadata?: boolean; // Include OData metadata (default: true)
@@ -666,7 +675,7 @@ const customers = await fm.getRecords<CustomerWithOrdersRecord>("Customers", {
 
 ### $orderby
 
-Sort results by a field in ascending or descending order.
+Sort results by one or multiple fields in ascending or descending order.
 
 ```typescript
 interface ProductRecord {
@@ -675,6 +684,7 @@ interface ProductRecord {
   PRICE: number;
 }
 
+// Sort by single column
 const products = await fm.getRecords<ProductRecord>("Products", {
   $orderby: ["PRICE", "desc"],
 });
@@ -687,6 +697,22 @@ interface CustomerRecord {
 const customers = await fm.getRecords<CustomerRecord>("Customers", {
   $orderby: ["NAME", "asc"],
 });
+
+// Sort by multiple columns
+interface OrderRecord {
+  ID: string;
+  STATUS: string;
+  ORDER_DATE: string;
+  TOTAL: number;
+}
+
+const orders = await fm.getRecords<OrderRecord>("Orders", {
+  $orderby: [
+    ["STATUS", "asc"],
+    ["ORDER_DATE", "desc"],
+  ],
+});
+// Orders will be sorted by STATUS (ascending), then by ORDER_DATE (descending) within each status
 ```
 
 ### $count

@@ -203,7 +203,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$orderby=NAME%20asc&$format=application/json"),
+        url: fm.url('people?$orderby="NAME" asc&$format=application/json'),
         data: {
           value: [
             { ID: "1", NAME: "Alice", COMPANY: "Company A" },
@@ -225,7 +225,7 @@ describe("getRecords", () => {
 
       request.mock<{ value: MockPersonRecord[] }>({
         type: "GET",
-        url: fm.url("people?$orderby=NAME%20desc&$format=application/json"),
+        url: fm.url('people?$orderby="NAME" desc&$format=application/json'),
         data: {
           value: [
             { ID: "2", NAME: "Bob", COMPANY: "Company B" },
@@ -240,6 +240,37 @@ describe("getRecords", () => {
       expect(response.length).toEqual(2);
       expect(response[0].NAME).toEqual("Bob");
       expect(response[1].NAME).toEqual("Alice");
+    });
+
+    test("orders results by multiple columns", async () => {
+      const { fm, request } = fixtures();
+
+      request.mock<{ value: MockPersonRecord[] }>({
+        type: "GET",
+        url: fm.url(
+          'people?$orderby="COMPANY" asc,"NAME" desc&$format=application/json',
+        ),
+        data: {
+          value: [
+            { ID: "1", NAME: "Zara", COMPANY: "Acme Corp" },
+            { ID: "2", NAME: "Alice", COMPANY: "Acme Corp" },
+            { ID: "3", NAME: "Bob", COMPANY: "Beezwax" },
+          ],
+        },
+      });
+
+      const response = await fm.getRecords<MockPersonRecord>("people", {
+        $orderby: [
+          ["COMPANY", "asc"],
+          ["NAME", "desc"],
+        ],
+      });
+      expect(response.length).toEqual(3);
+      expect(response[0].COMPANY).toEqual("Acme Corp");
+      expect(response[0].NAME).toEqual("Zara");
+      expect(response[1].COMPANY).toEqual("Acme Corp");
+      expect(response[1].NAME).toEqual("Alice");
+      expect(response[2].COMPANY).toEqual("Beezwax");
     });
   });
 
@@ -286,7 +317,7 @@ describe("getRecords", () => {
       request.mock<{ value: Partial<MockPersonRecord>[] }>({
         type: "GET",
         url: fm.url(
-          `people?$select="NAME","COMPANY"&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby=NAME%20asc&$format=application/json`,
+          `people?$select="NAME","COMPANY"&$top=10&$skip=5&$filter=company eq 'Beezwax'&$orderby="NAME" asc&$format=application/json`,
         ),
         data: {
           value: [{ NAME: "Fede", COMPANY: "Beezwax" }],
