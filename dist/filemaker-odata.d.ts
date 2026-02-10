@@ -291,6 +291,8 @@ declare class OperationBuilder {
 
 declare type OperationBuilderCallback = (operations: BatchOperation[]) => Promise<BatchOperationResponse<unknown>[]>;
 
+declare type OrderByClause<T> = [keyof T, "asc" | "desc"];
+
 declare type PartialExcept<T, K extends keyof T> = Partial<Omit<T, K>> & Pick<T, K>;
 
 declare interface QueryOptions<T> {
@@ -299,7 +301,7 @@ declare interface QueryOptions<T> {
     $skip?: number;
     $filter?: string;
     $expand?: string;
-    $orderby?: [keyof T, "asc" | "desc"];
+    $orderby?: OrderByClause<T> | OrderByClause<T>[];
     $count?: boolean;
     $format?: "json" | "xml";
     $metadata?: boolean;

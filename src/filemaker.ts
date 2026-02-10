@@ -16,6 +16,7 @@ const uuid = () =>
 
 // A wrapper around FileMaker's OData API
 // =============================================================================
+type OrderByClause<T> = [keyof T, "asc" | "desc"];
 
 // For more information on FileMaker's available query options, see:
 // https://help.claris.com/en/odata-guide/content/query-option-filter.html
@@ -25,7 +26,7 @@ interface QueryOptions<T> {
   $skip?: number;
   $filter?: string;
   $expand?: string;
-  $orderby?: [keyof T, "asc" | "desc"];
+  $orderby?: OrderByClause<T> | OrderByClause<T>[];
   $count?: boolean;
   $format?: "json" | "xml";
   $metadata?: boolean;
@@ -352,8 +353,15 @@ export class FileMaker {
 
     if (options.$expand !== undefined) params.$expand = options.$expand;
 
-    if (options.$orderby !== undefined)
-      params.$orderby = encodeURIComponent(options.$orderby.join(" "));
+    if (options.$orderby !== undefined) {
+      const clause: OrderByClause<T>[] = Array.isArray(options.$orderby[0])
+        ? (options.$orderby as OrderByClause<T>[])
+        : [options.$orderby as OrderByClause<T>];
+
+      params.$orderby = clause
+        .map(([key, order]) => `"${String(key)}" ${order}`)
+        .join(",");
+    }
 
     if (options.$count !== undefined)
       params.$count = options.$count ? "true" : "false";
