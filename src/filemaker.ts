@@ -163,9 +163,11 @@ export class FileMaker {
   ) {
     this.log(`[FileMaker] Get record from ${table}`);
     this.log(`ID: ${id}`);
+    console.log(options);
 
     try {
-      const url = `${this.url(table)}('${encodeURIComponent(id)}')?${this.parameterize(options)}`;
+      // const url = `${this.url(table)}('${encodeURIComponent(id)}')?${this.parameterize(options)}`;
+      const url = `${this.url(table)}('${encodeURIComponent(id)}')`;
       this.log(`URL: ${url}`);
 
       const response = await this.request.get<T>(url);
