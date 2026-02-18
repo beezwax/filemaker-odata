@@ -161,14 +161,14 @@ export class FileMaker {
     id: string,
     options?: GetRecordQueryOptions<T>,
   ) {
-    this.log(`[FileMaker] Get records from ${table}`);
+    this.log(`[FileMaker] Get record from ${table}`);
     this.log(`ID: ${id}`);
 
     try {
-      const response = await this.request.get<T>(
-        `${this.url(table)}('${encodeURIComponent(id)}')?${this.parameterize(options)}`,
-      );
+      const url = `${this.url(table)}('${encodeURIComponent(id)}')?${this.parameterize(options)}`;
+      this.log(`URL: ${url}`);
 
+      const response = await this.request.get<T>(url);
       return response.data;
     } catch (error) {
       if (isRequestError(error)) {

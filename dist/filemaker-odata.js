@@ -278,7 +278,7 @@ function cn() {
   return ve = a, ve;
 }
 var ge, ht;
-function Pr() {
+function Mr() {
   if (ht) return ge;
   ht = 1;
   var a = un(), e = cn();
@@ -292,14 +292,14 @@ var _e, ft;
 function xa() {
   if (ft) return _e;
   ft = 1;
-  var a = Pr(), e = $(), r = a(e, "Map");
+  var a = Mr(), e = $(), r = a(e, "Map");
   return _e = r, _e;
 }
 var ye, lt;
 function G() {
   if (lt) return ye;
   lt = 1;
-  var a = Pr(), e = a(Object, "create");
+  var a = Mr(), e = a(Object, "create");
   return ye = e, ye;
 }
 var be, dt;
@@ -464,9 +464,9 @@ function Rn() {
   }
   return i.prototype.clear = a, i.prototype.delete = e, i.prototype.get = r, i.prototype.has = t, i.prototype.set = n, xe = i, xe;
 }
-var Pe, $t;
+var Me, $t;
 function Cn() {
-  if ($t) return Pe;
+  if ($t) return Me;
   $t = 1;
   var a = k(), e = xa(), r = Rn(), t = 200;
   function n(i, s) {
@@ -479,24 +479,24 @@ function Cn() {
     }
     return o.set(i, s), this.size = o.size, this;
   }
-  return Pe = n, Pe;
+  return Me = n, Me;
 }
-var Me, wt;
+var Pe, wt;
 function On() {
-  if (wt) return Me;
+  if (wt) return Pe;
   wt = 1;
   var a = k(), e = Za(), r = Qa(), t = en(), n = rn(), i = Cn();
   function s(o) {
     var u = this.__data__ = new a(o);
     this.size = u.size;
   }
-  return s.prototype.clear = e, s.prototype.delete = r, s.prototype.get = t, s.prototype.has = n, s.prototype.set = i, Me = s, Me;
+  return s.prototype.clear = e, s.prototype.delete = r, s.prototype.get = t, s.prototype.has = n, s.prototype.set = i, Pe = s, Pe;
 }
 var Fe, jt;
-function Pa() {
+function Ma() {
   if (jt) return Fe;
   jt = 1;
-  var a = Pr(), e = (function() {
+  var a = Mr(), e = (function() {
     try {
       var r = a(Object, "defineProperty");
       return r({}, "", {}), r;
@@ -506,10 +506,10 @@ function Pa() {
   return Fe = e, Fe;
 }
 var De, It;
-function Mr() {
+function Pr() {
   if (It) return De;
   It = 1;
-  var a = Pa();
+  var a = Ma();
   function e(r, t, n) {
     t == "__proto__" && a ? a(r, t, {
       configurable: !0,
@@ -521,10 +521,10 @@ function Mr() {
   return De = e, De;
 }
 var Le, St;
-function Ma() {
+function Pa() {
   if (St) return Le;
   St = 1;
-  var a = Mr(), e = L();
+  var a = Pr(), e = L();
   function r(t, n, i) {
     (i !== void 0 && !e(t[n], i) || i === void 0 && !(n in t)) && a(t, n, i);
   }
@@ -546,18 +546,18 @@ function An() {
   }
   return Ee = a, Ee;
 }
-var ke, Pt;
+var ke, Mt;
 function mn() {
-  if (Pt) return ke;
-  Pt = 1;
+  if (Mt) return ke;
+  Mt = 1;
   var a = An(), e = a();
   return ke = e, ke;
 }
 var I = { exports: {} };
 I.exports;
-var Mt;
+var Pt;
 function $n() {
-  return Mt || (Mt = 1, (function(a, e) {
+  return Pt || (Pt = 1, (function(a, e) {
     var r = $(), t = e && !e.nodeType && e, n = t && !0 && a && !a.nodeType && a, i = n && n.exports === t, s = i ? r.Buffer : void 0, o = s ? s.allocUnsafe : void 0;
     function u(c, h) {
       if (h)
@@ -629,7 +629,7 @@ function xn() {
   return Be = r, Be;
 }
 var ze, Ht;
-function Pn() {
+function Mn() {
   if (Ht) return ze;
   Ht = 1;
   function a(e, r) {
@@ -643,7 +643,7 @@ var Ve, Gt;
 function Fa() {
   if (Gt) return Ve;
   Gt = 1;
-  var a = Pn(), e = a(Object.getPrototypeOf, Object);
+  var a = Mn(), e = a(Object.getPrototypeOf, Object);
   return Ve = e, Ve;
 }
 var Ke, Ut;
@@ -658,7 +658,7 @@ function Da() {
   return Ke = e, Ke;
 }
 var Xe, Nt;
-function Mn() {
+function Pn() {
   if (Nt) return Xe;
   Nt = 1;
   var a = xn(), e = Fa(), r = Da();
@@ -668,7 +668,7 @@ function Mn() {
   return Xe = t, Xe;
 }
 var Je, Bt;
-function M() {
+function P() {
   if (Bt) return Je;
   Bt = 1;
   function a(e) {
@@ -680,7 +680,7 @@ var We, zt;
 function Fn() {
   if (zt) return We;
   zt = 1;
-  var a = H(), e = M(), r = "[object Arguments]";
+  var a = H(), e = P(), r = "[object Arguments]";
   function t(n) {
     return e(n) && a(n) == r;
   }
@@ -690,7 +690,7 @@ var Ye, Vt;
 function La() {
   if (Vt) return Ye;
   Vt = 1;
-  var a = Fn(), e = M(), r = Object.prototype, t = r.hasOwnProperty, n = r.propertyIsEnumerable, i = a(/* @__PURE__ */ (function() {
+  var a = Fn(), e = P(), r = Object.prototype, t = r.hasOwnProperty, n = r.propertyIsEnumerable, i = a(/* @__PURE__ */ (function() {
     return arguments;
   })()) ? a : function(s) {
     return e(s) && t.call(s, "callee") && !n.call(s, "callee");
@@ -728,7 +728,7 @@ var rr, Wt;
 function Dn() {
   if (Wt) return rr;
   Wt = 1;
-  var a = Fr(), e = M();
+  var a = Fr(), e = P();
   function r(t) {
     return e(t) && a(t);
   }
@@ -755,7 +755,7 @@ var ar, Qt;
 function En() {
   if (Qt) return ar;
   Qt = 1;
-  var a = H(), e = Fa(), r = M(), t = "[object Object]", n = Function.prototype, i = Object.prototype, s = n.toString, o = i.hasOwnProperty, u = s.call(Object);
+  var a = H(), e = Fa(), r = P(), t = "[object Object]", n = Function.prototype, i = Object.prototype, s = n.toString, o = i.hasOwnProperty, u = s.call(Object);
   function c(h) {
     if (!r(h) || a(h) != t)
       return !1;
@@ -771,7 +771,7 @@ var nr, ea;
 function kn() {
   if (ea) return nr;
   ea = 1;
-  var a = H(), e = ka(), r = M(), t = "[object Arguments]", n = "[object Array]", i = "[object Boolean]", s = "[object Date]", o = "[object Error]", u = "[object Function]", c = "[object Map]", h = "[object Number]", l = "[object Object]", d = "[object RegExp]", _ = "[object Set]", b = "[object String]", q = "[object WeakMap]", T = "[object ArrayBuffer]", m = "[object DataView]", p = "[object Float32Array]", N = "[object Float64Array]", B = "[object Int8Array]", w = "[object Int16Array]", C = "[object Int32Array]", y = "[object Uint8Array]", v = "[object Uint8ClampedArray]", F = "[object Uint16Array]", g = "[object Uint32Array]", f = {};
+  var a = H(), e = ka(), r = P(), t = "[object Arguments]", n = "[object Array]", i = "[object Boolean]", s = "[object Date]", o = "[object Error]", u = "[object Function]", c = "[object Map]", h = "[object Number]", l = "[object Object]", d = "[object RegExp]", _ = "[object Set]", b = "[object String]", q = "[object WeakMap]", T = "[object ArrayBuffer]", m = "[object DataView]", p = "[object Float32Array]", N = "[object Float64Array]", B = "[object Int8Array]", w = "[object Int16Array]", C = "[object Int32Array]", y = "[object Uint8Array]", v = "[object Uint8ClampedArray]", F = "[object Uint16Array]", g = "[object Uint32Array]", f = {};
   f[p] = f[N] = f[B] = f[w] = f[C] = f[y] = f[v] = f[F] = f[g] = !0, f[t] = f[n] = f[T] = f[i] = f[m] = f[s] = f[o] = f[u] = f[c] = f[h] = f[l] = f[d] = f[_] = f[b] = f[q] = !1;
   function j(O) {
     return r(O) && e(O.length) && !!f[a(O)];
@@ -825,7 +825,7 @@ var ur, ia;
 function Un() {
   if (ia) return ur;
   ia = 1;
-  var a = Mr(), e = L(), r = Object.prototype, t = r.hasOwnProperty;
+  var a = Pr(), e = L(), r = Object.prototype, t = r.hasOwnProperty;
   function n(i, s, o) {
     var u = i[s];
     (!(t.call(i, s) && e(u, o)) || o === void 0 && !(s in i)) && a(i, s, o);
@@ -836,7 +836,7 @@ var cr, sa;
 function Nn() {
   if (sa) return cr;
   sa = 1;
-  var a = Un(), e = Mr();
+  var a = Un(), e = Pr();
   function r(t, n, i, s) {
     var o = !i;
     i || (i = {});
@@ -939,7 +939,7 @@ var _r, pa;
 function Jn() {
   if (pa) return _r;
   pa = 1;
-  var a = Ma(), e = $n(), r = In(), t = Sn(), n = Mn(), i = La(), s = Ea(), o = Dn(), u = Ha(), c = xr(), h = A(), l = En(), d = Ga(), _ = Ua(), b = Xn();
+  var a = Pa(), e = $n(), r = In(), t = Sn(), n = Pn(), i = La(), s = Ea(), o = Dn(), u = Ha(), c = xr(), h = A(), l = En(), d = Ga(), _ = Ua(), b = Xn();
   function q(T, m, p, N, B, w, C) {
     var y = _(T, p), v = _(m, p), F = C.get(v);
     if (F) {
@@ -959,7 +959,7 @@ var yr, va;
 function Wn() {
   if (va) return yr;
   va = 1;
-  var a = On(), e = Ma(), r = mn(), t = Jn(), n = A(), i = Ba(), s = Ua();
+  var a = On(), e = Pa(), r = mn(), t = Jn(), n = A(), i = Ba(), s = Ua();
   function o(u, c, h, l, d) {
     u !== c && r(c, function(_, b) {
       if (d || (d = new a()), n(_))
@@ -1032,7 +1032,7 @@ var Cr, qa;
 function ei() {
   if (qa) return Cr;
   qa = 1;
-  var a = Qn(), e = Pa(), r = za(), t = e ? function(n, i) {
+  var a = Qn(), e = Ma(), r = za(), t = e ? function(n, i) {
     return e(n, "toString", {
       configurable: !0,
       enumerable: !1,
@@ -1126,7 +1126,7 @@ class Ir extends Error {
   }
 }
 const R = (a) => a instanceof Ir;
-class P {
+class M {
   credentials;
   agent;
   constructor(e, r) {
@@ -1223,7 +1223,7 @@ class _i {
   database;
   request;
   constructor({ server: e, database: r }) {
-    this.server = e, this.database = r, this.request = new P(new Sr());
+    this.server = e, this.database = r, this.request = new M(new Sr());
   }
   url(e) {
     return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${e}`;
@@ -1244,7 +1244,15 @@ class _i {
     provider: r,
     returnUrl: t
   }) {
-    const n = `https://${this.server}/oauth/getoauthurl?trackingID=${e}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`, i = await this.request.get(n, {
+    const n = `https://${this.server}/oauth/getoauthurl?trackingID=${e}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`;
+    console.log(n), console.log({
+      headers: {
+        "X-FMS-Application-Type": "9",
+        "X-FMS-Application-Version": "15",
+        "X-FMS-Return-URL": t ?? `https://${this.server}/oauth-handler`
+      }
+    });
+    const i = await this.request.get(n, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
@@ -1521,11 +1529,10 @@ class ja {
     }
   }
   async getRecord(e, r, t) {
-    this.log(`[FileMaker] Get records from ${e}`), this.log(`ID: ${r}`);
+    this.log(`[FileMaker] Get record from ${e}`), this.log(`ID: ${r}`);
     try {
-      return (await this.request.get(
-        `${this.url(e)}('${encodeURIComponent(r)}')?${this.parameterize(t)}`
-      )).data;
+      const n = `${this.url(e)}('${encodeURIComponent(r)}')?${this.parameterize(t)}`;
+      return this.log(`URL: ${n}`), (await this.request.get(n)).data;
     } catch (n) {
       throw R(n) && (this.log("[FileMaker] getRecord: HTTP error"), this.log(n.data)), n;
     }
@@ -1688,7 +1695,7 @@ class bi {
     username: e,
     password: r
   }) {
-    const t = new ci({ username: e, password: r }), n = new P(t, this.agent);
+    const t = new ci({ username: e, password: r }), n = new M(t, this.agent);
     return new ja({
       server: this.server,
       database: this.database,
@@ -1710,7 +1717,7 @@ class bi {
     const t = new ui({
       requestId: e,
       identifier: r
-    }), n = new P(t, this.agent);
+    }), n = new M(t, this.agent);
     return new ja({
       server: this.server,
       database: this.database,
@@ -1732,7 +1739,7 @@ class bi {
     provider: r,
     returnUrl: t
   }) {
-    const n = new P(new Sr(), this.agent), i = `https://${this.server}/oauth/getoauthurl?trackingID=${e}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`, s = await n.get(i, {
+    const n = new M(new Sr(), this.agent), i = `https://${this.server}/oauth/getoauthurl?trackingID=${e}&provider=${r}&address=${this.server}&X-FMS-OAuth-AuthType=2`, s = await n.get(i, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
@@ -1752,7 +1759,7 @@ class bi {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes() {
-    const t = (await new P(new Sr(), this.agent).get(
+    const t = (await new M(new Sr(), this.agent).get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
         headers: {
