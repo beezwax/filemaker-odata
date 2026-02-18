@@ -318,7 +318,7 @@ export class FileMaker {
       );
 
       this.log(`[FileMaker] Script ${name} finished. Response:`);
-      this.log(response);
+      this.log(response.data);
 
       const success = response.data.scriptResult.code === 0;
       return {

@@ -1637,7 +1637,7 @@ Content-Type: multipart/mixed; boundary=${t}\r
           }
         }
       );
-      this.log(`[FileMaker] Script ${e} finished. Response:`), this.log(t);
+      this.log(`[FileMaker] Script ${e} finished. Response:`), this.log(t.data);
       const n = t.data.scriptResult.code === 0;
       return {
         success: n,
