@@ -1529,9 +1529,9 @@ class ja {
     }
   }
   async getRecord(e, r, t) {
-    this.log(`[FileMaker] Get record from ${e}`), this.log(`ID: ${r}`), console.log(t);
+    this.log(`[FileMaker] Get record from ${e}`), this.log(`ID: ${r}`);
     try {
-      const n = `${this.url(e)}('${encodeURIComponent(r)}')`;
+      const n = `${this.url(e)}('${encodeURIComponent(r)}')?${this.parameterize(t)}`;
       return this.log(`URL: ${n}`), (await this.request.get(n)).data;
     } catch (n) {
       throw R(n) && (this.log("[FileMaker] getRecord: HTTP error"), this.log(n.data)), n;
