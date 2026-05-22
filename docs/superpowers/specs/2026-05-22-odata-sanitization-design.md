@@ -168,6 +168,8 @@ input.
 Add unit tests for:
 
 - `odata.string` doubles single quotes and wraps the value.
+- `odata.string` does not URL encode values; it only creates an OData string
+  literal.
 - `odata.number` accepts finite numbers and numeric strings.
 - `odata.number` rejects `NaN`, `Infinity`, empty strings, and mixed strings.
 - `odata.integer` rejects decimals.
@@ -176,6 +178,9 @@ Add unit tests for:
 - `odata.identifier` quotes safe identifiers and rejects structural characters.
 - `getRecords` URL-encodes `$filter` values so injected `&$top=...` stays inside
   the filter parameter.
+- `getRecords` keeps an apostrophe escaped by `odata.string` as OData literal
+  syntax after URL serialization, e.g. `O'Brien` becomes `O''Brien` inside the
+  decoded `$filter` value.
 - Existing `$select` and `$orderby` behavior remains compatible after query
   encoding expectations are updated.
 
