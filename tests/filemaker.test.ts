@@ -404,7 +404,9 @@ describe("odata helpers", () => {
     });
 
     test("rejects invalid numbers", () => {
-      expect(() => odata.number(Number.NaN)).toThrow(TypeError);
+      expect(() => odata.number(Number.NaN)).toThrow(
+        "Invalid OData number",
+      );
       expect(() => odata.number(Number.POSITIVE_INFINITY)).toThrow(TypeError);
       expect(() => odata.number("")).toThrow(TypeError);
       expect(() => odata.number("12abc")).toThrow(TypeError);
@@ -418,7 +420,7 @@ describe("odata helpers", () => {
     });
 
     test("rejects decimal values", () => {
-      expect(() => odata.integer(12.5)).toThrow(TypeError);
+      expect(() => odata.integer(12.5)).toThrow("Invalid OData integer");
       expect(() => odata.integer("12.5")).toThrow(TypeError);
     });
   });
@@ -438,7 +440,17 @@ describe("odata helpers", () => {
     });
 
     test("rejects malformed UUIDs", () => {
-      expect(() => odata.uuid("not-a-uuid")).toThrow(TypeError);
+      expect(() => odata.uuid("not-a-uuid")).toThrow("Invalid OData UUID");
+    });
+
+    test("rejects non-string UUIDs", () => {
+      // @ts-expect-error runtime guard rejects non-string input
+      expect(() => odata.uuid(true)).toThrow("Invalid OData UUID");
+      const uuidLike = {
+        toString: () => "280dc895-23f6-4368-be3b-3ea81d360f62",
+      };
+      // @ts-expect-error runtime guard rejects non-string input
+      expect(() => odata.uuid(uuidLike)).toThrow("Invalid OData UUID");
     });
   });
 
@@ -451,10 +463,23 @@ describe("odata helpers", () => {
     });
 
     test("rejects identifiers with OData structural characters", () => {
-      expect(() => odata.identifier('NA"ME')).toThrow(TypeError);
+      expect(() => odata.identifier('NA"ME')).toThrow(
+        "Invalid OData identifier",
+      );
       expect(() => odata.identifier("Orders/ID")).toThrow(TypeError);
       expect(() => odata.identifier("NAME)&$top=1")).toThrow(TypeError);
       expect(() => odata.identifier("")).toThrow(TypeError);
+    });
+
+    test("rejects non-string identifiers", () => {
+      // @ts-expect-error runtime guard rejects non-string input
+      expect(() => odata.identifier(true)).toThrow(
+        "Invalid OData identifier",
+      );
+      // @ts-expect-error runtime guard rejects non-string input
+      expect(() => odata.identifier(123)).toThrow(
+        "Invalid OData identifier",
+      );
     });
   });
 });

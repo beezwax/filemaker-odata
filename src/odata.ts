@@ -40,11 +40,16 @@ const booleanLiteral = (value: boolean): string => {
 };
 
 const uuid = (value: string): string => {
+  if (typeof value !== "string") throw new TypeError("Invalid OData UUID");
   if (!uuidPattern.test(value)) throw new TypeError("Invalid OData UUID");
   return string(value);
 };
 
 const identifier = (value: string): string => {
+  if (typeof value !== "string") {
+    throw new TypeError("Invalid OData identifier");
+  }
+
   if (!identifierPattern.test(value)) {
     throw new TypeError("Invalid OData identifier");
   }
