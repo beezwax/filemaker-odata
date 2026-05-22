@@ -469,6 +469,11 @@ describe("odata helpers", () => {
       expect(odata.boolean(true)).toEqual("true");
       expect(odata.boolean(false)).toEqual("false");
     });
+
+    test("rejects non-boolean values", () => {
+      // @ts-expect-error runtime guard rejects non-boolean input
+      expectODataError(() => odata.boolean("true"), "Invalid OData boolean");
+    });
   });
 
   describe("uuid", () => {
@@ -486,6 +491,13 @@ describe("odata helpers", () => {
 
     test("rejects malformed UUIDs", () => {
       expectODataError(() => odata.uuid("not-a-uuid"), "Invalid OData UUID");
+    });
+
+    test("rejects UUIDs with wrong RFC variant", () => {
+      expectODataError(
+        () => odata.uuid("0196f682-e18d-7000-7000-000000000000"),
+        "Invalid OData UUID",
+      );
     });
 
     test("rejects non-string UUIDs", () => {
