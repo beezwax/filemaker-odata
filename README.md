@@ -37,6 +37,40 @@ const records = await fm.getRecords("MY_TABLE");
 
 For documentation on the `fm` instance see the [API](./API.md) documentation.
 
+## OData Filter Input
+
+Raw OData query strings are still supported for compatibility:
+
+```typescript
+const records = await fm.getRecords("Customers", {
+  $filter: "NAME eq 'Beezwax'",
+});
+```
+
+When interpolating user input, use the exported `odata` helpers to construct
+OData literals or validate identifiers:
+
+```typescript
+import { FileMakerClient, odata } from "filemaker-odata";
+
+const records = await fm.getRecords("Customers", {
+  $filter: `${odata.identifier("NAME")} eq ${odata.string(userInput)}`,
+});
+```
+
+The helpers are contextual. `odata.string()` is for OData string literals, not
+for whole filter expressions. Identifiers, numbers, booleans, and UUIDs have
+their own helpers:
+
+```typescript
+const records = await fm.getRecords("Customers", {
+  $filter: `${odata.identifier("AGE")} ge ${odata.integer(minAge)}`,
+});
+```
+
+This first pass does not change the library's default query serialization.
+Avoid placing raw untrusted text into complete `$filter` strings.
+
 ## OAuth Authentication
 
 ```typescript

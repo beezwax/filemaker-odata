@@ -17,6 +17,7 @@ This document provides detailed documentation for all methods available in the `
   - [batch()](#batch)
   - [script()](#script)
 - [Query Options](#query-options)
+- [OData Sanitization Utilities](#odata-sanitization-utilities)
 
 ## Configuration
 
@@ -801,3 +802,79 @@ const result = await fm.getRecordsWithCount<ProductRecord>("Products", {
 console.log(`Found ${result.count} products`);
 console.log(`Showing ${result.data.length} results`);
 ```
+
+---
+
+## OData Sanitization Utilities
+
+The package exports an `odata` helper object for constructing OData literals and
+validating identifiers when building query strings.
+
+```typescript
+import { odata } from "filemaker-odata";
+```
+
+### odata.string()
+
+Creates an OData string literal. Single quotes are escaped by doubling them.
+This helper does not URL encode.
+
+```typescript
+odata.string("O'Brien"); // "'O''Brien'"
+```
+
+### odata.number()
+
+Validates a finite number or numeric string and returns the normalized OData
+literal.
+
+```typescript
+odata.number(42); // "42"
+odata.number(" -12.5 "); // "-12.5"
+```
+
+### odata.integer()
+
+Validates an integer number or integer string.
+
+```typescript
+odata.integer("42"); // "42"
+```
+
+### odata.boolean()
+
+Returns an OData boolean literal.
+
+```typescript
+odata.boolean(true); // "true"
+```
+
+### odata.uuid()
+
+Validates a UUID and returns it as an OData string literal.
+
+```typescript
+odata.uuid("280dc895-23f6-4368-be3b-3ea81d360f62");
+// "'280dc895-23f6-4368-be3b-3ea81d360f62'"
+```
+
+### odata.identifier()
+
+Validates and quotes a simple FileMaker field or table identifier. Use this for
+trusted metadata or allow-listed identifiers, not arbitrary user text.
+
+```typescript
+odata.identifier("Customer Name"); // "\"Customer Name\""
+```
+
+### Safe Filter Interpolation
+
+```typescript
+const records = await fm.getRecords("Customers", {
+  $filter: `${odata.identifier("NAME")} eq ${odata.string(userInput)}`,
+});
+```
+
+Raw `$filter` strings remain supported. The helpers reduce OData literal and
+identifier injection risk, but they do not sanitize a complete arbitrary OData
+expression. Default query serialization is unchanged for backward compatibility.
