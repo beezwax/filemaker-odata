@@ -188,6 +188,27 @@ describe("getRecords", () => {
       expect(response.length).toEqual(1);
       expect(response[0].NAME).toEqual("Fede");
     });
+
+    test("keeps raw filter URL serialization for backward compatibility", async () => {
+      const { fm, request } = fixtures();
+
+      request.mock<{ value: MockPersonRecord[] }>({
+        type: "GET",
+        url: fm.url(
+          "people?$filter=name eq 'O''Brien'&$format=application/json",
+        ),
+        data: {
+          value: [{ ID: "1234", NAME: "O'Brien", COMPANY: "Beezwax" }],
+        },
+      });
+
+      const response = await fm.getRecords<MockPersonRecord>("people", {
+        $filter: `name eq ${odata.string("O'Brien")}`,
+      });
+
+      expect(response.length).toEqual(1);
+      expect(response[0].NAME).toEqual("O'Brien");
+    });
   });
 
   describe("$expand", () => {
