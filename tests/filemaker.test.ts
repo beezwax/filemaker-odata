@@ -402,6 +402,11 @@ describe("odata helpers", () => {
     test("does not URL encode the literal", () => {
       expect(odata.string("A B&C")).toEqual("'A B&C'");
     });
+
+    test("rejects non-string values", () => {
+      // @ts-expect-error runtime guard rejects non-string input
+      expectODataError(() => odata.string(true), "Invalid OData string");
+    });
   });
 
   describe("number", () => {
@@ -427,6 +432,15 @@ describe("odata helpers", () => {
       expectODataError(() => odata.number(""), "Invalid OData number");
       expectODataError(() => odata.number("12abc"), "Invalid OData number");
     });
+
+    test("rejects non-string and non-number values", () => {
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.number(true), "Invalid OData number");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.number(null), "Invalid OData number");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.number({}), "Invalid OData number");
+    });
   });
 
   describe("integer", () => {
@@ -438,6 +452,15 @@ describe("odata helpers", () => {
     test("rejects decimal values", () => {
       expectODataError(() => odata.integer(12.5), "Invalid OData integer");
       expectODataError(() => odata.integer("12.5"), "Invalid OData integer");
+    });
+
+    test("rejects non-string and non-number values", () => {
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.integer(true), "Invalid OData integer");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.integer(null), "Invalid OData integer");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.integer({}), "Invalid OData integer");
     });
   });
 
@@ -452,6 +475,12 @@ describe("odata helpers", () => {
     test("accepts valid UUIDs as string literals", () => {
       expect(odata.uuid("280dc895-23f6-4368-be3b-3ea81d360f62")).toEqual(
         "'280dc895-23f6-4368-be3b-3ea81d360f62'",
+      );
+    });
+
+    test("accepts UUIDv7 string literals", () => {
+      expect(odata.uuid("0196f682-e18d-7000-8000-000000000000")).toEqual(
+        "'0196f682-e18d-7000-8000-000000000000'",
       );
     });
 
