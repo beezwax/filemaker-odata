@@ -21,6 +21,18 @@ const fixtures = () => {
   return { fm, request };
 };
 
+const expectODataError = (callback: () => unknown, message: string) => {
+  try {
+    callback();
+  } catch (error) {
+    expect(error).toBeInstanceOf(TypeError);
+    expect((error as Error).message).toEqual(message);
+    return;
+  }
+
+  throw new Error("Expected OData helper to throw");
+};
+
 describe("FileMaker", () => {
   test("has proper URL", () => {
     const { fm } = fixtures();
@@ -404,14 +416,16 @@ describe("odata helpers", () => {
     });
 
     test("rejects invalid numbers", () => {
-      expect(() => odata.number(Number.NaN)).toThrow(
+      expectODataError(
+        () => odata.number(Number.NaN),
         "Invalid OData number",
       );
-      expect(() => odata.number(Number.POSITIVE_INFINITY)).toThrow(
+      expectODataError(
+        () => odata.number(Number.POSITIVE_INFINITY),
         "Invalid OData number",
       );
-      expect(() => odata.number("")).toThrow("Invalid OData number");
-      expect(() => odata.number("12abc")).toThrow("Invalid OData number");
+      expectODataError(() => odata.number(""), "Invalid OData number");
+      expectODataError(() => odata.number("12abc"), "Invalid OData number");
     });
   });
 
@@ -422,8 +436,8 @@ describe("odata helpers", () => {
     });
 
     test("rejects decimal values", () => {
-      expect(() => odata.integer(12.5)).toThrow("Invalid OData integer");
-      expect(() => odata.integer("12.5")).toThrow("Invalid OData integer");
+      expectODataError(() => odata.integer(12.5), "Invalid OData integer");
+      expectODataError(() => odata.integer("12.5"), "Invalid OData integer");
     });
   });
 
@@ -442,17 +456,17 @@ describe("odata helpers", () => {
     });
 
     test("rejects malformed UUIDs", () => {
-      expect(() => odata.uuid("not-a-uuid")).toThrow("Invalid OData UUID");
+      expectODataError(() => odata.uuid("not-a-uuid"), "Invalid OData UUID");
     });
 
     test("rejects non-string UUIDs", () => {
       // @ts-expect-error runtime guard rejects non-string input
-      expect(() => odata.uuid(true)).toThrow("Invalid OData UUID");
+      expectODataError(() => odata.uuid(true), "Invalid OData UUID");
       const uuidLike = {
         toString: () => "280dc895-23f6-4368-be3b-3ea81d360f62",
       };
       // @ts-expect-error runtime guard rejects non-string input
-      expect(() => odata.uuid(uuidLike)).toThrow("Invalid OData UUID");
+      expectODataError(() => odata.uuid(uuidLike), "Invalid OData UUID");
     });
   });
 
@@ -465,25 +479,33 @@ describe("odata helpers", () => {
     });
 
     test("rejects identifiers with OData structural characters", () => {
-      expect(() => odata.identifier('NA"ME')).toThrow(
+      expectODataError(
+        () => odata.identifier('NA"ME'),
         "Invalid OData identifier",
       );
-      expect(() => odata.identifier("Orders/ID")).toThrow(
+      expectODataError(
+        () => odata.identifier("Orders/ID"),
         "Invalid OData identifier",
       );
-      expect(() => odata.identifier("NAME)&$top=1")).toThrow(
+      expectODataError(
+        () => odata.identifier("NAME)&$top=1"),
         "Invalid OData identifier",
       );
-      expect(() => odata.identifier("")).toThrow("Invalid OData identifier");
+      expectODataError(
+        () => odata.identifier(""),
+        "Invalid OData identifier",
+      );
     });
 
     test("rejects non-string identifiers", () => {
-      // @ts-expect-error runtime guard rejects non-string input
-      expect(() => odata.identifier(true)).toThrow(
+      expectODataError(
+        // @ts-expect-error runtime guard rejects non-string input
+        () => odata.identifier(true),
         "Invalid OData identifier",
       );
-      // @ts-expect-error runtime guard rejects non-string input
-      expect(() => odata.identifier(123)).toThrow(
+      expectODataError(
+        // @ts-expect-error runtime guard rejects non-string input
+        () => odata.identifier(123),
         "Invalid OData identifier",
       );
     });
