@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { FileMaker, NullLogger } from "../src/index";
+import { FileMaker, NullLogger, odata } from "../src/index";
 import { MockRequest } from "./mocks";
 
 interface MockPersonRecord {
@@ -374,5 +374,87 @@ describe("getRecord", () => {
     expect(response.ID).toEqual("test@example.com");
     expect(response.NAME).toEqual("Test User");
     expect(response.COMPANY).toEqual("Test Corp");
+  });
+});
+
+describe("odata helpers", () => {
+  describe("string", () => {
+    test("wraps values in single quotes", () => {
+      expect(odata.string("Beezwax")).toEqual("'Beezwax'");
+    });
+
+    test("escapes single quotes by doubling them", () => {
+      expect(odata.string("O'Brien")).toEqual("'O''Brien'");
+    });
+
+    test("does not URL encode the literal", () => {
+      expect(odata.string("A B&C")).toEqual("'A B&C'");
+    });
+  });
+
+  describe("number", () => {
+    test("accepts finite numbers", () => {
+      expect(odata.number(42)).toEqual("42");
+      expect(odata.number(-12.5)).toEqual("-12.5");
+    });
+
+    test("accepts numeric strings", () => {
+      expect(odata.number("42")).toEqual("42");
+      expect(odata.number("  -12.5  ")).toEqual("-12.5");
+    });
+
+    test("rejects invalid numbers", () => {
+      expect(() => odata.number(Number.NaN)).toThrow(TypeError);
+      expect(() => odata.number(Number.POSITIVE_INFINITY)).toThrow(TypeError);
+      expect(() => odata.number("")).toThrow(TypeError);
+      expect(() => odata.number("12abc")).toThrow(TypeError);
+    });
+  });
+
+  describe("integer", () => {
+    test("accepts integers", () => {
+      expect(odata.integer(42)).toEqual("42");
+      expect(odata.integer(" -12 ")).toEqual("-12");
+    });
+
+    test("rejects decimal values", () => {
+      expect(() => odata.integer(12.5)).toThrow(TypeError);
+      expect(() => odata.integer("12.5")).toThrow(TypeError);
+    });
+  });
+
+  describe("boolean", () => {
+    test("accepts booleans", () => {
+      expect(odata.boolean(true)).toEqual("true");
+      expect(odata.boolean(false)).toEqual("false");
+    });
+  });
+
+  describe("uuid", () => {
+    test("accepts valid UUIDs as string literals", () => {
+      expect(odata.uuid("280dc895-23f6-4368-be3b-3ea81d360f62")).toEqual(
+        "'280dc895-23f6-4368-be3b-3ea81d360f62'",
+      );
+    });
+
+    test("rejects malformed UUIDs", () => {
+      expect(() => odata.uuid("not-a-uuid")).toThrow(TypeError);
+    });
+  });
+
+  describe("identifier", () => {
+    test("quotes safe FileMaker identifiers", () => {
+      expect(odata.identifier("NAME")).toEqual('"NAME"');
+      expect(odata.identifier("Customer Name")).toEqual('"Customer Name"');
+      expect(odata.identifier("customer_id")).toEqual('"customer_id"');
+      expect(odata.identifier("Order-Number")).toEqual('"Order-Number"');
+    });
+
+    test("rejects identifiers with OData structural characters", () => {
+      expect(() => odata.identifier('NA"ME')).toThrow(TypeError);
+      expect(() => odata.identifier("Orders/ID")).toThrow(TypeError);
+      expect(() => odata.identifier("NAME)&$top=1")).toThrow(TypeError);
+      expect(() => odata.identifier("")).toThrow(TypeError);
+    });
   });
 });
