@@ -7,11 +7,17 @@ and `$expand`. That keeps the API flexible, but it also makes it easy for
 callers to interpolate untrusted input directly into OData expressions or query
 strings.
 
-The main risk is OData/query injection. Escaping single quotes is necessary for
-string literals inside `$filter`, but it is not sufficient by itself. Query
-parameter values also need URL encoding, and identifiers such as table names,
-field names, path segments, and sort columns need validation rather than string
-literal escaping.
+The main risk is OData injection when callers interpolate untrusted input into
+raw OData expressions. Escaping single quotes is necessary for string literals
+inside `$filter`, but it is not sufficient for every expression position.
+Identifiers such as table names, field names, path segments, and sort columns
+need validation rather than string literal escaping.
+
+Query parameter encoding is also relevant, but changing the library's generated
+URL format might affect FileMaker compatibility. FileMaker accepts the current
+human-readable query strings in known deployments. This first pass does not
+change default query serialization until encoded query values are verified
+against real FileMaker Server or FileMaker Cloud behavior.
 
 The design keeps backward compatibility while adding explicit mitigation tools.
 Existing string-based query options continue to work.
@@ -23,8 +29,6 @@ Existing string-based query options continue to work.
 - Keep the existing `FileMaker` API compatible.
 - Avoid a generic `escape()` helper that implies a whole OData expression can be
   made safe without context.
-- Improve internal query option serialization so query parameter values cannot
-  break out into additional query parameters.
 - Document safe interpolation patterns for filters.
 
 ## Non-Goals
@@ -33,6 +37,7 @@ Existing string-based query options continue to work.
 - Do not implement complete OData expression parsing.
 - Do not attempt to sanitize arbitrary prebuilt OData expressions.
 - Do not change existing method signatures in a breaking way.
+- Do not change default query parameter serialization in this pass.
 
 ## Public API
 
@@ -59,7 +64,7 @@ odata.string("O'Brien"); // "'O''Brien'"
 ```
 
 It doubles single quotes and wraps the result in single quotes. It does not URL
-encode; query serialization handles URL encoding.
+encode.
 
 `odata.number(value)` accepts finite numbers and numeric strings, normalizes
 them to a string, and rejects `NaN`, `Infinity`, empty strings, or strings with
@@ -125,30 +130,35 @@ await fm.getRecords("people", {
 });
 ```
 
-## Internal Query Serialization
+## Query Serialization Compatibility
 
-`FileMaker.parameterize` encodes query parameter values with
-`encodeURIComponent`. Query option keys remain unchanged because they are
-library-controlled keys such as `$filter`, `$select`, and `$format`.
-
-This changes generated URLs from raw values like:
+The existing `FileMaker.parameterize` behavior remains unchanged in this first
+implementation. It keeps generated query option values readable, matching the
+format already used by existing applications and tests:
 
 ```txt
 people?$filter=NAME eq 'O''Brien'&$format=application/json
 ```
 
-to encoded query values:
+OData services are expected to percent-decode query option values before
+interpreting them, so encoded values such as the following are valid by the
+OData URL conventions:
 
 ```txt
 people?$filter=NAME%20eq%20'O''Brien'&$format=application%2Fjson
 ```
 
-JavaScript's `encodeURIComponent` leaves single quotes readable. Characters
-that can break query structure, especially `&`, `=`, `#`, `%`, and spaces, are
-encoded.
+However, FileMaker compatibility needs direct verification before this library
+changes its default output. A later change can add default encoding or an
+opt-in encoded query serializer after testing these variants against FileMaker:
 
-This is a URL construction change, not an API change. Tests assert the new URL
-format.
+- Raw readable expression: `?$filter=NAME eq 'O''Brien'`
+- Encoded spaces: `?$filter=NAME%20eq%20'O''Brien'`
+- Encoded quotes: `?$filter=NAME%20eq%20%27O%27%27Brien%27`
+
+Until that verification exists, the mitigation utilities reduce OData literal
+and identifier injection risk for callers that build filters, but they do not
+claim to solve every possible query-string injection case.
 
 ## Error Handling
 
@@ -176,13 +186,10 @@ Add unit tests for:
 - `odata.boolean` accepts only booleans.
 - `odata.uuid` accepts valid UUIDs and rejects malformed values.
 - `odata.identifier` quotes safe identifiers and rejects structural characters.
-- `getRecords` URL-encodes `$filter` values so injected `&$top=...` stays inside
-  the filter parameter.
-- `getRecords` keeps an apostrophe escaped by `odata.string` as OData literal
-  syntax after URL serialization, e.g. `O'Brien` becomes `O''Brien` inside the
-  decoded `$filter` value.
-- Existing `$select` and `$orderby` behavior remains compatible after query
-  encoding expectations are updated.
+- Existing `$filter`, `$select`, and `$orderby` URL expectations remain
+  unchanged for backward compatibility.
+- Documentation notes that raw query-string delimiters such as `&` remain a
+  risk in raw `$filter` strings until query serialization is addressed.
 
 ## Documentation
 
