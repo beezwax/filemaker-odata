@@ -407,9 +407,11 @@ describe("odata helpers", () => {
       expect(() => odata.number(Number.NaN)).toThrow(
         "Invalid OData number",
       );
-      expect(() => odata.number(Number.POSITIVE_INFINITY)).toThrow(TypeError);
-      expect(() => odata.number("")).toThrow(TypeError);
-      expect(() => odata.number("12abc")).toThrow(TypeError);
+      expect(() => odata.number(Number.POSITIVE_INFINITY)).toThrow(
+        "Invalid OData number",
+      );
+      expect(() => odata.number("")).toThrow("Invalid OData number");
+      expect(() => odata.number("12abc")).toThrow("Invalid OData number");
     });
   });
 
@@ -421,7 +423,7 @@ describe("odata helpers", () => {
 
     test("rejects decimal values", () => {
       expect(() => odata.integer(12.5)).toThrow("Invalid OData integer");
-      expect(() => odata.integer("12.5")).toThrow(TypeError);
+      expect(() => odata.integer("12.5")).toThrow("Invalid OData integer");
     });
   });
 
@@ -466,9 +468,13 @@ describe("odata helpers", () => {
       expect(() => odata.identifier('NA"ME')).toThrow(
         "Invalid OData identifier",
       );
-      expect(() => odata.identifier("Orders/ID")).toThrow(TypeError);
-      expect(() => odata.identifier("NAME)&$top=1")).toThrow(TypeError);
-      expect(() => odata.identifier("")).toThrow(TypeError);
+      expect(() => odata.identifier("Orders/ID")).toThrow(
+        "Invalid OData identifier",
+      );
+      expect(() => odata.identifier("NAME)&$top=1")).toThrow(
+        "Invalid OData identifier",
+      );
+      expect(() => odata.identifier("")).toThrow("Invalid OData identifier");
     });
 
     test("rejects non-string identifiers", () => {
