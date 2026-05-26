@@ -372,6 +372,128 @@ describe("getRecords", () => {
   });
 });
 
+describe("getRecordsWithCount", () => {
+  test("reads OData count responses", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<{ value: MockPersonRecord[]; "@odata.count": number }>({
+      type: "GET",
+      url: fm.url("people?$top=1&$count=true&$format=application/json"),
+      data: {
+        "@odata.count": 29,
+        value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
+      },
+    });
+
+    const response = await fm.getRecordsWithCount<MockPersonRecord>("people", {
+      $top: 1,
+    });
+
+    expect(response.data.length).toEqual(1);
+    expect(response.count).toEqual(29);
+  });
+
+  test("reads FileMaker count responses", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<{ value: MockPersonRecord[]; "@count": number }>({
+      type: "GET",
+      url: fm.url("people?$top=1&$count=true&$format=application/json"),
+      data: {
+        "@count": 29,
+        value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
+      },
+    });
+
+    const response = await fm.getRecordsWithCount<MockPersonRecord>("people", {
+      $top: 1,
+    });
+
+    expect(response.data.length).toEqual(1);
+    expect(response.count).toEqual(29);
+  });
+
+  test("defaults count to zero when the response has no count field", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<{ value: MockPersonRecord[] }>({
+      type: "GET",
+      url: fm.url("people?$top=1&$count=true&$format=application/json"),
+      data: {
+        value: [{ ID: "1234", NAME: "Fede", COMPANY: "Beezwax" }],
+      },
+    });
+
+    const response = await fm.getRecordsWithCount<MockPersonRecord>("people", {
+      $top: 1,
+    });
+
+    expect(response.data.length).toEqual(1);
+    expect(response.count).toEqual(0);
+  });
+});
+
+describe("countRecords", () => {
+  test("calls the table count endpoint", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<string>({
+      type: "GET",
+      url: fm.url("people/$count"),
+      data: "29",
+    });
+
+    await expect(fm.countRecords<MockPersonRecord>("people")).resolves.toEqual(
+      29,
+    );
+    expect(request.latestRequest()?.options).toEqual({ responseType: "text" });
+  });
+
+  test("includes filter when provided", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<string>({
+      type: "GET",
+      url: fm.url("people/$count?$filter=company eq 'Beezwax'"),
+      data: "12",
+    });
+
+    await expect(
+      fm.countRecords<MockPersonRecord>("people", {
+        $filter: "company eq 'Beezwax'",
+      }),
+    ).resolves.toEqual(12);
+  });
+
+  test("parses plain text numeric responses", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<string>({
+      type: "GET",
+      url: fm.url("people/$count"),
+      data: " 29\n",
+    });
+
+    await expect(fm.countRecords<MockPersonRecord>("people")).resolves.toEqual(
+      29,
+    );
+  });
+
+  test("rejects non-numeric count responses", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock<string>({
+      type: "GET",
+      url: fm.url("people/$count"),
+      data: "twenty-nine",
+    });
+
+    await expect(fm.countRecords<MockPersonRecord>("people")).rejects.toThrow(
+      'Invalid count response from "people/$count": twenty-nine',
+    );
+  });
+});
+
 describe("getRecord", () => {
   test("fetches a single record by ID", async () => {
     const { fm, request } = fixtures();

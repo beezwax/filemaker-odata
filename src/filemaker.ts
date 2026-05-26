@@ -42,6 +42,8 @@ type CrossJoinQueryOptions<T> = Pick<
   "$filter" | "$expand" | "$format" | "$metadata"
 >;
 
+type CountQueryOptions<T> = Pick<QueryOptions<T>, "$filter">;
+
 export interface FileMakerConfig {
   server: string;
   database: string;
@@ -141,15 +143,53 @@ export class FileMaker {
       const response = await this.request.get<{
         value: T[];
         "@odata.count"?: number;
+        "@count"?: number;
       }>(`${this.url(table)}?${this.parameterize(actualOptions)}`);
 
       return {
         data: response.data.value,
-        count: response.data["@odata.count"] ?? 0,
+        count: response.data["@odata.count"] ?? response.data["@count"] ?? 0,
       };
     } catch (error) {
       if (isRequestError(error)) {
         this.log("[FileMaker] getRecordsWithCount: HTTP error");
+        this.log(error.data);
+      }
+      throw error;
+    }
+  }
+
+  async countRecords<T>(table: string, options?: CountQueryOptions<T>) {
+    this.log(`[FileMaker] Count records from ${table}`);
+    this.log("Options:");
+    this.log(options);
+
+    const countPath = `${table}/$count`;
+    const query = this.parameterizeCount(options);
+    const url = this.url(query === "" ? countPath : `${countPath}?${query}`);
+    this.log(`URL: ${url}`);
+
+    try {
+      const response = await this.request.get<string>(url, {
+        responseType: "text",
+      });
+      const trimmedCount = response.data.trim();
+
+      if (!/^\d+$/.test(trimmedCount))
+        throw new Error(
+          `Invalid count response from "${countPath}": ${response.data}`,
+        );
+
+      const count = Number(trimmedCount);
+      if (!Number.isSafeInteger(count))
+        throw new Error(
+          `Invalid count response from "${countPath}": ${response.data}`,
+        );
+
+      return count;
+    } catch (error) {
+      if (isRequestError(error)) {
+        this.log("[FileMaker] countRecords: HTTP error");
         this.log(error.data);
       }
       throw error;
@@ -372,6 +412,12 @@ export class FileMaker {
     return Object.entries(params)
       .map(([key, value]) => `${key}=${value}`)
       .join("&");
+  }
+
+  private parameterizeCount<T>(options?: CountQueryOptions<T>) {
+    if (options?.$filter === undefined) return "";
+
+    return `$filter=${options.$filter}`;
   }
 
   private log(value: unknown) {

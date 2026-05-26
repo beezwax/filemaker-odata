@@ -5,7 +5,7 @@ class d extends Error {
     super(t), this.name = "RequestError", this.data = e;
   }
 }
-const a = (o) => o instanceof d, f = (o) => typeof o == "object" && o !== null && !Array.isArray(o) && Object.getPrototypeOf(o) === Object.prototype, l = (o, t) => {
+const c = (o) => o instanceof d, f = (o) => typeof o == "object" && o !== null && !Array.isArray(o) && Object.getPrototypeOf(o) === Object.prototype, l = (o, t) => {
   const e = { ...o };
   for (const r of Object.keys(t)) {
     const s = t[r];
@@ -15,7 +15,7 @@ const a = (o) => o instanceof d, f = (o) => typeof o == "object" && o !== null &
   }
   return e;
 };
-class c {
+class u {
   credentials;
   agent;
   constructor(t, e) {
@@ -106,7 +106,7 @@ class H {
   database;
   request;
   constructor({ server: t, database: e }) {
-    this.server = t, this.database = e, this.request = new c(new p());
+    this.server = t, this.database = e, this.request = new u(new p());
   }
   url(t) {
     return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${t}`;
@@ -141,12 +141,12 @@ class H {
         "X-FMS-Application-Version": "15",
         "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
       }
-    }), i = n.data, h = n.headers["x-fms-request-id"] ?? "";
-    if (h === void 0 || h === "")
+    }), i = n.data, a = n.headers["x-fms-request-id"] ?? "";
+    if (a === void 0 || a === "")
       throw new Error(
         'Did not get back an "X-FMS-Request-ID" header from FileMaker'
       );
-    return { redirectUrl: i, requestId: h };
+    return { redirectUrl: i, requestId: a };
   }
   // Uses a requestId and an identifier (OAuth) to return an authentication
   // token which can be used for subsequent requests.
@@ -314,7 +314,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class M {
+class I {
   operations;
   callback;
   config;
@@ -386,7 +386,7 @@ class w {
         `${this.url(`${t.table}('${t.recordId}')/${t.path}`)}?${this.parameterize(t.options)}`
       )).data.value;
     } catch (e) {
-      throw a(e) && (this.log("[FileMaker] subquery: HTTP error"), this.log(e.data)), e;
+      throw c(e) && (this.log("[FileMaker] subquery: HTTP error"), this.log(e.data)), e;
     }
   }
   async getRecords(t, e) {
@@ -394,7 +394,7 @@ class w {
     try {
       return (await this.request.get(`${this.url(t)}?${this.parameterize(e)}`)).data.value;
     } catch (r) {
-      throw a(r) && (this.log("[FileMaker] getRecords: HTTP error"), this.log(r.data)), r;
+      throw c(r) && (this.log("[FileMaker] getRecords: HTTP error"), this.log(r.data)), r;
     }
   }
   async getRecordsWithCount(t, e) {
@@ -405,10 +405,32 @@ class w {
       const s = await this.request.get(`${this.url(t)}?${this.parameterize(r)}`);
       return {
         data: s.data.value,
-        count: s.data["@odata.count"] ?? 0
+        count: s.data["@odata.count"] ?? s.data["@count"] ?? 0
       };
     } catch (s) {
-      throw a(s) && (this.log("[FileMaker] getRecordsWithCount: HTTP error"), this.log(s.data)), s;
+      throw c(s) && (this.log("[FileMaker] getRecordsWithCount: HTTP error"), this.log(s.data)), s;
+    }
+  }
+  async countRecords(t, e) {
+    this.log(`[FileMaker] Count records from ${t}`), this.log("Options:"), this.log(e);
+    const r = `${t}/$count`, s = this.parameterizeCount(e), n = this.url(s === "" ? r : `${r}?${s}`);
+    this.log(`URL: ${n}`);
+    try {
+      const i = await this.request.get(n, {
+        responseType: "text"
+      }), a = i.data.trim();
+      if (!/^\d+$/.test(a))
+        throw new Error(
+          `Invalid count response from "${r}": ${i.data}`
+        );
+      const h = Number(a);
+      if (!Number.isSafeInteger(h))
+        throw new Error(
+          `Invalid count response from "${r}": ${i.data}`
+        );
+      return h;
+    } catch (i) {
+      throw c(i) && (this.log("[FileMaker] countRecords: HTTP error"), this.log(i.data)), i;
     }
   }
   async getRecord(t, e, r) {
@@ -417,7 +439,7 @@ class w {
       const s = `${this.url(t)}('${encodeURIComponent(e)}')?${this.parameterize(r)}`;
       return this.log(`URL: ${s}`), (await this.request.get(s)).data;
     } catch (s) {
-      throw a(s) && (this.log("[FileMaker] getRecord: HTTP error"), this.log(s.data)), s;
+      throw c(s) && (this.log("[FileMaker] getRecord: HTTP error"), this.log(s.data)), s;
     }
   }
   async getValue(t, e, r) {
@@ -429,7 +451,7 @@ class w {
         }
       )).data;
     } catch (s) {
-      throw a(s) && (this.log("[FileMaker] getValue: HTTP error"), this.log(s.data)), s;
+      throw c(s) && (this.log("[FileMaker] getValue: HTTP error"), this.log(s.data)), s;
     }
   }
   async crossjoin({
@@ -441,7 +463,7 @@ class w {
         `${this.url("$crossjoin")}(${t.join(",")})?${this.parameterize(e)}`
       )).data;
     } catch (r) {
-      throw a(r) && (this.log("[FileMaker] crossjoin: HTTP error"), this.log(r.data)), r;
+      throw c(r) && (this.log("[FileMaker] crossjoin: HTTP error"), this.log(r.data)), r;
     }
   }
   // Performs a "$batch" request, executing the given operations
@@ -476,7 +498,7 @@ class w {
   //     ];
   //
   batch() {
-    return new M(this.config, async (t) => {
+    return new I(this.config, async (t) => {
       const e = `batch_${y()}`, r = `changeset_${y()}`, s = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
@@ -499,12 +521,12 @@ Content-Type: multipart/mixed; boundary=${r}\r
           }
         ), i = /boundary=(.+?)\r\n/.exec(n.data);
         if (i === null) throw new Error("Could not find changeset");
-        const h = i[0].split("=")[1].trim();
-        return n.data.split(`--${h}`).slice(1, -1).map(
+        const a = i[0].split("=")[1].trim();
+        return n.data.split(`--${a}`).slice(1, -1).map(
           (m, T) => t[T].parseResponse(m)
         );
       } catch (n) {
-        throw a(n) && (this.log("[FileMaker] batch: HTTP error"), this.log(n.data)), n;
+        throw c(n) && (this.log("[FileMaker] batch: HTTP error"), this.log(n.data)), n;
       }
     });
   }
@@ -527,7 +549,7 @@ Content-Type: multipart/mixed; boundary=${r}\r
         data: s ? r.data.scriptResult.resultParameter : void 0
       };
     } catch (r) {
-      throw a(r) && (this.log("[FileMaker] script: HTTP error"), this.log(r.data)), r;
+      throw c(r) && (this.log("[FileMaker] script: HTTP error"), this.log(r.data)), r;
     }
   }
   parameterize(t) {
@@ -541,11 +563,14 @@ Content-Type: multipart/mixed; boundary=${r}\r
     const r = t.$metadata ?? !0;
     return e.$format = `${t.$format === "xml" ? "application/xml" : "application/json"}${r ? "" : ";odata.metadata=none"}`, Object.entries(e).map(([s, n]) => `${s}=${n}`).join("&");
   }
+  parameterizeCount(t) {
+    return t?.$filter === void 0 ? "" : `$filter=${t.$filter}`;
+  }
   log(t) {
     return this.logger.log(t);
   }
 }
-class A {
+class M {
   log(t) {
     console.dir(t, { depth: null });
   }
@@ -565,7 +590,7 @@ class N {
     agent: r,
     logger: s
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new A();
+    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new M();
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -578,7 +603,7 @@ class N {
     username: t,
     password: e
   }) {
-    const r = new O({ username: t, password: e }), s = new c(r, this.agent);
+    const r = new O({ username: t, password: e }), s = new u(r, this.agent);
     return new w({
       server: this.server,
       database: this.database,
@@ -600,7 +625,7 @@ class N {
     const r = new x({
       requestId: t,
       identifier: e
-    }), s = new c(r, this.agent);
+    }), s = new u(r, this.agent);
     return new w({
       server: this.server,
       database: this.database,
@@ -622,18 +647,18 @@ class N {
     provider: e,
     returnUrl: r
   }) {
-    const s = new c(new p(), this.agent), n = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, i = await s.get(n, {
+    const s = new u(new p(), this.agent), n = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, i = await s.get(n, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
         "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
       }
-    }), h = i.data, u = i.headers["x-fms-request-id"] ?? "";
-    if (u === void 0 || u === "")
+    }), a = i.data, h = i.headers["x-fms-request-id"] ?? "";
+    if (h === void 0 || h === "")
       throw new Error(
         'Did not get back an "X-FMS-Request-ID" header from FileMaker'
       );
-    return { redirectUrl: h, requestId: u };
+    return { redirectUrl: a, requestId: h };
   }
   /**
    * Detects the available authentication types supported by the FileMaker
@@ -642,7 +667,7 @@ class N {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes() {
-    const r = (await new c(new p(), this.agent).get(
+    const r = (await new u(new p(), this.agent).get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
         headers: {
@@ -665,7 +690,7 @@ class N {
 const b = (o) => {
   if (typeof o != "string") throw new TypeError("Invalid OData string");
   return `'${o.replaceAll("'", "''")}'`;
-}, F = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, I = (o) => {
+}, F = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, E = (o) => {
   if (typeof o == "number") {
     if (!Number.isFinite(o)) throw new TypeError("Invalid OData number");
     return String(o);
@@ -678,14 +703,14 @@ const b = (o) => {
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
   return String(e);
-}, E = /^[+-]?\d+$/, k = (o) => {
+}, A = /^[+-]?\d+$/, C = (o) => {
   if (typeof o != "number" && typeof o != "string")
     throw new TypeError("Invalid OData integer");
   const t = typeof o == "number" ? String(o) : o.trim();
-  if (!E.test(t))
+  if (!A.test(t))
     throw new TypeError("Invalid OData integer");
   return t;
-}, C = (o) => {
+}, k = (o) => {
   if (typeof o != "boolean") throw new TypeError("Invalid OData boolean");
   return o ? "true" : "false";
 }, D = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, P = (o) => {
@@ -700,9 +725,9 @@ const b = (o) => {
   return `"${o}"`;
 }, X = {
   string: b,
-  number: I,
-  integer: k,
-  boolean: C,
+  number: E,
+  integer: C,
+  boolean: k,
   uuid: P,
   identifier: j
 };
@@ -713,7 +738,7 @@ export {
   N as FileMakerClient,
   x as FileMakerOAuthCredentials,
   U as FileMakerRawCredentials,
-  A as Logger,
+  M as Logger,
   p as NullFileMakerCredentials,
   L as NullLogger,
   X as odata
