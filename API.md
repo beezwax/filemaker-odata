@@ -10,6 +10,7 @@ This document provides detailed documentation for all methods available in the `
   - [metadata()](#metadata)
   - [getRecords()](#getrecords)
   - [getRecordsWithCount()](#getrecordswithcount)
+  - [countRecords()](#countrecords)
   - [getRecord()](#getrecord)
   - [getValue()](#getvalue)
   - [subquery()](#subquery)
@@ -144,6 +145,7 @@ const multiOrderedRecords = await fm.getRecords<CustomerRecord>("Customers", {
 ### getRecordsWithCount()
 
 Retrieves records along with the total count of matching records (ignoring pagination).
+Supports both OData `@odata.count` and FileMaker `@count` response fields.
 
 **Signature:**
 
@@ -181,6 +183,51 @@ const result = await fm.getRecordsWithCount<ProductRecord>("Products", {
 
 console.log(`Showing ${result.data.length} of ${result.count} products`);
 // Showing 10 of 245 products
+```
+
+---
+
+### countRecords()
+
+Retrieves only the total count of matching records from the direct OData
+`/{table}/$count` endpoint.
+
+**Signature:**
+
+```typescript
+async countRecords<T>(
+  table: string,
+  options?: Pick<QueryOptions<T>, "$filter">
+): Promise<number>
+```
+
+**Parameters:**
+
+- `table` - The name of the table to count
+- `options` - Optional count query options. Currently supports `$filter`.
+
+**Returns:** The count as a number
+
+**Throws:** An error if the server response is not a valid integer count
+
+**Example:**
+
+```typescript
+interface ProductRecord {
+  ID: string;
+  NAME: string;
+  PRICE: number;
+}
+
+// Count all records
+const totalProducts = await fm.countRecords<ProductRecord>("Products");
+
+// Count matching records
+const expensiveProducts = await fm.countRecords<ProductRecord>("Products", {
+  $filter: "Price gt 100",
+});
+
+console.log(`Found ${expensiveProducts} expensive products`);
 ```
 
 ---
@@ -718,7 +765,9 @@ const orders = await fm.getRecords<OrderRecord>("Orders", {
 
 ### $count
 
-Include the total count of matching records (automatically enabled in `getRecordsWithCount`).
+Include the total count of matching records in collection responses
+(automatically enabled in `getRecordsWithCount`). Use `countRecords()` when you
+only need the count from the direct `/{table}/$count` endpoint.
 
 ```typescript
 interface ProductRecord {
