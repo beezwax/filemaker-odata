@@ -14,6 +14,8 @@ declare interface BatchOperationResponse<T> {
     body: T;
 }
 
+declare type CountQueryOptions<T> = Pick<QueryOptions<T>, "$filter">;
+
 declare type CrossJoinQueryOptions<T> = Pick<QueryOptions<T>, "$filter" | "$expand" | "$format" | "$metadata">;
 
 export declare class FileMaker {
@@ -39,6 +41,7 @@ export declare class FileMaker {
         data: T[];
         count: number;
     }>;
+    countRecords<T>(table: string, options?: CountQueryOptions<T>): Promise<number>;
     getRecord<T>(table: string, id: string, options?: GetRecordQueryOptions<T>): Promise<T>;
     getValue(table: string, id: string, field: string): Promise<string>;
     crossjoin<T>({ tables, options, }: {
@@ -51,6 +54,7 @@ export declare class FileMaker {
         data: T | undefined;
     }>;
     private parameterize;
+    private parameterizeCount;
     private log;
 }
 

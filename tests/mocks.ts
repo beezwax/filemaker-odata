@@ -56,6 +56,10 @@ export class MockRequest implements IRequest {
     return response as IResponse<T>;
   }
 
+  latestRequest() {
+    return this.responses.at(-1)?.request;
+  }
+
   async post<T>(
     url: string,
     params: string | Record<string, unknown> | null,
