@@ -1,0 +1,179 @@
+{
+  "version": 1,
+  "skills": {
+    "clean-code": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-code/SKILL.md",
+      "computedHash": "f789685627665dcbe96180c3904837a7ca4028485f385b84f0f83030fb253a90"
+    },
+    "clean-code-reviewer": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-code-reviewer/SKILL.md",
+      "computedHash": "998048eeba66ffc0c1f351ed08c026383a39e9061b0eaaf94d63124cd7d05f40"
+    },
+    "clean-code-reviewer-correctness": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-code-reviewer-correctness/SKILL.md",
+      "computedHash": "224a13523679d0681d9c15244f8ac27347738164176f99be0ae8506e44b1f90d"
+    },
+    "clean-css": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-css/SKILL.md",
+      "computedHash": "2afda23be64d24b9f9cf921feb932a86f3484bcf7e4fc97760e112660d61a12d"
+    },
+    "clean-general": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-general/SKILL.md",
+      "computedHash": "f7d05c5eb6a6a7d44b906aeb720a6d19fe0766cb8151eb8b32b03a79d262dc49"
+    },
+    "clean-general-comments": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-general-comments/SKILL.md",
+      "computedHash": "6a8d39bc414f4568144bb5ae230fcb72ad67a08d5ca82b87c005c8cc1b981363"
+    },
+    "clean-general-names": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-general-names/SKILL.md",
+      "computedHash": "519c79624aff7cfaeadbdb716ae1e97ee98751b0d751fd14eb3190ba23ab2f31"
+    },
+    "clean-python": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python/SKILL.md",
+      "computedHash": "493c031ff6443c596a1debf2874e5fc73fe6e03f638fb5bf46f05e05f86b3ea6"
+    },
+    "clean-python-async": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python-async/SKILL.md",
+      "computedHash": "ea4f74cc58637cb33af503af763420104d4741066288e1e1aa8ccaa841ad95b4"
+    },
+    "clean-python-boundaries": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python-boundaries/SKILL.md",
+      "computedHash": "644a8fcbccd2cf93f54b2562854964e0d4ec361ac1f2f68fa97cda1f16f95065"
+    },
+    "clean-python-error-handling": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python-error-handling/SKILL.md",
+      "computedHash": "64c14ab2080d9eec01445bfd25a0d971fcfeed39fe019c21f8c81fd25be94998"
+    },
+    "clean-python-functions": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python-functions/SKILL.md",
+      "computedHash": "1fa13674e666bd1e4041448d86b6f5936f8fd4871cd73a5c5873fe0456dfd475"
+    },
+    "clean-python-modules": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python-modules/SKILL.md",
+      "computedHash": "acf23cd3cff4ec4ca18792ce57cc4573d02beae74cb541e56360a8fb1283168a"
+    },
+    "clean-python-objects-data": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python-objects-data/SKILL.md",
+      "computedHash": "080e606695aff10b0046dec3f23a3d0730b235ed6c5db74d204386e9a30dda76"
+    },
+    "clean-python-tests": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-python-tests/SKILL.md",
+      "computedHash": "65854c6a21744f0d0b34fad565357f43c377d5cf7fae52b8760d8ba619320b61"
+    },
+    "clean-react": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-react/SKILL.md",
+      "computedHash": "72ebdae3db3cab7bfcfbed603fc6300b93798d68130ecbc3227f81d099b287bf"
+    },
+    "clean-react-components": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-react-components/SKILL.md",
+      "computedHash": "a19c7ef978f5f115c20278cfbcae9bd1f3b6c51ed9232e34248e3d2d9d297940"
+    },
+    "clean-react-file-organization": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-react-file-organization/SKILL.md",
+      "computedHash": "21ad22ecdc857ddb1476eaf18658297836dcdd147423fd5b4a93b414a244b745"
+    },
+    "clean-react-hooks": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-react-hooks/SKILL.md",
+      "computedHash": "0bef0b3a729bb4f8e12a6939bdf3184ea79b4b84e96158626ab7a2f29a8f279c"
+    },
+    "clean-react-state": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-react-state/SKILL.md",
+      "computedHash": "b836a51b899a7d7a9dbc0a8eaa98e26920ccb275b20a524afb79c4cd20c80f11"
+    },
+    "clean-react-tests": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-react-tests/SKILL.md",
+      "computedHash": "d1d786e5631117ac2355ccc36aee2c0024d2f6babbc37834a3f61d15d9228191"
+    },
+    "clean-typescript": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript/SKILL.md",
+      "computedHash": "f1b3e699434fd8fb639268d3c95875290fd06fb85a79b3a2daea03f549d06f63"
+    },
+    "clean-typescript-async": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript-async/SKILL.md",
+      "computedHash": "bd3a8a84d04efdd33eff549d7d2e64f0fd6bc5974511931049e172a4b85442a4"
+    },
+    "clean-typescript-boundaries": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript-boundaries/SKILL.md",
+      "computedHash": "ce3d243eb71ae68a346944c191c9c8361d18ee856f783a66d9969b110ad12aff"
+    },
+    "clean-typescript-error-handling": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript-error-handling/SKILL.md",
+      "computedHash": "1c376491f5ac2cd2cc61f1bef25c0bd688e3eb7aa1f00983210050bbefa01c96"
+    },
+    "clean-typescript-functions": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript-functions/SKILL.md",
+      "computedHash": "8e9d598c685fef5f65c672a07753bddf45caff2210adc2767feb6148e136a7c3"
+    },
+    "clean-typescript-modules": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript-modules/SKILL.md",
+      "computedHash": "fea5baa708a95a9ff4f9cb56ef091d95400b133a013c815e782f5f314364d48d"
+    },
+    "clean-typescript-objects-data": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript-objects-data/SKILL.md",
+      "computedHash": "6ce7ea14598438f59399e1c6e6dbe5904ca9c93b18b8d69b6f2bb494b5317bd9"
+    },
+    "clean-typescript-tests": {
+      "source": "gosukiwi/clean-code-react",
+      "sourceType": "github",
+      "skillPath": "skills/clean-typescript-tests/SKILL.md",
+      "computedHash": "2af99a6b24c0cbadd69963a395d6c0af0f4e38818b9e9a83320c65a98e55d29a"
+    }
+  }
+}

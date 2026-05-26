@@ -3,3 +3,4 @@ export * from "./client";
 export * from "./credentials";
 export * from "./filemaker";
 export * from "./logger";
+export * from "./odata";

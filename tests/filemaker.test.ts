@@ -1,5 +1,5 @@
 import { expect, test, describe } from "vitest";
-import { FileMaker, NullLogger } from "../src/index";
+import { FileMaker, NullLogger, odata } from "../src/index";
 import { MockRequest } from "./mocks";
 
 interface MockPersonRecord {
@@ -19,6 +19,18 @@ const fixtures = () => {
   });
 
   return { fm, request };
+};
+
+const expectODataError = (callback: () => unknown, message: string) => {
+  try {
+    callback();
+  } catch (error) {
+    expect(error).toBeInstanceOf(TypeError);
+    expect((error as Error).message).toEqual(message);
+    return;
+  }
+
+  throw new Error("Expected OData helper to throw");
 };
 
 describe("FileMaker", () => {
@@ -175,6 +187,27 @@ describe("getRecords", () => {
       });
       expect(response.length).toEqual(1);
       expect(response[0].NAME).toEqual("Fede");
+    });
+
+    test("keeps raw filter URL serialization for backward compatibility", async () => {
+      const { fm, request } = fixtures();
+
+      request.mock<{ value: MockPersonRecord[] }>({
+        type: "GET",
+        url: fm.url(
+          "people?$filter=name eq 'O''Brien'&$format=application/json",
+        ),
+        data: {
+          value: [{ ID: "1234", NAME: "O'Brien", COMPANY: "Beezwax" }],
+        },
+      });
+
+      const response = await fm.getRecords<MockPersonRecord>("people", {
+        $filter: `name eq ${odata.string("O'Brien")}`,
+      });
+
+      expect(response.length).toEqual(1);
+      expect(response[0].NAME).toEqual("O'Brien");
     });
   });
 
@@ -374,5 +407,175 @@ describe("getRecord", () => {
     expect(response.ID).toEqual("test@example.com");
     expect(response.NAME).toEqual("Test User");
     expect(response.COMPANY).toEqual("Test Corp");
+  });
+});
+
+describe("odata helpers", () => {
+  describe("string", () => {
+    test("wraps values in single quotes", () => {
+      expect(odata.string("Beezwax")).toEqual("'Beezwax'");
+    });
+
+    test("escapes single quotes by doubling them", () => {
+      expect(odata.string("O'Brien")).toEqual("'O''Brien'");
+    });
+
+    test("does not URL encode the literal", () => {
+      expect(odata.string("A B&C")).toEqual("'A B&C'");
+    });
+
+    test("rejects non-string values", () => {
+      // @ts-expect-error runtime guard rejects non-string input
+      expectODataError(() => odata.string(true), "Invalid OData string");
+    });
+  });
+
+  describe("number", () => {
+    test("accepts finite numbers", () => {
+      expect(odata.number(42)).toEqual("42");
+      expect(odata.number(-12.5)).toEqual("-12.5");
+    });
+
+    test("accepts numeric strings", () => {
+      expect(odata.number("42")).toEqual("42");
+      expect(odata.number("  -12.5  ")).toEqual("-12.5");
+    });
+
+    test("canonicalizes non-standard string forms", () => {
+      expect(odata.number("+42")).toEqual("42");
+      expect(odata.number("01")).toEqual("1");
+      expect(odata.number(".5")).toEqual("0.5");
+    });
+
+    test("rejects invalid numbers", () => {
+      expectODataError(
+        () => odata.number(Number.NaN),
+        "Invalid OData number",
+      );
+      expectODataError(
+        () => odata.number(Number.POSITIVE_INFINITY),
+        "Invalid OData number",
+      );
+      expectODataError(() => odata.number(""), "Invalid OData number");
+      expectODataError(() => odata.number("12abc"), "Invalid OData number");
+    });
+
+    test("rejects non-string and non-number values", () => {
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.number(true), "Invalid OData number");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.number(null), "Invalid OData number");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.number({}), "Invalid OData number");
+    });
+  });
+
+  describe("integer", () => {
+    test("accepts integers", () => {
+      expect(odata.integer(42)).toEqual("42");
+      expect(odata.integer(" -12 ")).toEqual("-12");
+    });
+
+    test("rejects decimal values", () => {
+      expectODataError(() => odata.integer(12.5), "Invalid OData integer");
+      expectODataError(() => odata.integer("12.5"), "Invalid OData integer");
+    });
+
+    test("rejects non-string and non-number values", () => {
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.integer(true), "Invalid OData integer");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.integer(null), "Invalid OData integer");
+      // @ts-expect-error runtime guard rejects non-string and non-number input
+      expectODataError(() => odata.integer({}), "Invalid OData integer");
+    });
+  });
+
+  describe("boolean", () => {
+    test("accepts booleans", () => {
+      expect(odata.boolean(true)).toEqual("true");
+      expect(odata.boolean(false)).toEqual("false");
+    });
+
+    test("rejects non-boolean values", () => {
+      // @ts-expect-error runtime guard rejects non-boolean input
+      expectODataError(() => odata.boolean("true"), "Invalid OData boolean");
+    });
+  });
+
+  describe("uuid", () => {
+    test("accepts valid UUIDs as string literals", () => {
+      expect(odata.uuid("280dc895-23f6-4368-be3b-3ea81d360f62")).toEqual(
+        "'280dc895-23f6-4368-be3b-3ea81d360f62'",
+      );
+    });
+
+    test("accepts UUIDv7 string literals", () => {
+      expect(odata.uuid("0196f682-e18d-7000-8000-000000000000")).toEqual(
+        "'0196f682-e18d-7000-8000-000000000000'",
+      );
+    });
+
+    test("rejects malformed UUIDs", () => {
+      expectODataError(() => odata.uuid("not-a-uuid"), "Invalid OData UUID");
+    });
+
+    test("rejects UUIDs with wrong RFC variant", () => {
+      expectODataError(
+        () => odata.uuid("0196f682-e18d-7000-7000-000000000000"),
+        "Invalid OData UUID",
+      );
+    });
+
+    test("rejects non-string UUIDs", () => {
+      // @ts-expect-error runtime guard rejects non-string input
+      expectODataError(() => odata.uuid(true), "Invalid OData UUID");
+      const uuidLike = {
+        toString: () => "280dc895-23f6-4368-be3b-3ea81d360f62",
+      };
+      // @ts-expect-error runtime guard rejects non-string input
+      expectODataError(() => odata.uuid(uuidLike), "Invalid OData UUID");
+    });
+  });
+
+  describe("identifier", () => {
+    test("quotes safe FileMaker identifiers", () => {
+      expect(odata.identifier("NAME")).toEqual('"NAME"');
+      expect(odata.identifier("Customer Name")).toEqual('"Customer Name"');
+      expect(odata.identifier("customer_id")).toEqual('"customer_id"');
+      expect(odata.identifier("Order-Number")).toEqual('"Order-Number"');
+    });
+
+    test("rejects identifiers with OData structural characters", () => {
+      expectODataError(
+        () => odata.identifier('NA"ME'),
+        "Invalid OData identifier",
+      );
+      expectODataError(
+        () => odata.identifier("Orders/ID"),
+        "Invalid OData identifier",
+      );
+      expectODataError(
+        () => odata.identifier("NAME)&$top=1"),
+        "Invalid OData identifier",
+      );
+      expectODataError(
+        () => odata.identifier(""),
+        "Invalid OData identifier",
+      );
+    });
+
+    test("rejects non-string identifiers", () => {
+      expectODataError(
+        // @ts-expect-error runtime guard rejects non-string input
+        () => odata.identifier(true),
+        "Invalid OData identifier",
+      );
+      expectODataError(
+        // @ts-expect-error runtime guard rejects non-string input
+        () => odata.identifier(123),
+        "Invalid OData identifier",
+      );
+    });
   });
 });
