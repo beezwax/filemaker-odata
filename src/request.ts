@@ -1,4 +1,3 @@
-import merge from "lodash/merge";
 import axios, {
   isAxiosError,
   type ResponseType,
@@ -61,16 +60,14 @@ export class Request implements IRequest {
 
   async get<T>(url: string, options?: RequestOptions) {
     try {
-      const response = await axios.get<T>(
-        url,
-        merge(
-          { ...options },
-          {
-            httpsAgent: this.agent,
-            headers: this.credentials.authorizationHeaders,
-          },
-        ),
-      );
+      const response = await axios.get<T>(url, {
+        ...options,
+        httpsAgent: this.agent,
+        headers: {
+          ...options?.headers,
+          ...this.credentials.authorizationHeaders,
+        },
+      });
 
       return response;
     } catch (error) {
@@ -87,17 +84,14 @@ export class Request implements IRequest {
     options?: RequestOptions,
   ) {
     try {
-      const response = await axios.post<T>(
-        url,
-        params,
-        merge(
-          { ...options },
-          {
-            httpsAgent: this.agent,
-            headers: this.credentials.authorizationHeaders,
-          },
-        ),
-      );
+      const response = await axios.post<T>(url, params, {
+        ...options,
+        httpsAgent: this.agent,
+        headers: {
+          ...options?.headers,
+          ...this.credentials.authorizationHeaders,
+        },
+      });
 
       return response;
     } catch (error) {
