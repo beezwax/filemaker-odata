@@ -1779,10 +1779,10 @@ class Ii {
     return `https://${this.server}/fmi/odata/v4/${this.database}/${e}`;
   }
 }
-const gi = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, _i = /^[+-]?\d+$/, yi = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, bi = /^[A-Za-z0-9 _-]+$/, Va = (t) => {
+const Va = (t) => {
   if (typeof t != "string") throw new TypeError("Invalid OData string");
   return `'${t.replaceAll("'", "''")}'`;
-}, qi = (t) => {
+}, gi = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, _i = (t) => {
   if (typeof t == "number") {
     if (!Number.isFinite(t)) throw new TypeError("Invalid OData number");
     return String(t);
@@ -1794,33 +1794,33 @@ const gi = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, _i = /^[+-]?\d+$/, yi = /^[0-9a-f]{8
     throw new TypeError("Invalid OData number");
   const r = Number(e);
   if (!Number.isFinite(r)) throw new TypeError("Invalid OData number");
-  return e;
-}, Ti = (t) => {
+  return String(r);
+}, yi = /^[+-]?\d+$/, bi = (t) => {
   if (typeof t != "number" && typeof t != "string")
     throw new TypeError("Invalid OData integer");
   const e = typeof t == "number" ? String(t) : t.trim();
-  if (!_i.test(e))
+  if (!yi.test(e))
     throw new TypeError("Invalid OData integer");
   return e;
-}, Oi = (t) => {
+}, qi = (t) => {
   if (typeof t != "boolean") throw new TypeError("Invalid OData boolean");
   return t ? "true" : "false";
-}, Ri = (t) => {
+}, Ti = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, Oi = (t) => {
   if (typeof t != "string") throw new TypeError("Invalid OData UUID");
-  if (!yi.test(t)) throw new TypeError("Invalid OData UUID");
+  if (!Ti.test(t)) throw new TypeError("Invalid OData UUID");
   return Va(t);
-}, Ci = (t) => {
+}, Ri = /^[A-Za-z0-9 _-]+$/, Ci = (t) => {
   if (typeof t != "string")
     throw new TypeError("Invalid OData identifier");
-  if (!bi.test(t))
+  if (!Ri.test(t))
     throw new TypeError("Invalid OData identifier");
   return `"${t}"`;
 }, ji = {
   string: Va,
-  number: qi,
-  integer: Ti,
-  boolean: Oi,
-  uuid: Ri,
+  number: _i,
+  integer: bi,
+  boolean: qi,
+  uuid: Oi,
   identifier: Ci
 };
 export {

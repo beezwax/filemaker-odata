@@ -441,6 +441,12 @@ describe("odata helpers", () => {
       expect(odata.number("  -12.5  ")).toEqual("-12.5");
     });
 
+    test("canonicalizes non-standard string forms", () => {
+      expect(odata.number("+42")).toEqual("42");
+      expect(odata.number("01")).toEqual("1");
+      expect(odata.number(".5")).toEqual("0.5");
+    });
+
     test("rejects invalid numbers", () => {
       expectODataError(
         () => odata.number(Number.NaN),
