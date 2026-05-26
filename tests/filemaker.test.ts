@@ -1,5 +1,6 @@
 import { expect, test, describe } from "vitest";
 import { FileMaker, NullLogger, odata } from "../src/index";
+import { mergeDeep } from "../src/request";
 import { MockRequest } from "./mocks";
 
 interface MockPersonRecord {
@@ -577,5 +578,48 @@ describe("odata helpers", () => {
         "Invalid OData identifier",
       );
     });
+  });
+});
+
+describe("mergeDeep", () => {
+  test("shallow spread loses nested keys — mergeDeep does not", () => {
+    const target = { headers: { "X-Custom": "value", "Accept": "text/plain" } };
+    const source = { headers: { "Authorization": "Bearer token" } };
+
+    // Demonstrates the gap: spread overwrites the entire headers object.
+    const shallowResult = { ...target, ...source };
+    expect(shallowResult.headers).toEqual({ "Authorization": "Bearer token" });
+
+    // mergeDeep preserves both sides.
+    const deepResult = mergeDeep(target, source);
+    expect(deepResult["headers"]).toEqual({
+      "X-Custom": "value",
+      "Accept": "text/plain",
+      "Authorization": "Bearer token",
+    });
+  });
+
+  test("source scalar overwrites target scalar", () => {
+    const result = mergeDeep({ a: 1, b: 2 }, { b: 99 });
+    expect(result).toEqual({ a: 1, b: 99 });
+  });
+
+  test("source undefined values are skipped", () => {
+    const result = mergeDeep({ a: 1 }, { a: undefined, b: 2 });
+    expect(result).toEqual({ a: 1, b: 2 });
+  });
+
+  test("merges multiple levels deep", () => {
+    const result = mergeDeep(
+      { a: { b: { c: 1, d: 2 } } },
+      { a: { b: { d: 99, e: 3 } } },
+    );
+    expect(result).toEqual({ a: { b: { c: 1, d: 99, e: 3 } } });
+  });
+
+  test("does not mutate target", () => {
+    const target = { a: { x: 1 } };
+    mergeDeep(target, { a: { y: 2 } });
+    expect(target).toEqual({ a: { x: 1 } });
   });
 });
