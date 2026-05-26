@@ -46,6 +46,30 @@ export interface IRequest {
   ): Promise<IResponse<T>>;
 }
 
+type PlainObject = Record<string, unknown>;
+
+const isPlainObject = (val: unknown): val is PlainObject =>
+  typeof val === "object" &&
+  val !== null &&
+  !Array.isArray(val) &&
+  Object.getPrototypeOf(val) === Object.prototype;
+
+// Recursively merges plain-object properties, mirroring lodash.merge behaviour:
+// source wins on scalar/array conflicts; undefined source values are skipped.
+export const mergeDeep = (target: PlainObject, source: PlainObject): PlainObject => {
+  const result: PlainObject = { ...target };
+  for (const key of Object.keys(source)) {
+    const srcVal = source[key];
+    if (srcVal === undefined) continue;
+    const tgtVal = result[key];
+    result[key] =
+      isPlainObject(tgtVal) && isPlainObject(srcVal)
+        ? mergeDeep(tgtVal, srcVal)
+        : srcVal;
+  }
+  return result;
+};
+
 /**
  * An IRequest implementation using Axios
  */
@@ -60,14 +84,13 @@ export class Request implements IRequest {
 
   async get<T>(url: string, options?: RequestOptions) {
     try {
-      const response = await axios.get<T>(url, {
-        ...options,
-        httpsAgent: this.agent,
-        headers: {
-          ...options?.headers,
-          ...this.credentials.authorizationHeaders,
-        },
-      });
+      const response = await axios.get<T>(
+        url,
+        mergeDeep({ ...options } as PlainObject, {
+          httpsAgent: this.agent,
+          headers: this.credentials.authorizationHeaders,
+        }),
+      );
 
       return response;
     } catch (error) {
@@ -84,14 +107,14 @@ export class Request implements IRequest {
     options?: RequestOptions,
   ) {
     try {
-      const response = await axios.post<T>(url, params, {
-        ...options,
-        httpsAgent: this.agent,
-        headers: {
-          ...options?.headers,
-          ...this.credentials.authorizationHeaders,
-        },
-      });
+      const response = await axios.post<T>(
+        url,
+        params,
+        mergeDeep({ ...options } as PlainObject, {
+          httpsAgent: this.agent,
+          headers: this.credentials.authorizationHeaders,
+        }),
+      );
 
       return response;
     } catch (error) {

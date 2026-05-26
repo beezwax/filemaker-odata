@@ -1,11 +1,20 @@
-import p, { isAxiosError as g } from "axios";
+import g, { isAxiosError as $ } from "axios";
 class d extends Error {
   data;
   constructor(t, e) {
     super(t), this.name = "RequestError", this.data = e;
   }
 }
-const a = (i) => i instanceof d;
+const a = (o) => o instanceof d, f = (o) => typeof o == "object" && o !== null && !Array.isArray(o) && Object.getPrototypeOf(o) === Object.prototype, l = (o, t) => {
+  const e = { ...o };
+  for (const r of Object.keys(t)) {
+    const s = t[r];
+    if (s === void 0) continue;
+    const n = e[r];
+    e[r] = f(n) && f(s) ? l(n, s) : s;
+  }
+  return e;
+};
 class c {
   credentials;
   agent;
@@ -14,45 +23,44 @@ class c {
   }
   async get(t, e) {
     try {
-      return await p.get(t, {
-        ...e,
-        httpsAgent: this.agent,
-        headers: {
-          ...e?.headers,
-          ...this.credentials.authorizationHeaders
-        }
-      });
+      return await g.get(
+        t,
+        l({ ...e }, {
+          httpsAgent: this.agent,
+          headers: this.credentials.authorizationHeaders
+        })
+      );
     } catch (r) {
       throw new d(
         r instanceof Error ? r.message : String(r),
-        g(r) && r.response ? r.response.data : void 0
+        $(r) && r.response ? r.response.data : void 0
       );
     }
   }
   async post(t, e, r) {
     try {
-      return await p.post(t, e, {
-        ...r,
-        httpsAgent: this.agent,
-        headers: {
-          ...r?.headers,
-          ...this.credentials.authorizationHeaders
-        }
-      });
+      return await g.post(
+        t,
+        e,
+        l({ ...r }, {
+          httpsAgent: this.agent,
+          headers: this.credentials.authorizationHeaders
+        })
+      );
     } catch (s) {
       throw new d(
         s instanceof Error ? s.message : String(s),
-        g(s) && s.response ? s.response.data : void 0
+        $(s) && s.response ? s.response.data : void 0
       );
     }
   }
 }
-class l {
+class p {
   get authorizationHeaders() {
     return {};
   }
 }
-class m {
+class x {
   requestId;
   identifier;
   constructor({
@@ -70,7 +78,7 @@ class m {
     };
   }
 }
-class T {
+class O {
   username;
   password;
   constructor({ username: t, password: e }) {
@@ -82,7 +90,7 @@ class T {
     };
   }
 }
-class z {
+class U {
   authorization;
   constructor(t) {
     this.authorization = t;
@@ -93,12 +101,12 @@ class z {
     };
   }
 }
-class j {
+class H {
   server;
   database;
   request;
   constructor({ server: t, database: e }) {
-    this.server = t, this.database = e, this.request = new c(new l());
+    this.server = t, this.database = e, this.request = new c(new p());
   }
   url(t) {
     return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${t}`;
@@ -127,18 +135,18 @@ class j {
         "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
       }
     });
-    const o = await this.request.get(s, {
+    const n = await this.request.get(s, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
         "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
       }
-    }), n = o.data, h = o.headers["x-fms-request-id"] ?? "";
+    }), i = n.data, h = n.headers["x-fms-request-id"] ?? "";
     if (h === void 0 || h === "")
       throw new Error(
         'Did not get back an "X-FMS-Request-ID" header from FileMaker'
       );
-    return { redirectUrl: n, requestId: h };
+    return { redirectUrl: i, requestId: h };
   }
   // Uses a requestId and an identifier (OAuth) to return an authentication
   // token which can be used for subsequent requests.
@@ -173,7 +181,7 @@ class j {
     )).data.response.token ?? null;
   }
 }
-class x {
+class v {
   config;
   table;
   record;
@@ -188,16 +196,16 @@ class x {
     boundary: t,
     changeId: e
   }) {
-    const { ID: r, ...s } = this.record, o = JSON.stringify(s);
+    const { ID: r, ...s } = this.record, n = JSON.stringify(s);
     return `--${t}\r
 Content-Type: application/http\r
 Content-ID: ${e}\r
 \r
 PATCH ${this.url(this.table)}('${this.record.ID}') HTTP/1.1\r
 Content-Type: application/json\r
-Content-Length: ${this.byteLength(o)}\r
+Content-Length: ${this.byteLength(n)}\r
 \r
-` + o + `\r
+` + n + `\r
 `;
   }
   parseResponse(t) {
@@ -205,10 +213,10 @@ Content-Length: ${this.byteLength(o)}\r
     if (e === null) throw new Error("Could not find status in response");
     const r = Number(e[1]);
     if (r >= 300) {
-      const { error: o } = JSON.parse(
+      const { error: n } = JSON.parse(
         t.substring(t.indexOf("{")).trim()
       );
-      throw new Error(`[UPDATE OPERATION: ${this.table}] ${o.message}`);
+      throw new Error(`[UPDATE OPERATION: ${this.table}] ${n.message}`);
     }
     const s = JSON.parse(t.substring(t.indexOf("{")).trim());
     return { status: r, body: s };
@@ -220,7 +228,7 @@ Content-Length: ${this.byteLength(o)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class v {
+class R {
   config;
   table;
   record;
@@ -266,7 +274,7 @@ Content-Length: ${this.byteLength(r)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class O {
+class q {
   config;
   table;
   id;
@@ -306,7 +314,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class R {
+class M {
   operations;
   callback;
   config;
@@ -318,7 +326,7 @@ class R {
     record: e
   }) {
     return this.operations.push(
-      new x({
+      new v({
         config: this.config,
         table: t,
         record: e
@@ -327,7 +335,7 @@ class R {
   }
   create({ table: t, record: e }) {
     return this.operations.push(
-      new v({
+      new R({
         config: this.config,
         table: t,
         record: e
@@ -336,7 +344,7 @@ class R {
   }
   delete({ table: t, id: e }) {
     return this.operations.push(
-      new O({
+      new q({
         config: this.config,
         table: t,
         id: e
@@ -347,11 +355,11 @@ class R {
     return this.callback(this.operations);
   }
 }
-const $ = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (i) => {
+const y = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (o) => {
   const t = Math.random() * 16 | 0;
-  return (i == "x" ? t : t & 3 | 8).toString(16);
+  return (o == "x" ? t : t & 3 | 8).toString(16);
 });
-class f {
+class w {
   config;
   logger;
   request;
@@ -468,20 +476,20 @@ class f {
   //     ];
   //
   batch() {
-    return new R(this.config, async (t) => {
-      const e = `batch_${$()}`, r = `changeset_${$()}`, s = `--${e}\r
+    return new M(this.config, async (t) => {
+      const e = `batch_${y()}`, r = `changeset_${y()}`, s = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
 ` + t.map(
-        (o, n) => o.toRequestBody({
+        (n, i) => n.toRequestBody({
           boundary: r,
-          changeId: n + 1
+          changeId: i + 1
         })
       ).join("") + `--${r}--\r
 --${e}--\r
 `;
       try {
-        const o = await this.request.post(
+        const n = await this.request.post(
           this.url("$batch"),
           s,
           {
@@ -489,14 +497,14 @@ Content-Type: multipart/mixed; boundary=${r}\r
               "Content-Type": `multipart/mixed; boundary=${e}`
             }
           }
-        ), n = /boundary=(.+?)\r\n/.exec(o.data);
-        if (n === null) throw new Error("Could not find changeset");
-        const h = n[0].split("=")[1].trim();
-        return o.data.split(`--${h}`).slice(1, -1).map(
-          (w, b) => t[b].parseResponse(w)
+        ), i = /boundary=(.+?)\r\n/.exec(n.data);
+        if (i === null) throw new Error("Could not find changeset");
+        const h = i[0].split("=")[1].trim();
+        return n.data.split(`--${h}`).slice(1, -1).map(
+          (m, T) => t[T].parseResponse(m)
         );
-      } catch (o) {
-        throw a(o) && (this.log("[FileMaker] batch: HTTP error"), this.log(o.data)), o;
+      } catch (n) {
+        throw a(n) && (this.log("[FileMaker] batch: HTTP error"), this.log(n.data)), n;
       }
     });
   }
@@ -527,26 +535,26 @@ Content-Type: multipart/mixed; boundary=${r}\r
     const e = {};
     if (t.$select !== void 0 && (e.$select = t.$select.map((s) => `"${String(s).replaceAll('"', '""')}"`).join(",")), t.$top !== void 0 && (e.$top = t.$top), t.$skip !== void 0 && (e.$skip = t.$skip), t.$filter !== void 0 && (e.$filter = t.$filter), t.$expand !== void 0 && (e.$expand = t.$expand), t.$orderby !== void 0) {
       const s = Array.isArray(t.$orderby[0]) ? t.$orderby : [t.$orderby];
-      e.$orderby = s.map(([o, n]) => `"${String(o)}" ${n}`).join(",");
+      e.$orderby = s.map(([n, i]) => `"${String(n)}" ${i}`).join(",");
     }
     t.$count !== void 0 && (e.$count = t.$count ? "true" : "false");
     const r = t.$metadata ?? !0;
-    return e.$format = `${t.$format === "xml" ? "application/xml" : "application/json"}${r ? "" : ";odata.metadata=none"}`, Object.entries(e).map(([s, o]) => `${s}=${o}`).join("&");
+    return e.$format = `${t.$format === "xml" ? "application/xml" : "application/json"}${r ? "" : ";odata.metadata=none"}`, Object.entries(e).map(([s, n]) => `${s}=${n}`).join("&");
   }
   log(t) {
     return this.logger.log(t);
   }
 }
-class q {
+class A {
   log(t) {
     console.dir(t, { depth: null });
   }
 }
-class U {
+class L {
   log() {
   }
 }
-class H {
+class N {
   server;
   database;
   agent;
@@ -557,7 +565,7 @@ class H {
     agent: r,
     logger: s
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new q();
+    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new A();
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -570,8 +578,8 @@ class H {
     username: t,
     password: e
   }) {
-    const r = new T({ username: t, password: e }), s = new c(r, this.agent);
-    return new f({
+    const r = new O({ username: t, password: e }), s = new c(r, this.agent);
+    return new w({
       server: this.server,
       database: this.database,
       logger: this.logger,
@@ -589,11 +597,11 @@ class H {
     requestId: t,
     identifier: e
   }) {
-    const r = new m({
+    const r = new x({
       requestId: t,
       identifier: e
     }), s = new c(r, this.agent);
-    return new f({
+    return new w({
       server: this.server,
       database: this.database,
       logger: this.logger,
@@ -614,13 +622,13 @@ class H {
     provider: e,
     returnUrl: r
   }) {
-    const s = new c(new l(), this.agent), o = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, n = await s.get(o, {
+    const s = new c(new p(), this.agent), n = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, i = await s.get(n, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
         "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
       }
-    }), h = n.data, u = n.headers["x-fms-request-id"] ?? "";
+    }), h = i.data, u = i.headers["x-fms-request-id"] ?? "";
     if (u === void 0 || u === "")
       throw new Error(
         'Did not get back an "X-FMS-Request-ID" header from FileMaker'
@@ -634,7 +642,7 @@ class H {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes() {
-    const r = (await new c(new l(), this.agent).get(
+    const r = (await new c(new p(), this.agent).get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
         headers: {
@@ -654,59 +662,59 @@ class H {
     return `https://${this.server}/fmi/odata/v4/${this.database}/${t}`;
   }
 }
-const y = (i) => {
-  if (typeof i != "string") throw new TypeError("Invalid OData string");
-  return `'${i.replaceAll("'", "''")}'`;
-}, M = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, F = (i) => {
-  if (typeof i == "number") {
-    if (!Number.isFinite(i)) throw new TypeError("Invalid OData number");
-    return String(i);
+const b = (o) => {
+  if (typeof o != "string") throw new TypeError("Invalid OData string");
+  return `'${o.replaceAll("'", "''")}'`;
+}, F = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, I = (o) => {
+  if (typeof o == "number") {
+    if (!Number.isFinite(o)) throw new TypeError("Invalid OData number");
+    return String(o);
   }
-  if (typeof i != "string")
+  if (typeof o != "string")
     throw new TypeError("Invalid OData number");
-  const t = i.trim();
-  if (!M.test(t))
+  const t = o.trim();
+  if (!F.test(t))
     throw new TypeError("Invalid OData number");
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
   return String(e);
-}, I = /^[+-]?\d+$/, E = (i) => {
-  if (typeof i != "number" && typeof i != "string")
+}, E = /^[+-]?\d+$/, k = (o) => {
+  if (typeof o != "number" && typeof o != "string")
     throw new TypeError("Invalid OData integer");
-  const t = typeof i == "number" ? String(i) : i.trim();
-  if (!I.test(t))
+  const t = typeof o == "number" ? String(o) : o.trim();
+  if (!E.test(t))
     throw new TypeError("Invalid OData integer");
   return t;
-}, A = (i) => {
-  if (typeof i != "boolean") throw new TypeError("Invalid OData boolean");
-  return i ? "true" : "false";
-}, C = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, k = (i) => {
-  if (typeof i != "string") throw new TypeError("Invalid OData UUID");
-  if (!C.test(i)) throw new TypeError("Invalid OData UUID");
-  return y(i);
-}, D = /^[A-Za-z0-9 _-]+$/, P = (i) => {
-  if (typeof i != "string")
+}, C = (o) => {
+  if (typeof o != "boolean") throw new TypeError("Invalid OData boolean");
+  return o ? "true" : "false";
+}, D = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, P = (o) => {
+  if (typeof o != "string") throw new TypeError("Invalid OData UUID");
+  if (!D.test(o)) throw new TypeError("Invalid OData UUID");
+  return b(o);
+}, S = /^[A-Za-z0-9 _-]+$/, j = (o) => {
+  if (typeof o != "string")
     throw new TypeError("Invalid OData identifier");
-  if (!D.test(i))
+  if (!S.test(o))
     throw new TypeError("Invalid OData identifier");
-  return `"${i}"`;
-}, L = {
-  string: y,
-  number: F,
-  integer: E,
-  boolean: A,
-  uuid: k,
-  identifier: P
+  return `"${o}"`;
+}, X = {
+  string: b,
+  number: I,
+  integer: k,
+  boolean: C,
+  uuid: P,
+  identifier: j
 };
 export {
-  f as FileMaker,
-  j as FileMakerAuthenticator,
-  T as FileMakerBasicCredentials,
-  H as FileMakerClient,
-  m as FileMakerOAuthCredentials,
-  z as FileMakerRawCredentials,
-  q as Logger,
-  l as NullFileMakerCredentials,
-  U as NullLogger,
-  L as odata
+  w as FileMaker,
+  H as FileMakerAuthenticator,
+  O as FileMakerBasicCredentials,
+  N as FileMakerClient,
+  x as FileMakerOAuthCredentials,
+  U as FileMakerRawCredentials,
+  A as Logger,
+  p as NullFileMakerCredentials,
+  L as NullLogger,
+  X as odata
 };
