@@ -30,15 +30,10 @@ export declare class FileMaker {
     });
     url(path: string): string;
     metadata(options?: {
-        format?: "xml";
         $format?: "xml";
     }): Promise<string>;
     metadata<T = Record<string, unknown>>(options: {
-        format: "json";
-        $format?: never;
-    } | {
         $format: "json";
-        format?: never;
     }): Promise<T>;
     metadata<T = unknown>(options?: MetadataOptions): Promise<T>;
     subquery<T>(params: {
@@ -277,7 +272,6 @@ export declare class Logger implements ILogger {
 }
 
 export declare interface MetadataOptions {
-    format?: "json" | "xml";
     $format?: "json" | "xml";
 }
 

@@ -375,7 +375,7 @@ class w {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
   async metadata(t) {
-    const e = t?.format ?? t?.$format, r = this.url(e ? `$metadata?$format=${e}` : "$metadata"), s = e ? { Accept: `application/${e}` } : void 0;
+    const e = t?.$format, r = this.url(e ? `$metadata?$format=${e}` : "$metadata"), s = e ? { Accept: `application/${e}` } : void 0;
     this.log("[FileMaker] Get metadata"), this.log("Options:"), this.log(t), this.log(`URL: ${r}`);
     try {
       return (await this.request.get(r, s ? { headers: s } : void 0)).data;
