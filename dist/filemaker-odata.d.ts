@@ -29,13 +29,7 @@ export declare class FileMaker {
         request: IRequest;
     });
     url(path: string): string;
-    metadata(options?: {
-        $format?: "xml";
-    }): Promise<string>;
-    metadata<T = Record<string, unknown>>(options: {
-        $format: "json";
-    }): Promise<T>;
-    metadata<T = unknown>(options?: MetadataOptions): Promise<T>;
+    metadata<T>(options?: MetadataOptions): Promise<T>;
     subquery<T>(params: {
         table: string;
         recordId: string;

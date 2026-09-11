@@ -78,12 +78,7 @@ export class FileMaker {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${path}`;
   }
 
-  async metadata(options?: { $format?: "xml" }): Promise<string>;
-  async metadata<T = Record<string, unknown>>(options: {
-    $format: "json";
-  }): Promise<T>;
-  async metadata<T = unknown>(options?: MetadataOptions): Promise<T>;
-  async metadata<T>(options?: MetadataOptions): Promise<T> {
+  async metadata<T>(options?: MetadataOptions) {
     const format = options?.$format;
     const url = this.url(format ? `$metadata?$format=${format}` : "$metadata");
     const headers = format ? { Accept: `application/${format}` } : undefined;
