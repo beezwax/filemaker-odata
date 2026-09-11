@@ -78,7 +78,7 @@ class x {
     };
   }
 }
-class O {
+class v {
   username;
   password;
   constructor({ username: t, password: e }) {
@@ -181,7 +181,7 @@ class H {
     )).data.response.token ?? null;
   }
 }
-class v {
+class O {
   config;
   table;
   record;
@@ -326,7 +326,7 @@ class I {
     record: e
   }) {
     return this.operations.push(
-      new v({
+      new O({
         config: this.config,
         table: t,
         record: e
@@ -374,8 +374,9 @@ class w {
   url(t) {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
-  async metadata() {
-    return (await this.request.get(this.url("$metadata"))).data;
+  async metadata(t) {
+    const e = t?.format, r = e ? `${this.url("$metadata")}?$format=${e}` : this.url("$metadata"), s = e === "json" ? { Accept: "application/json" } : e === "xml" ? { Accept: "application/xml" } : void 0;
+    return (await this.request.get(r, s ? { headers: s } : void 0)).data;
   }
   async subquery(t) {
     this.log(`[FileMaker] Get records from ${t.table}`), this.log("Options:"), this.log(t.options), this.log(
@@ -523,7 +524,7 @@ Content-Type: multipart/mixed; boundary=${r}\r
         if (i === null) throw new Error("Could not find changeset");
         const a = i[0].split("=")[1].trim();
         return n.data.split(`--${a}`).slice(1, -1).map(
-          (m, T) => t[T].parseResponse(m)
+          (b, T) => t[T].parseResponse(b)
         );
       } catch (n) {
         throw c(n) && (this.log("[FileMaker] batch: HTTP error"), this.log(n.data)), n;
@@ -603,7 +604,7 @@ class N {
     username: t,
     password: e
   }) {
-    const r = new O({ username: t, password: e }), s = new u(r, this.agent);
+    const r = new v({ username: t, password: e }), s = new u(r, this.agent);
     return new w({
       server: this.server,
       database: this.database,
@@ -687,10 +688,10 @@ class N {
     return `https://${this.server}/fmi/odata/v4/${this.database}/${t}`;
   }
 }
-const b = (o) => {
+const m = (o) => {
   if (typeof o != "string") throw new TypeError("Invalid OData string");
   return `'${o.replaceAll("'", "''")}'`;
-}, F = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, E = (o) => {
+}, A = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, F = (o) => {
   if (typeof o == "number") {
     if (!Number.isFinite(o)) throw new TypeError("Invalid OData number");
     return String(o);
@@ -698,16 +699,16 @@ const b = (o) => {
   if (typeof o != "string")
     throw new TypeError("Invalid OData number");
   const t = o.trim();
-  if (!F.test(t))
+  if (!A.test(t))
     throw new TypeError("Invalid OData number");
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
   return String(e);
-}, A = /^[+-]?\d+$/, C = (o) => {
+}, E = /^[+-]?\d+$/, C = (o) => {
   if (typeof o != "number" && typeof o != "string")
     throw new TypeError("Invalid OData integer");
   const t = typeof o == "number" ? String(o) : o.trim();
-  if (!A.test(t))
+  if (!E.test(t))
     throw new TypeError("Invalid OData integer");
   return t;
 }, k = (o) => {
@@ -716,7 +717,7 @@ const b = (o) => {
 }, D = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, P = (o) => {
   if (typeof o != "string") throw new TypeError("Invalid OData UUID");
   if (!D.test(o)) throw new TypeError("Invalid OData UUID");
-  return b(o);
+  return m(o);
 }, S = /^[A-Za-z0-9 _-]+$/, j = (o) => {
   if (typeof o != "string")
     throw new TypeError("Invalid OData identifier");
@@ -724,8 +725,8 @@ const b = (o) => {
     throw new TypeError("Invalid OData identifier");
   return `"${o}"`;
 }, X = {
-  string: b,
-  number: E,
+  string: m,
+  number: F,
   integer: C,
   boolean: k,
   uuid: P,
@@ -734,7 +735,7 @@ const b = (o) => {
 export {
   w as FileMaker,
   H as FileMakerAuthenticator,
-  O as FileMakerBasicCredentials,
+  v as FileMakerBasicCredentials,
   N as FileMakerClient,
   x as FileMakerOAuthCredentials,
   U as FileMakerRawCredentials,

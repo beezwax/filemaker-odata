@@ -44,6 +44,10 @@ type CrossJoinQueryOptions<T> = Pick<
 
 type CountQueryOptions<T> = Pick<QueryOptions<T>, "$filter">;
 
+export interface MetadataOptions {
+  format?: "json" | "xml";
+}
+
 export interface FileMakerConfig {
   server: string;
   database: string;
@@ -74,8 +78,20 @@ export class FileMaker {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${path}`;
   }
 
-  async metadata<T>() {
-    return (await this.request.get<T>(this.url("$metadata"))).data;
+  async metadata<T>(options?: MetadataOptions): Promise<T> {
+    const format = options?.format;
+    const url = format
+      ? `${this.url("$metadata")}?$format=${format}`
+      : this.url("$metadata");
+    const headers =
+      format === "json"
+        ? { Accept: "application/json" }
+        : format === "xml"
+          ? { Accept: "application/xml" }
+          : undefined;
+
+    return (await this.request.get<T>(url, headers ? { headers } : undefined))
+      .data;
   }
 
   async subquery<T>(params: {

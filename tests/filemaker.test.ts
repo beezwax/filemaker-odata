@@ -55,6 +55,38 @@ describe("FileMaker", () => {
     const response = await fm.metadata<string>();
     expect(response).toEqual("someJSON");
   });
+
+  test("metadata with format json", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock({
+      type: "GET",
+      url: `${fm.url("$metadata")}?$format=json`,
+      data: { $Version: "4.01" },
+    });
+
+    const response = await fm.metadata({ format: "json" });
+    expect(response).toEqual({ $Version: "4.01" });
+    expect(request.latestRequest()?.options?.headers).toEqual({
+      Accept: "application/json",
+    });
+  });
+
+  test("metadata with format xml", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock({
+      type: "GET",
+      url: `${fm.url("$metadata")}?$format=xml`,
+      data: "<edmx:Edmx />",
+    });
+
+    const response = await fm.metadata({ format: "xml" });
+    expect(response).toEqual("<edmx:Edmx />");
+    expect(request.latestRequest()?.options?.headers).toEqual({
+      Accept: "application/xml",
+    });
+  });
 });
 
 describe("getRecords", () => {
@@ -571,10 +603,7 @@ describe("odata helpers", () => {
     });
 
     test("rejects invalid numbers", () => {
-      expectODataError(
-        () => odata.number(Number.NaN),
-        "Invalid OData number",
-      );
+      expectODataError(() => odata.number(Number.NaN), "Invalid OData number");
       expectODataError(
         () => odata.number(Number.POSITIVE_INFINITY),
         "Invalid OData number",
@@ -682,10 +711,7 @@ describe("odata helpers", () => {
         () => odata.identifier("NAME)&$top=1"),
         "Invalid OData identifier",
       );
-      expectODataError(
-        () => odata.identifier(""),
-        "Invalid OData identifier",
-      );
+      expectODataError(() => odata.identifier(""), "Invalid OData identifier");
     });
 
     test("rejects non-string identifiers", () => {
@@ -705,19 +731,19 @@ describe("odata helpers", () => {
 
 describe("mergeDeep", () => {
   test("shallow spread loses nested keys — mergeDeep does not", () => {
-    const target = { headers: { "X-Custom": "value", "Accept": "text/plain" } };
-    const source = { headers: { "Authorization": "Bearer token" } };
+    const target = { headers: { "X-Custom": "value", Accept: "text/plain" } };
+    const source = { headers: { Authorization: "Bearer token" } };
 
     // Demonstrates the gap: spread overwrites the entire headers object.
     const shallowResult = { ...target, ...source };
-    expect(shallowResult.headers).toEqual({ "Authorization": "Bearer token" });
+    expect(shallowResult.headers).toEqual({ Authorization: "Bearer token" });
 
     // mergeDeep preserves both sides.
     const deepResult = mergeDeep(target, source);
     expect(deepResult["headers"]).toEqual({
       "X-Custom": "value",
-      "Accept": "text/plain",
-      "Authorization": "Bearer token",
+      Accept: "text/plain",
+      Authorization: "Bearer token",
     });
   });
 

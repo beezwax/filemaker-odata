@@ -29,7 +29,7 @@ export declare class FileMaker {
         request: IRequest;
     });
     url(path: string): string;
-    metadata<T>(): Promise<T>;
+    metadata<T>(options?: MetadataOptions): Promise<T>;
     subquery<T>(params: {
         table: string;
         recordId: string;
@@ -263,6 +263,10 @@ declare type IResponseHeaders = AxiosResponse["headers"];
 
 export declare class Logger implements ILogger {
     log(message: unknown): void;
+}
+
+export declare interface MetadataOptions {
+    format?: "json" | "xml";
 }
 
 export declare class NullFileMakerCredentials implements FileMakerCredentials {
