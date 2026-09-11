@@ -29,7 +29,18 @@ export declare class FileMaker {
         request: IRequest;
     });
     url(path: string): string;
-    metadata<T>(options?: MetadataOptions): Promise<T>;
+    metadata(options?: {
+        format?: "xml";
+        $format?: "xml";
+    }): Promise<string>;
+    metadata<T = Record<string, unknown>>(options: {
+        format: "json";
+        $format?: never;
+    } | {
+        $format: "json";
+        format?: never;
+    }): Promise<T>;
+    metadata<T = unknown>(options?: MetadataOptions): Promise<T>;
     subquery<T>(params: {
         table: string;
         recordId: string;
@@ -267,6 +278,7 @@ export declare class Logger implements ILogger {
 
 export declare interface MetadataOptions {
     format?: "json" | "xml";
+    $format?: "json" | "xml";
 }
 
 export declare class NullFileMakerCredentials implements FileMakerCredentials {

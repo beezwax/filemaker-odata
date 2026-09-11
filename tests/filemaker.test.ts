@@ -87,6 +87,36 @@ describe("FileMaker", () => {
       Accept: "application/xml",
     });
   });
+
+  test("metadata with $format alias", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock({
+      type: "GET",
+      url: `${fm.url("$metadata")}?$format=json`,
+      data: { $Version: "4.01" },
+    });
+
+    const response = await fm.metadata({ $format: "json" });
+    expect(response).toEqual({ $Version: "4.01" });
+    expect(request.latestRequest()?.options?.headers).toEqual({
+      Accept: "application/json",
+    });
+  });
+
+  test("metadata with empty options", async () => {
+    const { fm, request } = fixtures();
+
+    request.mock({
+      type: "GET",
+      url: fm.url("$metadata"),
+      data: "<edmx:Edmx />",
+    });
+
+    const response = await fm.metadata({});
+    expect(response).toEqual("<edmx:Edmx />");
+    expect(request.latestRequest()?.options?.headers).toBeUndefined();
+  });
 });
 
 describe("getRecords", () => {

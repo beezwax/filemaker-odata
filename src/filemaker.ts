@@ -46,6 +46,7 @@ type CountQueryOptions<T> = Pick<QueryOptions<T>, "$filter">;
 
 export interface MetadataOptions {
   format?: "json" | "xml";
+  $format?: "json" | "xml";
 }
 
 export interface FileMakerConfig {
@@ -78,20 +79,42 @@ export class FileMaker {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${path}`;
   }
 
+  async metadata(options?: {
+    format?: "xml";
+    $format?: "xml";
+  }): Promise<string>;
+  async metadata<T = Record<string, unknown>>(
+    options:
+      | {
+          format: "json";
+          $format?: never;
+        }
+      | {
+          $format: "json";
+          format?: never;
+        },
+  ): Promise<T>;
+  async metadata<T = unknown>(options?: MetadataOptions): Promise<T>;
   async metadata<T>(options?: MetadataOptions): Promise<T> {
-    const format = options?.format;
-    const url = format
-      ? `${this.url("$metadata")}?$format=${format}`
-      : this.url("$metadata");
-    const headers =
-      format === "json"
-        ? { Accept: "application/json" }
-        : format === "xml"
-          ? { Accept: "application/xml" }
-          : undefined;
+    const format = options?.format ?? options?.$format;
+    const url = this.url(format ? `$metadata?$format=${format}` : "$metadata");
+    const headers = format ? { Accept: `application/${format}` } : undefined;
 
-    return (await this.request.get<T>(url, headers ? { headers } : undefined))
-      .data;
+    this.log("[FileMaker] Get metadata");
+    this.log("Options:");
+    this.log(options);
+    this.log(`URL: ${url}`);
+
+    try {
+      return (await this.request.get<T>(url, headers ? { headers } : undefined))
+        .data;
+    } catch (error) {
+      if (isRequestError(error)) {
+        this.log("[FileMaker] metadata: HTTP error");
+        this.log(error.data);
+      }
+      throw error;
+    }
   }
 
   async subquery<T>(params: {
