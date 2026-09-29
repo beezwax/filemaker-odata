@@ -24,22 +24,35 @@ This document provides detailed documentation for all methods available in the `
 
 ### FileMaker Constructor
 
-The `FileMaker` class requires the following configuration:
+The `FileMaker` class constructor requires the following configuration:
 
 ```typescript
 interface FileMakerConfig {
   server: string;
   database: string;
+  logger: ILogger;
+  request: IRequest;
+  dedupe?: boolean;
 }
 ```
+
+- `server` — The FileMaker server hostname
+- `database` — The FileMaker database name
+- `logger` — A logger instance implementing `ILogger`
+- `request` — An `IRequest` instance for making HTTP requests
+- `dedupe?: boolean` (default: `true`) — When enabled, identical concurrent read requests made through the same FileMaker instance are deduplicated, with all callers receiving their own copy of the result. Reads are deduplicated only when the URL, response type, and request headers all match. See the [Request Deduplication](./README.md#request-deduplication) section in the README for details.
 
 **Note:** In most cases, you'll use `FileMakerClient` to create authenticated instances rather than constructing `FileMaker` directly. See the [README](./README.md) for authentication examples.
 
 ### FileMakerClient Constructor
 
-The `FileMakerClient` constructor accepts additional options:
+The `FileMakerClient` constructor accepts the following options:
 
-- `dedupe?: boolean` (default: `true`) — When enabled, identical concurrent read requests made through the same FileMaker instance are deduplicated, with all callers receiving their own copy of the result. See the [Request Deduplication](./README.md#request-deduplication) section in the README for details.
+- `server` — The FileMaker server hostname
+- `database` — The FileMaker database name
+- `agent?: unknown` — Optional custom HTTPS agent (e.g., for self-signed certificates)
+- `logger?: ILogger` — Optional logger instance (defaults to standard logger)
+- `dedupe?: boolean` (default: `true`) — When enabled, identical concurrent read requests made through the same FileMaker instance are deduplicated, with all callers receiving their own copy of the result. Reads are deduplicated only when the URL, response type, and request headers all match. See the [Request Deduplication](./README.md#request-deduplication) section in the README for details.
 
 ## Methods
 
