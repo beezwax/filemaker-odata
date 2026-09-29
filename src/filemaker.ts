@@ -1,4 +1,5 @@
 import { isRequestError, type IRequest } from "./request";
+import { DedupeRequest } from "./dedupe-request";
 import { OperationBuilder } from "./operations/builder";
 import type { ILogger } from "./logger";
 
@@ -63,15 +64,17 @@ export class FileMaker {
     database,
     logger,
     request,
+    dedupe = true,
   }: {
     server: string;
     database: string;
     logger: ILogger;
     request: IRequest;
+    dedupe?: boolean;
   }) {
     this.config = { server, database };
     this.logger = logger;
-    this.request = request;
+    this.request = dedupe ? new DedupeRequest(request) : request;
   }
 
   url(path: string) {

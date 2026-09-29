@@ -1,5 +1,6 @@
-import { expect, test, describe } from "vitest";
-import { FileMaker, NullLogger, odata } from "../src/index";
+import axios from "axios";
+import { afterEach, expect, test, describe, vi } from "vitest";
+import { FileMaker, FileMakerClient, NullLogger, odata } from "../src/index";
 import { mergeDeep } from "../src/request";
 import { MockRequest } from "./mocks";
 
@@ -9,7 +10,7 @@ interface MockPersonRecord {
   COMPANY: string;
 }
 
-const fixtures = () => {
+const fixtures = ({ dedupe }: { dedupe?: boolean } = {}) => {
   const request = new MockRequest();
   const logger = new NullLogger();
   const fm = new FileMaker({
@@ -17,6 +18,7 @@ const fixtures = () => {
     database: "test",
     logger,
     request,
+    dedupe,
   });
 
   return { fm, request };
@@ -783,5 +785,128 @@ describe("mergeDeep", () => {
     const target = { a: { x: 1 } };
     mergeDeep(target, { a: { y: 2 } });
     expect(target).toEqual({ a: { x: 1 } });
+  });
+});
+
+describe("dedupe", () => {
+  const peopleUrl = "people?$format=application/json";
+  const mockPeople = (
+    request: MockRequest,
+    fm: FileMaker,
+    value: Partial<MockPersonRecord>[] = [{ ID: "1", NAME: "Fede" }],
+  ) =>
+    request.mock({ type: "GET", url: fm.url(peopleUrl), data: { value } });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  test("shares concurrent identical getRecords by default", async () => {
+    const { fm, request } = fixtures();
+    mockPeople(request, fm);
+
+    const [first, second] = await Promise.all([
+      fm.getRecords<MockPersonRecord>("people"),
+      fm.getRecords<MockPersonRecord>("people"),
+    ]);
+
+    expect(request.requestCount(fm.url(peopleUrl))).toEqual(1);
+    expect(first).toEqual(second);
+  });
+
+  test("does not share requests when dedupe is false", async () => {
+    const { fm, request } = fixtures({ dedupe: false });
+    mockPeople(request, fm);
+
+    await Promise.all([
+      fm.getRecords<MockPersonRecord>("people"),
+      fm.getRecords<MockPersonRecord>("people"),
+    ]);
+
+    expect(request.requestCount(fm.url(peopleUrl))).toEqual(2);
+  });
+
+  test("never shares requests between FileMaker instances", async () => {
+    const request = new MockRequest();
+    const build = () =>
+      new FileMaker({
+        server: "demo.server.beezwax.net",
+        database: "test",
+        logger: new NullLogger(),
+        request,
+      });
+    const [first, second] = [build(), build()];
+    mockPeople(request, first);
+
+    await Promise.all([
+      first.getRecords<MockPersonRecord>("people"),
+      second.getRecords<MockPersonRecord>("people"),
+    ]);
+
+    expect(request.requestCount(first.url(peopleUrl))).toEqual(2);
+  });
+
+  test("shares concurrent identical reads other than getRecords", async () => {
+    const { fm, request } = fixtures();
+    const url = fm.url("people/$count");
+    request.mock({ type: "GET", url, data: "3" });
+
+    const counts = await Promise.all([
+      fm.countRecords("people"),
+      fm.countRecords("people"),
+    ]);
+
+    expect(request.requestCount(url)).toEqual(1);
+    expect(counts).toEqual([3, 3]);
+  });
+
+  test("a caller mutating its result does not affect a concurrent caller", async () => {
+    const { fm, request } = fixtures();
+    mockPeople(request, fm);
+
+    const [first, second] = await Promise.all([
+      fm.getRecords<MockPersonRecord>("people").then((records) => {
+        records[0].NAME = "Mutated";
+        return records;
+      }),
+      fm.getRecords<MockPersonRecord>("people"),
+    ]);
+
+    expect(first[0].NAME).toEqual("Mutated");
+    expect(second[0].NAME).toEqual("Fede");
+  });
+
+  describe("FileMakerClient", () => {
+    const credentials = { username: "user", password: "pass" };
+    const build = (dedupe?: boolean) =>
+      new FileMakerClient({
+        server: "demo.server.beezwax.net",
+        database: "test",
+        logger: new NullLogger(),
+        dedupe,
+      }).withBasicAuth(credentials);
+
+    const concurrentGetRecords = async (fm: FileMaker) => {
+      const get = vi
+        .spyOn(axios, "get")
+        .mockResolvedValue({ data: { value: [] }, headers: {} });
+
+      await Promise.all([
+        fm.getRecords("people"),
+        fm.getRecords("people"),
+      ]);
+
+      return get;
+    };
+
+    test("dedupes by default", async () => {
+      const get = await concurrentGetRecords(build());
+      expect(get).toHaveBeenCalledTimes(1);
+    });
+
+    test("does not dedupe when dedupe is false", async () => {
+      const get = await concurrentGetRecords(build(false));
+      expect(get).toHaveBeenCalledTimes(2);
+    });
   });
 });

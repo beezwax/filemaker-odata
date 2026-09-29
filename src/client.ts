@@ -18,6 +18,9 @@ interface OAuthResponse {
  * instances. This class handles the composition of credentials, requests, and
  * the FileMaker client internally.
  *
+ * Identical concurrent GET requests made through the same FileMaker instance
+ * are shared by default. Pass `dedupe: false` to send every request.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -44,22 +47,26 @@ export class FileMakerClient {
   private database: string;
   private agent?: unknown;
   private logger: ILogger;
+  private dedupe?: boolean;
 
   constructor({
     server,
     database,
     agent,
     logger,
+    dedupe,
   }: {
     server: string;
     database: string;
     agent?: unknown;
     logger?: ILogger;
+    dedupe?: boolean;
   }) {
     this.server = server;
     this.database = database;
     this.agent = agent;
     this.logger = logger ?? new Logger();
+    this.dedupe = dedupe;
   }
 
   /**
@@ -83,6 +90,7 @@ export class FileMakerClient {
       database: this.database,
       logger: this.logger,
       request,
+      dedupe: this.dedupe,
     });
   }
 
@@ -110,6 +118,7 @@ export class FileMakerClient {
       database: this.database,
       logger: this.logger,
       request,
+      dedupe: this.dedupe,
     });
   }
 

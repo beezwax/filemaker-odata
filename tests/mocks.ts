@@ -60,6 +60,10 @@ export class MockRequest implements IRequest {
     return this.responses.at(-1)?.request;
   }
 
+  requestCount(url: string) {
+    return this.responses.filter(({ request }) => request.url === url).length;
+  }
+
   async post<T>(
     url: string,
     params: string | Record<string, unknown> | null,
@@ -73,7 +77,7 @@ export class MockRequest implements IRequest {
     // Store response for latest inspection if needed by tests
     this.responses.push({
       response: request,
-      request: { type: "GET", url, params, options },
+      request: { type: "POST", url, params, options },
     });
 
     return request as T;
