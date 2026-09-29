@@ -5,7 +5,7 @@ class d extends Error {
     super(t), this.name = "RequestError", this.data = e;
   }
 }
-const c = (o) => o instanceof d, f = (o) => typeof o == "object" && o !== null && !Array.isArray(o) && Object.getPrototypeOf(o) === Object.prototype, l = (o, t) => {
+const h = (o) => o instanceof d, f = (o) => typeof o == "object" && o !== null && !Array.isArray(o) && Object.getPrototypeOf(o) === Object.prototype, l = (o, t) => {
   const e = { ...o };
   for (const r of Object.keys(t)) {
     const s = t[r];
@@ -60,7 +60,7 @@ class p {
     return {};
   }
 }
-class v {
+class O {
   requestId;
   identifier;
   constructor({
@@ -78,7 +78,7 @@ class v {
     };
   }
 }
-class x {
+class v {
   username;
   password;
   constructor({ username: t, password: e }) {
@@ -90,7 +90,7 @@ class x {
     };
   }
 }
-class U {
+class L {
   authorization;
   constructor(t) {
     this.authorization = t;
@@ -101,7 +101,7 @@ class U {
     };
   }
 }
-class H {
+class N {
   server;
   database;
   request;
@@ -181,7 +181,37 @@ class H {
     )).data.response.token ?? null;
   }
 }
-class O {
+const x = (o, t) => {
+  const e = Object.entries(t?.headers ?? {}).sort(
+    ([r], [s]) => r < s ? -1 : r > s ? 1 : 0
+  );
+  return JSON.stringify([o, t?.responseType ?? null, e]);
+};
+class F {
+  inner;
+  inFlight = /* @__PURE__ */ new Map();
+  constructor(t) {
+    this.inner = t;
+  }
+  get(t, e) {
+    const r = x(t, e), s = this.inFlight.get(r);
+    if (s !== void 0)
+      return s.then((a) => ({
+        ...a,
+        data: structuredClone(a.data)
+      }));
+    const i = this.inner.get(t, e);
+    this.inFlight.set(r, i);
+    const n = () => {
+      this.inFlight.get(r) === i && this.inFlight.delete(r);
+    };
+    return i.then(n, n), i;
+  }
+  post(t, e, r) {
+    return this.inFlight.clear(), this.inner.post(t, e, r);
+  }
+}
+class R {
   config;
   table;
   record;
@@ -228,7 +258,7 @@ Content-Length: ${this.byteLength(i)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class R {
+class M {
   config;
   table;
   record;
@@ -274,7 +304,7 @@ Content-Length: ${this.byteLength(r)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class M {
+class q {
   config;
   table;
   id;
@@ -314,7 +344,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class F {
+class I {
   operations;
   callback;
   config;
@@ -326,7 +356,7 @@ class F {
     record: e
   }) {
     return this.operations.push(
-      new O({
+      new R({
         config: this.config,
         table: t,
         record: e
@@ -335,7 +365,7 @@ class F {
   }
   create({ table: t, record: e }) {
     return this.operations.push(
-      new R({
+      new M({
         config: this.config,
         table: t,
         record: e
@@ -344,7 +374,7 @@ class F {
   }
   delete({ table: t, id: e }) {
     return this.operations.push(
-      new M({
+      new q({
         config: this.config,
         table: t,
         id: e
@@ -367,9 +397,10 @@ class w {
     server: t,
     database: e,
     logger: r,
-    request: s
+    request: s,
+    dedupe: i = !0
   }) {
-    this.config = { server: t, database: e }, this.logger = r, this.request = s;
+    this.config = { server: t, database: e }, this.logger = r, this.request = i ? new F(s) : s;
   }
   url(t) {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
@@ -380,7 +411,7 @@ class w {
     try {
       return (await this.request.get(r, s ? { headers: s } : void 0)).data;
     } catch (i) {
-      throw c(i) && (this.log("[FileMaker] metadata: HTTP error"), this.log(i.data)), i;
+      throw h(i) && (this.log("[FileMaker] metadata: HTTP error"), this.log(i.data)), i;
     }
   }
   async subquery(t) {
@@ -392,7 +423,7 @@ class w {
         `${this.url(`${t.table}('${t.recordId}')/${t.path}`)}?${this.parameterize(t.options)}`
       )).data.value;
     } catch (e) {
-      throw c(e) && (this.log("[FileMaker] subquery: HTTP error"), this.log(e.data)), e;
+      throw h(e) && (this.log("[FileMaker] subquery: HTTP error"), this.log(e.data)), e;
     }
   }
   async getRecords(t, e) {
@@ -400,7 +431,7 @@ class w {
     try {
       return (await this.request.get(`${this.url(t)}?${this.parameterize(e)}`)).data.value;
     } catch (r) {
-      throw c(r) && (this.log("[FileMaker] getRecords: HTTP error"), this.log(r.data)), r;
+      throw h(r) && (this.log("[FileMaker] getRecords: HTTP error"), this.log(r.data)), r;
     }
   }
   async getRecordsWithCount(t, e) {
@@ -414,7 +445,7 @@ class w {
         count: s.data["@odata.count"] ?? s.data["@count"] ?? 0
       };
     } catch (s) {
-      throw c(s) && (this.log("[FileMaker] getRecordsWithCount: HTTP error"), this.log(s.data)), s;
+      throw h(s) && (this.log("[FileMaker] getRecordsWithCount: HTTP error"), this.log(s.data)), s;
     }
   }
   async countRecords(t, e) {
@@ -429,14 +460,14 @@ class w {
         throw new Error(
           `Invalid count response from "${r}": ${n.data}`
         );
-      const h = Number(a);
-      if (!Number.isSafeInteger(h))
+      const c = Number(a);
+      if (!Number.isSafeInteger(c))
         throw new Error(
           `Invalid count response from "${r}": ${n.data}`
         );
-      return h;
+      return c;
     } catch (n) {
-      throw c(n) && (this.log("[FileMaker] countRecords: HTTP error"), this.log(n.data)), n;
+      throw h(n) && (this.log("[FileMaker] countRecords: HTTP error"), this.log(n.data)), n;
     }
   }
   async getRecord(t, e, r) {
@@ -445,7 +476,7 @@ class w {
       const s = `${this.url(t)}('${encodeURIComponent(e)}')?${this.parameterize(r)}`;
       return this.log(`URL: ${s}`), (await this.request.get(s)).data;
     } catch (s) {
-      throw c(s) && (this.log("[FileMaker] getRecord: HTTP error"), this.log(s.data)), s;
+      throw h(s) && (this.log("[FileMaker] getRecord: HTTP error"), this.log(s.data)), s;
     }
   }
   async getValue(t, e, r) {
@@ -457,7 +488,7 @@ class w {
         }
       )).data;
     } catch (s) {
-      throw c(s) && (this.log("[FileMaker] getValue: HTTP error"), this.log(s.data)), s;
+      throw h(s) && (this.log("[FileMaker] getValue: HTTP error"), this.log(s.data)), s;
     }
   }
   async crossjoin({
@@ -469,7 +500,7 @@ class w {
         `${this.url("$crossjoin")}(${t.join(",")})?${this.parameterize(e)}`
       )).data;
     } catch (r) {
-      throw c(r) && (this.log("[FileMaker] crossjoin: HTTP error"), this.log(r.data)), r;
+      throw h(r) && (this.log("[FileMaker] crossjoin: HTTP error"), this.log(r.data)), r;
     }
   }
   // Performs a "$batch" request, executing the given operations
@@ -504,7 +535,7 @@ class w {
   //     ];
   //
   batch() {
-    return new F(this.config, async (t) => {
+    return new I(this.config, async (t) => {
       const e = `batch_${y()}`, r = `changeset_${y()}`, s = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
@@ -532,7 +563,7 @@ Content-Type: multipart/mixed; boundary=${r}\r
           (b, T) => t[T].parseResponse(b)
         );
       } catch (i) {
-        throw c(i) && (this.log("[FileMaker] batch: HTTP error"), this.log(i.data)), i;
+        throw h(i) && (this.log("[FileMaker] batch: HTTP error"), this.log(i.data)), i;
       }
     });
   }
@@ -555,7 +586,7 @@ Content-Type: multipart/mixed; boundary=${r}\r
         data: s ? r.data.scriptResult.resultParameter : void 0
       };
     } catch (r) {
-      throw c(r) && (this.log("[FileMaker] script: HTTP error"), this.log(r.data)), r;
+      throw h(r) && (this.log("[FileMaker] script: HTTP error"), this.log(r.data)), r;
     }
   }
   parameterize(t) {
@@ -576,27 +607,29 @@ Content-Type: multipart/mixed; boundary=${r}\r
     return this.logger.log(t);
   }
 }
-class q {
+class k {
   log(t) {
     console.dir(t, { depth: null });
   }
 }
-class L {
+class X {
   log() {
   }
 }
-class N {
+class B {
   server;
   database;
   agent;
   logger;
+  dedupe;
   constructor({
     server: t,
     database: e,
     agent: r,
-    logger: s
+    logger: s,
+    dedupe: i
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new q();
+    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new k(), this.dedupe = i;
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -609,12 +642,13 @@ class N {
     username: t,
     password: e
   }) {
-    const r = new x({ username: t, password: e }), s = new u(r, this.agent);
+    const r = new v({ username: t, password: e }), s = new u(r, this.agent);
     return new w({
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request: s
+      request: s,
+      dedupe: this.dedupe
     });
   }
   /**
@@ -628,7 +662,7 @@ class N {
     requestId: t,
     identifier: e
   }) {
-    const r = new v({
+    const r = new O({
       requestId: t,
       identifier: e
     }), s = new u(r, this.agent);
@@ -636,7 +670,8 @@ class N {
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request: s
+      request: s,
+      dedupe: this.dedupe
     });
   }
   /**
@@ -659,12 +694,12 @@ class N {
         "X-FMS-Application-Version": "15",
         "X-FMS-Return-URL": r ?? `https://${this.server}/oauth-handler`
       }
-    }), a = n.data, h = n.headers["x-fms-request-id"] ?? "";
-    if (h === void 0 || h === "")
+    }), a = n.data, c = n.headers["x-fms-request-id"] ?? "";
+    if (c === void 0 || c === "")
       throw new Error(
         'Did not get back an "X-FMS-Request-ID" header from FileMaker'
       );
-    return { redirectUrl: a, requestId: h };
+    return { redirectUrl: a, requestId: c };
   }
   /**
    * Detects the available authentication types supported by the FileMaker
@@ -696,7 +731,7 @@ class N {
 const m = (o) => {
   if (typeof o != "string") throw new TypeError("Invalid OData string");
   return `'${o.replaceAll("'", "''")}'`;
-}, I = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, A = (o) => {
+}, A = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, C = (o) => {
   if (typeof o == "number") {
     if (!Number.isFinite(o)) throw new TypeError("Invalid OData number");
     return String(o);
@@ -704,48 +739,48 @@ const m = (o) => {
   if (typeof o != "string")
     throw new TypeError("Invalid OData number");
   const t = o.trim();
-  if (!I.test(t))
+  if (!A.test(t))
     throw new TypeError("Invalid OData number");
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
   return String(e);
-}, E = /^[+-]?\d+$/, k = (o) => {
+}, E = /^[+-]?\d+$/, D = (o) => {
   if (typeof o != "number" && typeof o != "string")
     throw new TypeError("Invalid OData integer");
   const t = typeof o == "number" ? String(o) : o.trim();
   if (!E.test(t))
     throw new TypeError("Invalid OData integer");
   return t;
-}, C = (o) => {
+}, P = (o) => {
   if (typeof o != "boolean") throw new TypeError("Invalid OData boolean");
   return o ? "true" : "false";
-}, D = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, P = (o) => {
+}, S = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, j = (o) => {
   if (typeof o != "string") throw new TypeError("Invalid OData UUID");
-  if (!D.test(o)) throw new TypeError("Invalid OData UUID");
+  if (!S.test(o)) throw new TypeError("Invalid OData UUID");
   return m(o);
-}, S = /^[A-Za-z0-9 _-]+$/, j = (o) => {
+}, z = /^[A-Za-z0-9 _-]+$/, H = (o) => {
   if (typeof o != "string")
     throw new TypeError("Invalid OData identifier");
-  if (!S.test(o))
+  if (!z.test(o))
     throw new TypeError("Invalid OData identifier");
   return `"${o}"`;
-}, X = {
+}, V = {
   string: m,
-  number: A,
-  integer: k,
-  boolean: C,
-  uuid: P,
-  identifier: j
+  number: C,
+  integer: D,
+  boolean: P,
+  uuid: j,
+  identifier: H
 };
 export {
   w as FileMaker,
-  H as FileMakerAuthenticator,
-  x as FileMakerBasicCredentials,
-  N as FileMakerClient,
-  v as FileMakerOAuthCredentials,
-  U as FileMakerRawCredentials,
-  q as Logger,
+  N as FileMakerAuthenticator,
+  v as FileMakerBasicCredentials,
+  B as FileMakerClient,
+  O as FileMakerOAuthCredentials,
+  L as FileMakerRawCredentials,
+  k as Logger,
   p as NullFileMakerCredentials,
-  L as NullLogger,
-  X as odata
+  X as NullLogger,
+  V as odata
 };

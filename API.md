@@ -22,6 +22,8 @@ This document provides detailed documentation for all methods available in the `
 
 ## Configuration
 
+### FileMaker Constructor
+
 The `FileMaker` class requires the following configuration:
 
 ```typescript
@@ -32,6 +34,12 @@ interface FileMakerConfig {
 ```
 
 **Note:** In most cases, you'll use `FileMakerClient` to create authenticated instances rather than constructing `FileMaker` directly. See the [README](./README.md) for authentication examples.
+
+### FileMakerClient Constructor
+
+The `FileMakerClient` constructor accepts additional options:
+
+- `dedupe?: boolean` (default: `true`) — When enabled, identical concurrent read requests made through the same FileMaker instance are deduplicated, with all callers receiving their own copy of the result. See the [Request Deduplication](./README.md#request-deduplication) section in the README for details.
 
 ## Methods
 

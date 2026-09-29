@@ -22,11 +22,12 @@ export declare class FileMaker {
     private config;
     private logger;
     private request;
-    constructor({ server, database, logger, request, }: {
+    constructor({ server, database, logger, request, dedupe, }: {
         server: string;
         database: string;
         logger: ILogger;
         request: IRequest;
+        dedupe?: boolean;
     });
     url(path: string): string;
     metadata<T>(options?: MetadataOptions): Promise<T>;
@@ -124,6 +125,9 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * instances. This class handles the composition of credentials, requests, and
  * the FileMaker client internally.
  *
+ * Identical concurrent GET requests made through the same FileMaker instance
+ * are shared by default. Pass `dedupe: false` to send every request.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -150,11 +154,13 @@ export declare class FileMakerClient {
     private database;
     private agent?;
     private logger;
-    constructor({ server, database, agent, logger, }: {
+    private dedupe?;
+    constructor({ server, database, agent, logger, dedupe, }: {
         server: string;
         database: string;
         agent?: unknown;
         logger?: ILogger;
+        dedupe?: boolean;
     });
     /**
      * Creates a FileMaker instance configured with basic authentication.

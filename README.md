@@ -211,6 +211,28 @@ const client = new FileMakerClient({
 });
 ```
 
+## Request Deduplication
+
+When several identical read requests run at the same time on one `FileMaker` instance,
+only one HTTP request is sent and all callers get the result. Each caller receives its
+own copy of the data. Nothing is kept in memory after the request completes—it is not
+a cache.
+
+POST requests such as `batch().execute()` and `script()` are never deduplicated. A read
+request that starts after a write has started sends a new HTTP request. Each `FileMaker`
+instance has its own deduplication, so different users (for example different instances
+created with `withBasicAuth`) never share requests.
+
+Deduplication is enabled by default. To disable it:
+
+```typescript
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  dedupe: false,
+});
+```
+
 # Development
 
     npm i
