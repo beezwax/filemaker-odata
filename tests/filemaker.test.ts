@@ -2,7 +2,7 @@ import axios from "axios";
 import { afterEach, expect, test, describe, vi } from "vitest";
 import { FileMaker, FileMakerClient, NullLogger, odata } from "../src/index";
 import { mergeDeep } from "../src/request";
-import { MockRequest } from "./mocks";
+import { MockRequest, NodeBuffer } from "./mocks";
 
 interface MockPersonRecord {
   ID: string;
@@ -874,6 +874,175 @@ describe("dedupe", () => {
 
     expect(first[0].NAME).toEqual("Mutated");
     expect(second[0].NAME).toEqual("Fede");
+  });
+
+  describe("concurrent identical reads", () => {
+    test("getRecord", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url("people('1')?$format=application/json");
+      request.mock({ type: "GET", url, data: { ID: "1", NAME: "Fede" } });
+
+      const results = await Promise.all([
+        fm.getRecord<MockPersonRecord>("people", "1"),
+        fm.getRecord<MockPersonRecord>("people", "1"),
+      ]);
+
+      expect(request.requestCount(url)).toEqual(1);
+      expect(results[0]).toEqual(results[1]);
+    });
+
+    test("getRecordsWithCount", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url("people?$count=true&$format=application/json");
+      request.mock({
+        type: "GET",
+        url,
+        data: { "@odata.count": 7, value: [{ ID: "1" }] },
+      });
+
+      const results = await Promise.all([
+        fm.getRecordsWithCount<MockPersonRecord>("people"),
+        fm.getRecordsWithCount<MockPersonRecord>("people"),
+      ]);
+
+      expect(request.requestCount(url)).toEqual(1);
+      expect(results[0]).toEqual({ data: [{ ID: "1" }], count: 7 });
+      expect(results[1]).toEqual(results[0]);
+    });
+
+    test("subquery", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url("people('1')/orders?$format=application/json");
+      request.mock({ type: "GET", url, data: { value: [{ ID: "o1" }] } });
+      const params = { table: "people", recordId: "1", path: "orders" };
+
+      const results = await Promise.all([
+        fm.subquery(params),
+        fm.subquery(params),
+      ]);
+
+      expect(request.requestCount(url)).toEqual(1);
+      expect(results[0]).toEqual([{ ID: "o1" }]);
+      expect(results[1]).toEqual(results[0]);
+    });
+
+    test("crossjoin", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url("$crossjoin(people,orders)?$format=application/json");
+      request.mock({ type: "GET", url, data: "joined" });
+      const params = { tables: ["people", "orders"], options: {} };
+
+      const results = await Promise.all([
+        fm.crossjoin(params),
+        fm.crossjoin(params),
+      ]);
+
+      expect(request.requestCount(url)).toEqual(1);
+      expect(results).toEqual(["joined", "joined"]);
+    });
+
+    test("metadata with a $format", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url("$metadata?$format=json");
+      request.mock({ type: "GET", url, data: { edm: true } });
+
+      const results = await Promise.all([
+        fm.metadata({ $format: "json" }),
+        fm.metadata({ $format: "json" }),
+      ]);
+
+      expect(request.requestCount(url)).toEqual(1);
+      expect(results[0]).toEqual({ edm: true });
+      expect(results[1]).toEqual(results[0]);
+    });
+
+    test("getValue keeps binary data a Buffer for every caller", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url("people('1')/PHOTO/$value");
+      request.mock({ type: "GET", url, data: NodeBuffer.from("hi") });
+
+      const results = await Promise.all([
+        fm.getValue("people", "1", "PHOTO"),
+        fm.getValue("people", "1", "PHOTO"),
+      ]);
+
+      expect(request.requestCount(url)).toEqual(1);
+      for (const result of results) {
+        expect(NodeBuffer.isBuffer(result)).toBe(true);
+        expect(String(result)).toEqual("hi");
+      }
+    });
+  });
+
+  describe("writes detach in-flight reads", () => {
+    const scriptResponse = {
+      scriptResult: { code: 0, resultParameter: "ok" },
+    };
+
+    test("a script started after a GET prevents later GETs from joining it", async () => {
+      const { fm, request } = fixtures();
+      mockPeople(request, fm);
+      request.mock({
+        type: "POST",
+        url: fm.url("Script.Sync"),
+        data: scriptResponse,
+      });
+      const release = request.holdGets();
+
+      const before = fm.getRecords<MockPersonRecord>("people");
+      const script = fm.script("Sync");
+      const after = fm.getRecords<MockPersonRecord>("people");
+
+      expect(request.requestCount(fm.url(peopleUrl))).toEqual(2);
+
+      release();
+      await Promise.all([before, script, after]);
+    });
+
+    test("a batch started after a GET prevents later GETs from joining it", async () => {
+      const { fm, request } = fixtures();
+      mockPeople(request, fm);
+      request.mock({ type: "POST", url: fm.url("$batch"), data: "" });
+      const release = request.holdGets();
+
+      const before = fm.getRecords<MockPersonRecord>("people");
+      const batch = fm
+        .batch()
+        .create({ table: "people", record: { NAME: "Fede" } })
+        .execute()
+        .catch(() => undefined);
+      const after = fm.getRecords<MockPersonRecord>("people");
+
+      expect(request.requestCount(fm.url("$batch"))).toEqual(1);
+      expect(request.requestCount(fm.url(peopleUrl))).toEqual(2);
+
+      release();
+      await Promise.all([before, batch, after]);
+    });
+  });
+
+  describe("failed shared reads", () => {
+    test("reject every concurrent caller and are not kept", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url(peopleUrl);
+      request.mockGetError(url, new Error("boom"));
+      const release = request.holdGets();
+
+      const first = fm.getRecords<MockPersonRecord>("people");
+      const second = fm.getRecords<MockPersonRecord>("people");
+      const results = Promise.all([
+        expect(first).rejects.toThrow("boom"),
+        expect(second).rejects.toThrow("boom"),
+      ]);
+      expect(request.requestCount(url)).toEqual(1);
+
+      release();
+      await results;
+
+      const third = fm.getRecords<MockPersonRecord>("people");
+      expect(request.requestCount(url)).toEqual(2);
+      await expect(third).rejects.toThrow("boom");
+    });
   });
 
   describe("FileMakerClient", () => {

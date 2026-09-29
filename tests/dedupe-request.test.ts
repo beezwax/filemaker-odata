@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DedupeRequest } from "../src/dedupe-request";
 import type { IRequest, IResponse, RequestOptions } from "../src/request";
+import { NodeBuffer } from "./mocks";
 
 interface RecordedCall {
   type: "GET" | "POST";
@@ -157,6 +158,60 @@ describe("DedupeRequest", () => {
 
       expect((await originator).data.items).toEqual([1]);
       expect((await joinerTwo).data.items).toEqual([1]);
+    });
+
+    describe("binary data", () => {
+      const joinerData = async <T>(data: T) => {
+        const { inner, request } = setup();
+        const originator = request.get<T>("/a", { responseType: "arraybuffer" });
+        const joiner = request.get<T>("/a", { responseType: "arraybuffer" });
+        inner.calls[0]!.resolve(respond(data));
+        return { original: (await originator).data, copy: (await joiner).data };
+      };
+
+      it("gives joiners a Buffer when the response is a Buffer", async () => {
+        const { original, copy } = await joinerData(NodeBuffer.from("hi"));
+
+        expect(NodeBuffer.isBuffer(copy)).toBe(true);
+        expect(copy.toString()).toBe("hi");
+        expect(copy).toEqual(original);
+      });
+
+      it("gives joiners Buffer memory independent of the original", async () => {
+        const { original, copy } = await joinerData(NodeBuffer.from("hi"));
+
+        copy[0] = 0;
+
+        expect(original.toString()).toBe("hi");
+      });
+
+      it("gives joiners an ArrayBuffer when the response is an ArrayBuffer", async () => {
+        const source = new Uint8Array([1, 2, 3]).buffer;
+        const { original, copy } = await joinerData(source);
+
+        expect(copy).toBeInstanceOf(ArrayBuffer);
+        expect(copy).not.toBe(original);
+        new Uint8Array(copy)[0] = 9;
+        expect([...new Uint8Array(original)]).toEqual([1, 2, 3]);
+      });
+
+      it("keeps the constructor of typed arrays", async () => {
+        const { original, copy } = await joinerData(new Uint16Array([1, 2, 3]));
+
+        expect(copy).toBeInstanceOf(Uint16Array);
+        expect([...copy]).toEqual([1, 2, 3]);
+        copy[0] = 9;
+        expect(original[0]).toBe(1);
+      });
+
+      it("copies only the viewed bytes of a view over a larger buffer", async () => {
+        const backing = new Uint8Array([1, 2, 3, 4]);
+        const { copy } = await joinerData(backing.subarray(1, 3));
+
+        expect([...copy]).toEqual([2, 3]);
+        expect(copy.byteLength).toBe(2);
+        expect(copy.buffer.byteLength).toBe(2);
+      });
     });
 
     it("returns the original response unchanged to the originator", async () => {

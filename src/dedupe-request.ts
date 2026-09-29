@@ -11,6 +11,21 @@ const requestKey = (url: string, options?: RequestOptions) => {
   return JSON.stringify([url, options?.responseType ?? null, sortedHeaders]);
 };
 
+// structuredClone turns binary views into plain Uint8Arrays (a Node Buffer
+// loses its type) and copies the whole backing buffer, so views are copied
+// explicitly. `slice` copies, and honours the species of the source, so a
+// Buffer stays a Buffer and a Uint16Array stays a Uint16Array.
+const cloneData = (data: unknown): unknown => {
+  if (!ArrayBuffer.isView(data)) return structuredClone(data);
+
+  if (data instanceof DataView)
+    return new DataView(
+      data.buffer.slice(data.byteOffset, data.byteOffset + data.byteLength),
+    );
+
+  return Uint8Array.prototype.slice.call(data);
+};
+
 /**
  * An IRequest wrapper that shares the result of identical in-flight GETs.
  *
@@ -34,7 +49,7 @@ export class DedupeRequest implements IRequest {
     if (existing !== undefined) {
       return existing.then((response) => ({
         ...response,
-        data: structuredClone(response.data),
+        data: cloneData(response.data),
       })) as Promise<IResponse<T>>;
     }
 
