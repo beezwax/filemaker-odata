@@ -112,6 +112,15 @@ describe("DedupeRequest", () => {
       expect(inner.calls).toHaveLength(1);
     });
 
+    it("shares GETs whose header names differ only in case", () => {
+      const { inner, request } = setup();
+
+      void request.get("/a", { headers: { Accept: "x" } });
+      void request.get("/a", { headers: { accept: "x" } });
+
+      expect(inner.calls).toHaveLength(1);
+    });
+
     it("sends a new request once the previous one has settled", async () => {
       const { inner, request } = setup();
 
@@ -158,6 +167,19 @@ describe("DedupeRequest", () => {
 
       expect((await originator).data.items).toEqual([1]);
       expect((await joinerTwo).data.items).toEqual([1]);
+    });
+
+    it("gives joiners their own copy of the headers", async () => {
+      const { inner, request } = setup();
+
+      const originator = request.get("/a");
+      const joiner = request.get("/a");
+
+      inner.calls[0]!.resolve({ data: 1, headers: { etag: "x" } });
+
+      (await joiner).headers.etag = "changed";
+
+      expect((await originator).headers.etag).toEqual("x");
     });
 
     describe("binary data", () => {

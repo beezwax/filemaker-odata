@@ -5,9 +5,10 @@ import type {
 } from "./request";
 
 const requestKey = (url: string, options?: RequestOptions) => {
-  const sortedHeaders = Object.entries(options?.headers ?? {}).sort(
-    ([a], [b]) => (a < b ? -1 : a > b ? 1 : 0),
-  );
+  // Header names are case-insensitive, so `Accept` and `accept` share a key.
+  const sortedHeaders = Object.entries(options?.headers ?? {})
+    .map(([name, value]) => [name.toLowerCase(), value])
+    .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
   return JSON.stringify([url, options?.responseType ?? null, sortedHeaders]);
 };
 
@@ -49,6 +50,7 @@ export class DedupeRequest implements IRequest {
     if (existing !== undefined) {
       return existing.then((response) => ({
         ...response,
+        headers: { ...response.headers },
         data: cloneData(response.data),
       })) as Promise<IResponse<T>>;
     }
@@ -69,7 +71,12 @@ export class DedupeRequest implements IRequest {
     params: string | Record<string, unknown> | null,
     options?: RequestOptions,
   ): Promise<IResponse<T>> {
-    this.inFlight.clear();
+    this.detachInFlightReads();
     return this.inner.post<T>(url, params, options);
+  }
+
+  // Any POST (batch, script) may write, so later reads must not join reads that started before it.
+  private detachInFlightReads() {
+    this.inFlight.clear();
   }
 }

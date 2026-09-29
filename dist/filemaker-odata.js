@@ -182,9 +182,7 @@ class X {
   }
 }
 const x = (i, t) => {
-  const e = Object.entries(t?.headers ?? {}).sort(
-    ([r], [s]) => r < s ? -1 : r > s ? 1 : 0
-  );
+  const e = Object.entries(t?.headers ?? {}).map(([r, s]) => [r.toLowerCase(), s]).sort(([r], [s]) => r < s ? -1 : r > s ? 1 : 0);
   return JSON.stringify([i, t?.responseType ?? null, e]);
 }, F = (i) => ArrayBuffer.isView(i) ? i instanceof DataView ? new DataView(
   i.buffer.slice(i.byteOffset, i.byteOffset + i.byteLength)
@@ -200,6 +198,7 @@ class R {
     if (s !== void 0)
       return s.then((a) => ({
         ...a,
+        headers: { ...a.headers },
         data: F(a.data)
       }));
     const o = this.inner.get(t, e);
@@ -210,7 +209,11 @@ class R {
     return o.then(n, n), o;
   }
   post(t, e, r) {
-    return this.inFlight.clear(), this.inner.post(t, e, r);
+    return this.detachInFlightReads(), this.inner.post(t, e, r);
+  }
+  // Any POST (batch, script) may write, so later reads must not join reads that started before it.
+  detachInFlightReads() {
+    this.inFlight.clear();
   }
 }
 class M {
@@ -260,7 +263,7 @@ Content-Length: ${this.byteLength(o)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class q {
+class I {
   config;
   table;
   record;
@@ -306,7 +309,7 @@ Content-Length: ${this.byteLength(r)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class A {
+class q {
   config;
   table;
   id;
@@ -346,7 +349,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class I {
+class A {
   operations;
   callback;
   config;
@@ -367,7 +370,7 @@ class I {
   }
   create({ table: t, record: e }) {
     return this.operations.push(
-      new q({
+      new I({
         config: this.config,
         table: t,
         record: e
@@ -376,7 +379,7 @@ class I {
   }
   delete({ table: t, id: e }) {
     return this.operations.push(
-      new A({
+      new q({
         config: this.config,
         table: t,
         id: e
@@ -537,7 +540,7 @@ class w {
   //     ];
   //
   batch() {
-    return new I(this.config, async (t) => {
+    return new A(this.config, async (t) => {
       const e = `batch_${y()}`, r = `changeset_${y()}`, s = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
@@ -609,7 +612,7 @@ Content-Type: multipart/mixed; boundary=${r}\r
     return this.logger.log(t);
   }
 }
-class k {
+class C {
   log(t) {
     console.dir(t, { depth: null });
   }
@@ -631,7 +634,7 @@ class B {
     logger: s,
     dedupe: o
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new k(), this.dedupe = o;
+    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new C(), this.dedupe = o;
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -733,7 +736,7 @@ class B {
 const m = (i) => {
   if (typeof i != "string") throw new TypeError("Invalid OData string");
   return `'${i.replaceAll("'", "''")}'`;
-}, C = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, E = (i) => {
+}, k = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, E = (i) => {
   if (typeof i == "number") {
     if (!Number.isFinite(i)) throw new TypeError("Invalid OData number");
     return String(i);
@@ -741,7 +744,7 @@ const m = (i) => {
   if (typeof i != "string")
     throw new TypeError("Invalid OData number");
   const t = i.trim();
-  if (!C.test(t))
+  if (!k.test(t))
     throw new TypeError("Invalid OData number");
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
@@ -760,10 +763,10 @@ const m = (i) => {
   if (typeof i != "string") throw new TypeError("Invalid OData UUID");
   if (!j.test(i)) throw new TypeError("Invalid OData UUID");
   return m(i);
-}, U = /^[A-Za-z0-9 _-]+$/, H = (i) => {
+}, L = /^[A-Za-z0-9 _-]+$/, U = (i) => {
   if (typeof i != "string")
     throw new TypeError("Invalid OData identifier");
-  if (!U.test(i))
+  if (!L.test(i))
     throw new TypeError("Invalid OData identifier");
   return `"${i}"`;
 }, J = {
@@ -772,7 +775,7 @@ const m = (i) => {
   integer: P,
   boolean: S,
   uuid: z,
-  identifier: H
+  identifier: U
 };
 export {
   w as FileMaker,
@@ -781,7 +784,7 @@ export {
   B as FileMakerClient,
   O as FileMakerOAuthCredentials,
   N as FileMakerRawCredentials,
-  k as Logger,
+  C as Logger,
   p as NullFileMakerCredentials,
   V as NullLogger,
   J as odata

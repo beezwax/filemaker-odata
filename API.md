@@ -24,10 +24,11 @@ This document provides detailed documentation for all methods available in the `
 
 ### FileMaker Constructor
 
-The `FileMaker` class constructor requires the following configuration:
+The `FileMaker` class constructor takes the following options (this is an options object, not an exported type):
 
 ```typescript
-interface FileMakerConfig {
+// FileMaker constructor options
+{
   server: string;
   database: string;
   logger: ILogger;
@@ -40,7 +41,7 @@ interface FileMakerConfig {
 - `database` — The FileMaker database name
 - `logger` — A logger instance implementing `ILogger`
 - `request` — An `IRequest` instance for making HTTP requests
-- `dedupe?: boolean` (default: `true`) — When enabled, identical concurrent read requests made through the same FileMaker instance are deduplicated, with all callers receiving their own copy of the result. Reads are deduplicated only when the URL, response type, and request headers all match. See the [Request Deduplication](./README.md#request-deduplication) section in the README for details.
+- `dedupe?: boolean` (default: `true`) — Deduplicates identical concurrent reads. See [`dedupe` in the FileMakerClient constructor](#filemakerclient-constructor).
 
 **Note:** In most cases, you'll use `FileMakerClient` to create authenticated instances rather than constructing `FileMaker` directly. See the [README](./README.md) for authentication examples.
 

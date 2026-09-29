@@ -15,15 +15,21 @@ export const NodeBuffer = (
   }
 ).Buffer;
 
-export class MockRequest implements IRequest {
-  private requests: Record<"GET" | "POST", Record<string, IResponse<unknown>>>;
+type GetMock =
+  | { kind: "response"; response: IResponse<unknown> }
+  | { kind: "error"; error: Error };
 
-  private getErrors: Record<string, Error> = {};
+export class MockRequest implements IRequest {
+  private getMocks: Record<string, GetMock> = {};
+
+  private postMocks: Record<string, IResponse<unknown>> = {};
 
   private getGate: Promise<void> | undefined;
 
-  private responses: {
-    response: IResponse<unknown>;
+  // Every request made, in order, with the response it was answered with
+  // (none when the mock was an error).
+  private calls: {
+    response?: IResponse<unknown>;
     request: {
       type: "GET" | "POST";
       url: string;
@@ -31,15 +37,7 @@ export class MockRequest implements IRequest {
       params?: unknown;
       headers?: IResponseHeaders;
     };
-  }[];
-
-  constructor() {
-    this.requests = {
-      GET: {},
-      POST: {},
-    };
-    this.responses = [];
-  }
+  }[] = [];
 
   mock<T>({
     type,
@@ -52,11 +50,14 @@ export class MockRequest implements IRequest {
     data: T;
     headers?: IResponseHeaders;
   }) {
-    this.requests[type][url] = { data, headers: headers ?? {} };
+    const response = { data, headers: headers ?? {} };
+
+    if (type === "GET") this.getMocks[url] = { kind: "response", response };
+    else this.postMocks[url] = response;
   }
 
   mockGetError(url: string, error: Error) {
-    this.getErrors[url] = error;
+    this.getMocks[url] = { kind: "error", error };
   }
 
   // Keeps every GET pending until the returned function is called. Requests
@@ -73,31 +74,30 @@ export class MockRequest implements IRequest {
   }
 
   async get<T>(url: string, options?: RequestOptions) {
-    const response = this.requests.GET[url] as IResponse<T>;
-    const error = this.getErrors[url];
+    const mock = this.getMocks[url];
 
-    if (response === undefined && error === undefined)
+    if (mock === undefined)
       throw new Error(`Could not find mock GET request: "${url}"`);
 
     // Store response for latest inspection if needed by tests
-    this.responses.push({
-      response,
+    this.calls.push({
+      response: mock.kind === "response" ? mock.response : undefined,
       request: { type: "GET", url, options },
     });
 
     if (this.getGate !== undefined) await this.getGate;
 
-    if (error !== undefined) throw error;
+    if (mock.kind === "error") throw mock.error;
 
-    return response as IResponse<T>;
+    return mock.response as IResponse<T>;
   }
 
   latestRequest() {
-    return this.responses.at(-1)?.request;
+    return this.calls.at(-1)?.request;
   }
 
   requestCount(url: string) {
-    return this.responses.filter(({ request }) => request.url === url).length;
+    return this.calls.filter(({ request }) => request.url === url).length;
   }
 
   async post<T>(
@@ -105,17 +105,17 @@ export class MockRequest implements IRequest {
     params: string | Record<string, unknown> | null,
     options?: RequestOptions,
   ): Promise<T> {
-    const request = this.requests.POST[url];
+    const response = this.postMocks[url];
 
-    if (request === undefined)
+    if (response === undefined)
       throw new Error(`Could not find mock POST request: "${url}"`);
 
     // Store response for latest inspection if needed by tests
-    this.responses.push({
-      response: request,
+    this.calls.push({
+      response,
       request: { type: "POST", url, params, options },
     });
 
-    return request as T;
+    return response as T;
   }
 }
