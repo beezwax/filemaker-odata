@@ -33,15 +33,13 @@ The `FileMaker` class constructor takes the following options (this is an option
   database: string;
   logger: ILogger;
   request: IRequest;
-  dedupe?: boolean;
 }
 ```
 
 - `server` — The FileMaker server hostname
 - `database` — The FileMaker database name
 - `logger` — A logger instance implementing `ILogger`
-- `request` — An `IRequest` instance for making HTTP requests
-- `dedupe?: boolean` (default: `true`) — Deduplicates identical concurrent reads. See [`dedupe` in the FileMakerClient constructor](#filemakerclient-constructor).
+- `request` — An `IRequest` instance for making HTTP requests. It is used as given. To deduplicate reads on a `FileMaker` you create directly, wrap it: `request: new DedupeRequest(request)`. See [`dedupe` in the FileMakerClient constructor](#filemakerclient-constructor).
 
 **Note:** In most cases, you'll use `FileMakerClient` to create authenticated instances rather than constructing `FileMaker` directly. See the [README](./README.md) for authentication examples.
 

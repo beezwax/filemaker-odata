@@ -9,7 +9,7 @@ interface MockPersonRecord {
   COMPANY: string;
 }
 
-const fixtures = ({ dedupe }: { dedupe?: boolean } = {}) => {
+const fixtures = () => {
   const request = new MockRequest();
   const logger = new NullLogger();
   const fm = new FileMaker({
@@ -17,7 +17,6 @@ const fixtures = ({ dedupe }: { dedupe?: boolean } = {}) => {
     database: "test",
     logger,
     request,
-    dedupe,
   });
 
   return { fm, request };

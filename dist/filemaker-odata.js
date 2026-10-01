@@ -60,7 +60,7 @@ class p {
     return {};
   }
 }
-class O {
+class T {
   requestId;
   identifier;
   constructor({
@@ -78,7 +78,7 @@ class O {
     };
   }
 }
-class v {
+class O {
   username;
   password;
   constructor({ username: t, password: e }) {
@@ -181,42 +181,7 @@ class X {
     )).data.response.token ?? null;
   }
 }
-const x = (i, t) => {
-  const e = Object.entries(t?.headers ?? {}).map(([r, s]) => [r.toLowerCase(), s]).sort(([r], [s]) => r < s ? -1 : r > s ? 1 : 0);
-  return JSON.stringify([i, t?.responseType ?? null, e]);
-}, F = (i) => ArrayBuffer.isView(i) ? i instanceof DataView ? new DataView(
-  i.buffer.slice(i.byteOffset, i.byteOffset + i.byteLength)
-) : Uint8Array.prototype.slice.call(i) : structuredClone(i);
-class R {
-  inner;
-  inFlight = /* @__PURE__ */ new Map();
-  constructor(t) {
-    this.inner = t;
-  }
-  get(t, e) {
-    const r = x(t, e), s = this.inFlight.get(r);
-    if (s !== void 0)
-      return s.then((a) => ({
-        ...a,
-        headers: { ...a.headers },
-        data: F(a.data)
-      }));
-    const o = this.inner.get(t, e);
-    this.inFlight.set(r, o);
-    const n = () => {
-      this.inFlight.get(r) === o && this.inFlight.delete(r);
-    };
-    return o.then(n, n), o;
-  }
-  post(t, e, r) {
-    return this.detachInFlightReads(), this.inner.post(t, e, r);
-  }
-  // Any POST (batch, script) may write, so later reads must not join reads that started before it.
-  detachInFlightReads() {
-    this.inFlight.clear();
-  }
-}
-class M {
+class x {
   config;
   table;
   record;
@@ -263,7 +228,7 @@ Content-Length: ${this.byteLength(o)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class I {
+class F {
   config;
   table;
   record;
@@ -309,7 +274,7 @@ Content-Length: ${this.byteLength(r)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class q {
+class v {
   config;
   table;
   id;
@@ -349,7 +314,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class A {
+class R {
   operations;
   callback;
   config;
@@ -361,7 +326,7 @@ class A {
     record: e
   }) {
     return this.operations.push(
-      new M({
+      new x({
         config: this.config,
         table: t,
         record: e
@@ -370,7 +335,7 @@ class A {
   }
   create({ table: t, record: e }) {
     return this.operations.push(
-      new I({
+      new F({
         config: this.config,
         table: t,
         record: e
@@ -379,7 +344,7 @@ class A {
   }
   delete({ table: t, id: e }) {
     return this.operations.push(
-      new q({
+      new v({
         config: this.config,
         table: t,
         id: e
@@ -394,7 +359,7 @@ const y = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (i) => {
   const t = Math.random() * 16 | 0;
   return (i == "x" ? t : t & 3 | 8).toString(16);
 });
-class w {
+class M {
   config;
   logger;
   request;
@@ -402,10 +367,9 @@ class w {
     server: t,
     database: e,
     logger: r,
-    request: s,
-    dedupe: o = !0
+    request: s
   }) {
-    this.config = { server: t, database: e }, this.logger = r, this.request = o ? new R(s) : s;
+    this.config = { server: t, database: e }, this.logger = r, this.request = s;
   }
   url(t) {
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
@@ -540,7 +504,7 @@ class w {
   //     ];
   //
   batch() {
-    return new A(this.config, async (t) => {
+    return new R(this.config, async (t) => {
       const e = `batch_${y()}`, r = `changeset_${y()}`, s = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
@@ -565,7 +529,7 @@ Content-Type: multipart/mixed; boundary=${r}\r
         if (n === null) throw new Error("Could not find changeset");
         const a = n[0].split("=")[1].trim();
         return o.data.split(`--${a}`).slice(1, -1).map(
-          (b, T) => t[T].parseResponse(b)
+          (m, b) => t[b].parseResponse(m)
         );
       } catch (o) {
         throw h(o) && (this.log("[FileMaker] batch: HTTP error"), this.log(o.data)), o;
@@ -612,7 +576,42 @@ Content-Type: multipart/mixed; boundary=${r}\r
     return this.logger.log(t);
   }
 }
-class C {
+const I = (i, t) => {
+  const e = Object.entries(t?.headers ?? {}).map(([r, s]) => [r.toLowerCase(), s]).sort(([r], [s]) => r < s ? -1 : r > s ? 1 : 0);
+  return JSON.stringify([i, t?.responseType ?? null, e]);
+}, k = (i) => ArrayBuffer.isView(i) ? i instanceof DataView ? new DataView(
+  i.buffer.slice(i.byteOffset, i.byteOffset + i.byteLength)
+) : Uint8Array.prototype.slice.call(i) : structuredClone(i);
+class q {
+  inner;
+  inFlight = /* @__PURE__ */ new Map();
+  constructor(t) {
+    this.inner = t;
+  }
+  get(t, e) {
+    const r = I(t, e), s = this.inFlight.get(r);
+    if (s !== void 0)
+      return s.then((a) => ({
+        ...a,
+        headers: { ...a.headers },
+        data: k(a.data)
+      }));
+    const o = this.inner.get(t, e);
+    this.inFlight.set(r, o);
+    const n = () => {
+      this.inFlight.get(r) === o && this.inFlight.delete(r);
+    };
+    return o.then(n, n), o;
+  }
+  post(t, e, r) {
+    return this.detachInFlightReads(), this.inner.post(t, e, r);
+  }
+  // Any POST (batch, script) may write, so later reads must not join reads that started before it.
+  detachInFlightReads() {
+    this.inFlight.clear();
+  }
+}
+class A {
   log(t) {
     console.dir(t, { depth: null });
   }
@@ -632,9 +631,9 @@ class B {
     database: e,
     agent: r,
     logger: s,
-    dedupe: o
+    dedupe: o = !0
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new C(), this.dedupe = o;
+    this.server = t, this.database = e, this.agent = r, this.logger = s ?? new A(), this.dedupe = o;
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -647,14 +646,8 @@ class B {
     username: t,
     password: e
   }) {
-    const r = new v({ username: t, password: e }), s = new u(r, this.agent);
-    return new w({
-      server: this.server,
-      database: this.database,
-      logger: this.logger,
-      request: s,
-      dedupe: this.dedupe
-    });
+    const r = new O({ username: t, password: e });
+    return this.buildFileMaker(new u(r, this.agent));
   }
   /**
    * Creates a FileMaker instance configured with OAuth credentials.
@@ -667,16 +660,18 @@ class B {
     requestId: t,
     identifier: e
   }) {
-    const r = new O({
+    const r = new T({
       requestId: t,
       identifier: e
-    }), s = new u(r, this.agent);
-    return new w({
+    });
+    return this.buildFileMaker(new u(r, this.agent));
+  }
+  buildFileMaker(t) {
+    return new M({
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request: s,
-      dedupe: this.dedupe
+      request: this.dedupe ? new q(t) : t
     });
   }
   /**
@@ -733,10 +728,10 @@ class B {
     return `https://${this.server}/fmi/odata/v4/${this.database}/${t}`;
   }
 }
-const m = (i) => {
+const w = (i) => {
   if (typeof i != "string") throw new TypeError("Invalid OData string");
   return `'${i.replaceAll("'", "''")}'`;
-}, k = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, E = (i) => {
+}, C = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, E = (i) => {
   if (typeof i == "number") {
     if (!Number.isFinite(i)) throw new TypeError("Invalid OData number");
     return String(i);
@@ -744,7 +739,7 @@ const m = (i) => {
   if (typeof i != "string")
     throw new TypeError("Invalid OData number");
   const t = i.trim();
-  if (!k.test(t))
+  if (!C.test(t))
     throw new TypeError("Invalid OData number");
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
@@ -762,7 +757,7 @@ const m = (i) => {
 }, j = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, z = (i) => {
   if (typeof i != "string") throw new TypeError("Invalid OData UUID");
   if (!j.test(i)) throw new TypeError("Invalid OData UUID");
-  return m(i);
+  return w(i);
 }, L = /^[A-Za-z0-9 _-]+$/, U = (i) => {
   if (typeof i != "string")
     throw new TypeError("Invalid OData identifier");
@@ -770,7 +765,7 @@ const m = (i) => {
     throw new TypeError("Invalid OData identifier");
   return `"${i}"`;
 }, J = {
-  string: m,
+  string: w,
   number: E,
   integer: P,
   boolean: S,
@@ -778,13 +773,14 @@ const m = (i) => {
   identifier: U
 };
 export {
-  w as FileMaker,
+  q as DedupeRequest,
+  M as FileMaker,
   X as FileMakerAuthenticator,
-  v as FileMakerBasicCredentials,
+  O as FileMakerBasicCredentials,
   B as FileMakerClient,
-  O as FileMakerOAuthCredentials,
+  T as FileMakerOAuthCredentials,
   N as FileMakerRawCredentials,
-  C as Logger,
+  A as Logger,
   p as NullFileMakerCredentials,
   V as NullLogger,
   J as odata

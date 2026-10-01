@@ -1,6 +1,11 @@
 import axios from "axios";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import { FileMaker, FileMakerClient, NullLogger } from "../src/index";
+import {
+  DedupeRequest,
+  FileMaker,
+  FileMakerClient,
+  NullLogger,
+} from "../src/index";
 import { MockRequest, NodeBuffer } from "./mocks";
 
 interface MockPersonRecord {
@@ -8,14 +13,13 @@ interface MockPersonRecord {
   NAME: string;
 }
 
-const fixtures = ({ dedupe }: { dedupe?: boolean } = {}) => {
+const fixtures = ({ dedupe = true }: { dedupe?: boolean } = {}) => {
   const request = new MockRequest();
   const fm = new FileMaker({
     server: "demo.server.beezwax.net",
     database: "test",
     logger: new NullLogger(),
-    request,
-    dedupe,
+    request: dedupe ? new DedupeRequest(request) : request,
   });
 
   return { fm, request };
@@ -35,7 +39,7 @@ afterEach(() => {
 });
 
 describe("dedupe", () => {
-  test("does not share requests when dedupe is false", async () => {
+  test("FileMaker does not share requests when its request is not a DedupeRequest", async () => {
     const { fm, request } = fixtures({ dedupe: false });
     mockPeople(request, fm);
 
@@ -45,26 +49,6 @@ describe("dedupe", () => {
     ]);
 
     expect(request.requestCount(fm.url(peopleUrl))).toEqual(2);
-  });
-
-  test("never shares requests between FileMaker instances", async () => {
-    const request = new MockRequest();
-    const build = () =>
-      new FileMaker({
-        server: "demo.server.beezwax.net",
-        database: "test",
-        logger: new NullLogger(),
-        request,
-      });
-    const [first, second] = [build(), build()];
-    mockPeople(request, first);
-
-    await Promise.all([
-      first.getRecords<MockPersonRecord>("people"),
-      second.getRecords<MockPersonRecord>("people"),
-    ]);
-
-    expect(request.requestCount(first.url(peopleUrl))).toEqual(2);
   });
 
   test("a caller mutating its result does not affect a concurrent caller", async () => {
@@ -83,8 +67,7 @@ describe("dedupe", () => {
     expect(second[0].NAME).toEqual("Fede");
   });
 
-  // Nothing passes `dedupe`, so every row also proves dedup is on by default.
-  describe("concurrent identical reads are shared by default", () => {
+  describe("concurrent identical reads are shared", () => {
     const subqueryParams = { table: "people", recordId: "1", path: "orders" };
     const crossjoinParams = { tables: ["people", "orders"], options: {} };
 
@@ -107,7 +90,8 @@ describe("dedupe", () => {
         name: "getRecordsWithCount",
         path: "people?$count=true&$format=application/json",
         data: { "@odata.count": 7, value: [{ ID: "1" }] },
-        read: (fm: FileMaker) => fm.getRecordsWithCount<MockPersonRecord>("people"),
+        read: (fm: FileMaker) =>
+          fm.getRecordsWithCount<MockPersonRecord>("people"),
         expected: { data: [{ ID: "1" }], count: 7 },
       },
       {
@@ -258,6 +242,19 @@ describe("dedupe", () => {
 
     test("does not dedupe when dedupe is false", async () => {
       const get = await concurrentGetRecords(build(false));
+      expect(get).toHaveBeenCalledTimes(2);
+    });
+
+    test("never shares requests between FileMaker instances", async () => {
+      const get = vi
+        .spyOn(axios, "get")
+        .mockResolvedValue({ data: { value: [] }, headers: {} });
+
+      await Promise.all([
+        build().getRecords("people"),
+        build().getRecords("people"),
+      ]);
+
       expect(get).toHaveBeenCalledTimes(2);
     });
   });

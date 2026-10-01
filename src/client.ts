@@ -1,5 +1,6 @@
 import { FileMaker } from "./filemaker";
-import { Request } from "./request";
+import { type IRequest, Request } from "./request";
+import { DedupeRequest } from "./dedupe-request";
 import { type ILogger, Logger } from "./logger";
 import {
   FileMakerBasicCredentials,
@@ -47,14 +48,14 @@ export class FileMakerClient {
   private database: string;
   private agent?: unknown;
   private logger: ILogger;
-  private dedupe?: boolean;
+  private dedupe: boolean;
 
   constructor({
     server,
     database,
     agent,
     logger,
-    dedupe,
+    dedupe = true,
   }: {
     server: string;
     database: string;
@@ -84,14 +85,7 @@ export class FileMakerClient {
     password: string;
   }): FileMaker {
     const credentials = new FileMakerBasicCredentials({ username, password });
-    const request = new Request(credentials, this.agent);
-    return new FileMaker({
-      server: this.server,
-      database: this.database,
-      logger: this.logger,
-      request,
-      dedupe: this.dedupe,
-    });
+    return this.buildFileMaker(new Request(credentials, this.agent));
   }
 
   /**
@@ -112,13 +106,15 @@ export class FileMakerClient {
       requestId,
       identifier,
     });
-    const request = new Request(credentials, this.agent);
+    return this.buildFileMaker(new Request(credentials, this.agent));
+  }
+
+  private buildFileMaker(request: IRequest): FileMaker {
     return new FileMaker({
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request,
-      dedupe: this.dedupe,
+      request: this.dedupe ? new DedupeRequest(request) : request,
     });
   }
 

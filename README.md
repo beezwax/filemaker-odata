@@ -223,13 +223,25 @@ request that starts after a write has started sends a new HTTP request. Each `Fi
 instance has its own deduplication, so different users (for example different instances
 created with `withBasicAuth`) never share requests.
 
-Deduplication is enabled by default. To disable it:
+`FileMakerClient` enables deduplication by default. To disable it:
 
 ```typescript
 const client = new FileMakerClient({
   server: "demo.server.beezwax.net",
   database: "test",
   dedupe: false,
+});
+```
+
+A `FileMaker` you construct yourself does not deduplicate. To turn it on, wrap
+its request in `DedupeRequest`:
+
+```typescript
+const fm = new FileMaker({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  logger,
+  request: new DedupeRequest(request),
 });
 ```
 
