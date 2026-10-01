@@ -1,5 +1,6 @@
 import { FileMaker } from "./filemaker";
-import { Request } from "./request";
+import { type IRequest, Request } from "./request";
+import { DedupeRequest } from "./dedupe-request";
 import { type ILogger, Logger } from "./logger";
 import {
   FileMakerBasicCredentials,
@@ -17,6 +18,9 @@ interface OAuthResponse {
  * A facade class that simplifies the creation and configuration of FileMaker
  * instances. This class handles the composition of credentials, requests, and
  * the FileMaker client internally.
+ *
+ * Identical concurrent GET requests made through the same FileMaker instance
+ * are shared by default. Pass `dedupe: false` to send every request.
  *
  * @example
  * // Basic authentication
@@ -44,22 +48,26 @@ export class FileMakerClient {
   private database: string;
   private agent?: unknown;
   private logger: ILogger;
+  private dedupe: boolean;
 
   constructor({
     server,
     database,
     agent,
     logger,
+    dedupe = true,
   }: {
     server: string;
     database: string;
     agent?: unknown;
     logger?: ILogger;
+    dedupe?: boolean;
   }) {
     this.server = server;
     this.database = database;
     this.agent = agent;
     this.logger = logger ?? new Logger();
+    this.dedupe = dedupe;
   }
 
   /**
@@ -77,13 +85,7 @@ export class FileMakerClient {
     password: string;
   }): FileMaker {
     const credentials = new FileMakerBasicCredentials({ username, password });
-    const request = new Request(credentials, this.agent);
-    return new FileMaker({
-      server: this.server,
-      database: this.database,
-      logger: this.logger,
-      request,
-    });
+    return this.buildFileMaker(new Request(credentials, this.agent));
   }
 
   /**
@@ -104,12 +106,15 @@ export class FileMakerClient {
       requestId,
       identifier,
     });
-    const request = new Request(credentials, this.agent);
+    return this.buildFileMaker(new Request(credentials, this.agent));
+  }
+
+  private buildFileMaker(request: IRequest): FileMaker {
     return new FileMaker({
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request,
+      request: this.dedupe ? new DedupeRequest(request) : request,
     });
   }
 

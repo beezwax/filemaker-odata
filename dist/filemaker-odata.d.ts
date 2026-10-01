@@ -18,6 +18,23 @@ declare type CountQueryOptions<T> = Pick<QueryOptions<T>, "$filter">;
 
 declare type CrossJoinQueryOptions<T> = Pick<QueryOptions<T>, "$filter" | "$expand" | "$format" | "$metadata">;
 
+/**
+ * An IRequest wrapper that shares the result of identical in-flight GETs.
+ *
+ * Only requests that are currently in flight are shared: nothing is cached
+ * after a request settles, and errors are never kept. Any POST detaches all
+ * in-flight GETs, so a read started after a write never joins a read that
+ * started before it.
+ */
+export declare class DedupeRequest implements IRequest {
+    private inner;
+    private inFlight;
+    constructor(inner: IRequest);
+    get<T>(url: string, options?: RequestOptions): Promise<IResponse<T>>;
+    post<T>(url: string, params: string | Record<string, unknown> | null, options?: RequestOptions): Promise<IResponse<T>>;
+    private detachInFlightReads;
+}
+
 export declare class FileMaker {
     private config;
     private logger;
@@ -124,6 +141,9 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * instances. This class handles the composition of credentials, requests, and
  * the FileMaker client internally.
  *
+ * Identical concurrent GET requests made through the same FileMaker instance
+ * are shared by default. Pass `dedupe: false` to send every request.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -150,11 +170,13 @@ export declare class FileMakerClient {
     private database;
     private agent?;
     private logger;
-    constructor({ server, database, agent, logger, }: {
+    private dedupe;
+    constructor({ server, database, agent, logger, dedupe, }: {
         server: string;
         database: string;
         agent?: unknown;
         logger?: ILogger;
+        dedupe?: boolean;
     });
     /**
      * Creates a FileMaker instance configured with basic authentication.
@@ -178,6 +200,7 @@ export declare class FileMakerClient {
         requestId: string;
         identifier: string;
     }): FileMaker;
+    private buildFileMaker;
     /**
      * Initiates the OAuth authentication flow by generating the OAuth URL.
      * Redirect the user to the returned URL to begin authentication.
