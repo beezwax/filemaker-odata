@@ -18,6 +18,7 @@ This document provides detailed documentation for all methods available in the `
   - [batch()](#batch)
   - [script()](#script)
 - [Query Options](#query-options)
+  - [Paging](#paging)
 - [OData Sanitization Utilities](#odata-sanitization-utilities)
 
 ## Configuration
@@ -105,6 +106,8 @@ console.log(metadata);
 
 Retrieves records from a specified table with optional query options.
 
+Results over 10,000 records are fetched automatically. See [Paging](#paging).
+
 **Signature:**
 
 ```typescript
@@ -167,6 +170,8 @@ const multiOrderedRecords = await fm.getRecords<CustomerRecord>("Customers", {
 Retrieves records along with the total count of matching records (ignoring pagination).
 Supports both OData `@odata.count` and FileMaker `@count` response fields.
 
+Results over 10,000 records are fetched automatically. See [Paging](#paging).
+
 **Signature:**
 
 ```typescript
@@ -183,8 +188,8 @@ async getRecordsWithCount<T>(
 
 **Returns:** An object containing:
 
-- `data` - Array of records
-- `count` - Total number of matching records
+- `data` - Array of records (all pages)
+- `count` - Total number of matching records from the first response
 
 **Example:**
 
@@ -353,6 +358,8 @@ fs.writeFileSync("product.jpg", Buffer.from(imageData));
 
 Retrieves related records through a relationship/portal.
 
+Results over 10,000 records are fetched automatically. See [Paging](#paging).
+
 **Signature:**
 
 ```typescript
@@ -371,7 +378,7 @@ async subquery<T>(params: {
 - `path` - The relationship/portal name
 - `options` - Optional query options
 
-**Returns:** An array of related records
+**Returns:** An array of related records (all pages)
 
 **Example:**
 
@@ -674,6 +681,26 @@ const records = await fm.getRecords<ProductRecord>("Products", {
   $top: 20,
 });
 ```
+
+### Paging
+
+FileMaker returns at most 10,000 records per response. The `getRecords()`, `getRecordsWithCount()`, and `subquery()` methods follow `@odata.nextLink` or `@nextLink` and return all records. Use `$top` to limit the number of records.
+
+```typescript
+// Get all records (automatic paging)
+const all = await fm.getRecords("Products");
+
+// Get only the first 100 records
+const limited = await fm.getRecords("Products", { $top: 100 });
+```
+
+**Important behavior:**
+
+- If the data changes while pages are being fetched, records can be duplicated or missed. Each page is a separate request.
+- If any page request fails, the method throws. No partial result is returned.
+- A next link to a different origin than the configured server is refused. The method throws.
+- XML responses (`$format: "xml"`) are not paged.
+- For `getRecordsWithCount()`, `count` comes from the first response. `data` holds all pages.
 
 ### $filter
 

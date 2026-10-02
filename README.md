@@ -35,6 +35,8 @@ const fm = client.withBasicAuth({
 const records = await fm.getRecords("MY_TABLE");
 ```
 
+The library automatically fetches all pages when results exceed FileMaker's 10,000-record limit per response. Use `$top` to limit results. See [Paging](./API.md#paging).
+
 For documentation on the `fm` instance see the [API](./API.md) documentation.
 
 ## OData Filter Input
