@@ -114,11 +114,11 @@ export class FileMaker {
     );
 
     try {
-      const response = await this.request.get<{ value: T[] }>(
+      const { records } = await this.getAllPages<T>(
         `${this.url(`${params.table}('${params.recordId}')/${params.path}`)}?${this.parameterize(params.options)}`,
       );
 
-      return response.data.value;
+      return records;
     } catch (error) {
       if (isRequestError(error)) {
         this.log("[FileMaker] subquery: HTTP error");
@@ -195,15 +195,13 @@ export class FileMaker {
     this.log(`URL: ${this.url(table)}?${this.parameterize(actualOptions)}`);
 
     try {
-      const response = await this.request.get<{
-        value: T[];
-        "@odata.count"?: number;
-        "@count"?: number;
-      }>(`${this.url(table)}?${this.parameterize(actualOptions)}`);
+      const { records, firstPage } = await this.getAllPages<T>(
+        `${this.url(table)}?${this.parameterize(actualOptions)}`,
+      );
 
       return {
-        data: response.data.value,
-        count: response.data["@odata.count"] ?? response.data["@count"] ?? 0,
+        data: records,
+        count: firstPage["@odata.count"] ?? firstPage["@count"] ?? 0,
       };
     } catch (error) {
       if (isRequestError(error)) {

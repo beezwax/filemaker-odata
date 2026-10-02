@@ -599,6 +599,68 @@ describe("getRecordsWithCount", () => {
     expect(response.data.length).toEqual(1);
     expect(response.count).toEqual(0);
   });
+
+  test("follows next links and keeps the first page's count", async () => {
+    const { fm, request } = fixtures();
+    const url = fm.url("people?$count=true&$format=application/json");
+    request.mock({
+      type: "GET",
+      url,
+      data: {
+        "@odata.count": 2,
+        value: [{ ID: "1", NAME: "P1", COMPANY: "Beezwax" }],
+        "@odata.nextLink": fm.url("people?$skiptoken=1"),
+      },
+    });
+    request.mock({
+      type: "GET",
+      url: fm.url("people?$skiptoken=1"),
+      data: { value: [{ ID: "2", NAME: "P2", COMPANY: "Beezwax" }] },
+    });
+
+    const response = await fm.getRecordsWithCount<MockPersonRecord>("people");
+
+    expect(response.data.map((r) => r.ID)).toEqual(["1", "2"]);
+    expect(response.count).toEqual(2);
+  });
+});
+
+describe("subquery", () => {
+  const params = { table: "people", recordId: "1", path: "pets" };
+  const firstUrl = (fm: { url: (path: string) => string }) =>
+    fm.url("people('1')/pets?$format=application/json");
+
+  test("returns the records of a single page", async () => {
+    const { fm, request } = fixtures();
+    request.mock({
+      type: "GET",
+      url: firstUrl(fm),
+      data: { value: [{ ID: "1" }] },
+    });
+
+    const response = await fm.subquery<{ ID: string }>(params);
+    expect(response).toEqual([{ ID: "1" }]);
+  });
+
+  test("follows @nextLink across pages", async () => {
+    const { fm, request } = fixtures();
+    request.mock({
+      type: "GET",
+      url: firstUrl(fm),
+      data: {
+        value: [{ ID: "1" }],
+        "@nextLink": fm.url("people('1')/pets?$skiptoken=1"),
+      },
+    });
+    request.mock({
+      type: "GET",
+      url: fm.url("people('1')/pets?$skiptoken=1"),
+      data: { value: [{ ID: "2" }] },
+    });
+
+    const response = await fm.subquery<{ ID: string }>(params);
+    expect(response.map((r) => r.ID)).toEqual(["1", "2"]);
+  });
 });
 
 describe("countRecords", () => {
