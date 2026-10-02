@@ -22,6 +22,27 @@ const fixtures = () => {
   return { fm, request };
 };
 
+const person = (ID: string): MockPersonRecord => ({
+  ID,
+  NAME: `P${ID}`,
+  COMPANY: "Beezwax",
+});
+
+const mockPageChain = (
+  request: MockRequest,
+  pages: { url: string; records: MockPersonRecord[] }[],
+  nextLinkKey: "@odata.nextLink" | "@nextLink" = "@odata.nextLink",
+) => {
+  pages.forEach(({ url, records }, index) => {
+    const next = pages[index + 1];
+    request.mock({
+      type: "GET",
+      url,
+      data: { value: records, ...(next && { [nextLinkKey]: next.url }) },
+    });
+  });
+};
+
 const expectODataError = (callback: () => unknown, message: string) => {
   try {
     callback();
@@ -418,25 +439,15 @@ describe("getRecords", () => {
   });
 
   describe("paging", () => {
-    const firstUrl = (fm: { url: (path: string) => string }) =>
-      fm.url("people?$format=application/json");
-    const person = (ID: string) => ({ ID, NAME: `P${ID}`, COMPANY: "Beezwax" });
-
     test("follows an absolute @odata.nextLink", async () => {
       const { fm, request } = fixtures();
-      request.mock({
-        type: "GET",
-        url: firstUrl(fm),
-        data: {
-          value: [person("1")],
-          "@odata.nextLink": fm.url("people?$skiptoken=1"),
+      mockPageChain(request, [
+        {
+          url: fm.url("people?$format=application/json"),
+          records: [person("1")],
         },
-      });
-      request.mock({
-        type: "GET",
-        url: fm.url("people?$skiptoken=1"),
-        data: { value: [person("2")] },
-      });
+        { url: fm.url("people?$skiptoken=1"), records: [person("2")] },
+      ]);
 
       const response = await fm.getRecords<MockPersonRecord>("people");
       expect(response.map((r) => r.ID)).toEqual(["1", "2"]);
@@ -444,27 +455,18 @@ describe("getRecords", () => {
 
     test("follows @nextLink across three pages", async () => {
       const { fm, request } = fixtures();
-      request.mock({
-        type: "GET",
-        url: firstUrl(fm),
-        data: {
-          value: [person("1")],
-          "@nextLink": fm.url("people?$skiptoken=1"),
-        },
-      });
-      request.mock({
-        type: "GET",
-        url: fm.url("people?$skiptoken=1"),
-        data: {
-          value: [person("2")],
-          "@nextLink": fm.url("people?$skiptoken=2"),
-        },
-      });
-      request.mock({
-        type: "GET",
-        url: fm.url("people?$skiptoken=2"),
-        data: { value: [person("3")] },
-      });
+      mockPageChain(
+        request,
+        [
+          {
+            url: fm.url("people?$format=application/json"),
+            records: [person("1")],
+          },
+          { url: fm.url("people?$skiptoken=1"), records: [person("2")] },
+          { url: fm.url("people?$skiptoken=2"), records: [person("3")] },
+        ],
+        "@nextLink",
+      );
 
       const response = await fm.getRecords<MockPersonRecord>("people");
       expect(response.map((r) => r.ID)).toEqual(["1", "2", "3"]);
@@ -474,7 +476,7 @@ describe("getRecords", () => {
       const { fm, request } = fixtures();
       request.mock({
         type: "GET",
-        url: firstUrl(fm),
+        url: fm.url("people?$format=application/json"),
         data: {
           value: [person("1")],
           "@odata.nextLink": "people?$skiptoken=10000",
@@ -499,7 +501,7 @@ describe("getRecords", () => {
         "https://evil.example.com/fmi/odata/v4/test/people?$skiptoken=1";
       request.mock({
         type: "GET",
-        url: firstUrl(fm),
+        url: fm.url("people?$format=application/json"),
         data: { value: [person("1")], "@odata.nextLink": evil },
       });
 
@@ -513,7 +515,7 @@ describe("getRecords", () => {
       const { fm, request } = fixtures();
       request.mock({
         type: "GET",
-        url: firstUrl(fm),
+        url: fm.url("people?$format=application/json"),
         data: {
           value: [person("1")],
           "@odata.nextLink": fm.url("people?$skiptoken=1"),
@@ -526,16 +528,53 @@ describe("getRecords", () => {
       );
     });
 
+    test("refuses a cross-origin next link on a later page", async () => {
+      const { fm, request } = fixtures();
+      const evil =
+        "https://evil.example.com/fmi/odata/v4/test/people?$skiptoken=2";
+      request.mock({
+        type: "GET",
+        url: fm.url("people?$format=application/json"),
+        data: {
+          value: [person("1")],
+          "@odata.nextLink": fm.url("people?$skiptoken=1"),
+        },
+      });
+      request.mock({
+        type: "GET",
+        url: fm.url("people?$skiptoken=1"),
+        data: { value: [person("2")], "@odata.nextLink": evil },
+      });
+
+      await expect(fm.getRecords<MockPersonRecord>("people")).rejects.toThrow(
+        "Refusing to follow OData next link to another origin: https://evil.example.com",
+      );
+      expect(request.requestCount(evil)).toEqual(0);
+    });
+
+    test("does not page XML responses", async () => {
+      const { fm, request } = fixtures();
+      const url = fm.url("people?$format=application/xml");
+      request.mock<string>({ type: "GET", url, data: "<feed/>" });
+
+      await expect(
+        fm.getRecords<MockPersonRecord>("people", { $format: "xml" }),
+      ).resolves.not.toThrow();
+      expect(request.requestCount(url)).toEqual(1);
+    });
+
     test("makes a single request when there is no next link", async () => {
       const { fm, request } = fixtures();
       request.mock({
         type: "GET",
-        url: firstUrl(fm),
+        url: fm.url("people?$format=application/json"),
         data: { value: [person("1")] },
       });
 
       await fm.getRecords<MockPersonRecord>("people");
-      expect(request.requestCount(firstUrl(fm))).toEqual(1);
+      expect(
+        request.requestCount(fm.url("people?$format=application/json")),
+      ).toEqual(1);
     });
   });
 });
@@ -608,14 +647,14 @@ describe("getRecordsWithCount", () => {
       url,
       data: {
         "@odata.count": 2,
-        value: [{ ID: "1", NAME: "P1", COMPANY: "Beezwax" }],
+        value: [person("1")],
         "@odata.nextLink": fm.url("people?$skiptoken=1"),
       },
     });
     request.mock({
       type: "GET",
       url: fm.url("people?$skiptoken=1"),
-      data: { value: [{ ID: "2", NAME: "P2", COMPANY: "Beezwax" }] },
+      data: { value: [person("2")] },
     });
 
     const response = await fm.getRecordsWithCount<MockPersonRecord>("people");
@@ -627,14 +666,12 @@ describe("getRecordsWithCount", () => {
 
 describe("subquery", () => {
   const params = { table: "people", recordId: "1", path: "pets" };
-  const firstUrl = (fm: { url: (path: string) => string }) =>
-    fm.url("people('1')/pets?$format=application/json");
 
   test("returns the records of a single page", async () => {
     const { fm, request } = fixtures();
     request.mock({
       type: "GET",
-      url: firstUrl(fm),
+      url: fm.url("people('1')/pets?$format=application/json"),
       data: { value: [{ ID: "1" }] },
     });
 
@@ -646,7 +683,7 @@ describe("subquery", () => {
     const { fm, request } = fixtures();
     request.mock({
       type: "GET",
-      url: firstUrl(fm),
+      url: fm.url("people('1')/pets?$format=application/json"),
       data: {
         value: [{ ID: "1" }],
         "@nextLink": fm.url("people('1')/pets?$skiptoken=1"),
