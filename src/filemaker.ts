@@ -44,6 +44,12 @@ type CrossJoinQueryOptions<T> = Pick<
 
 type CountQueryOptions<T> = Pick<QueryOptions<T>, "$filter">;
 
+type Page<T> = {
+  value: T[];
+  "@odata.nextLink"?: string;
+  "@nextLink"?: string;
+};
+
 export interface MetadataOptions {
   $format?: "json" | "xml";
 }
@@ -109,16 +115,10 @@ export class FileMaker {
     this.log(`[FileMaker] Get records from ${params.table}`);
     this.log("Options:");
     this.log(params.options);
-    this.log(
-      `URL: ${this.url(`${params.table}('${params.recordId}')/${params.path}`)}?${this.parameterize(params.options)}`,
-    );
+    const url = `${this.url(`${params.table}('${params.recordId}')/${params.path}`)}?${this.parameterize(params.options)}`;
 
     try {
-      const response = await this.request.get<{ value: T[] }>(
-        `${this.url(`${params.table}('${params.recordId}')/${params.path}`)}?${this.parameterize(params.options)}`,
-      );
-
-      return response.data.value;
+      return (await this.getPagedCollection<Page<T>>(url)).value;
     } catch (error) {
       if (isRequestError(error)) {
         this.log("[FileMaker] subquery: HTTP error");
@@ -132,15 +132,10 @@ export class FileMaker {
     this.log(`[FileMaker] Get records from ${table}`);
     this.log("Options:");
     this.log(options);
-    this.log(`URL: ${this.url(table)}?${this.parameterize(options)}`);
+    const url = `${this.url(table)}?${this.parameterize(options)}`;
 
     try {
-      const response = await this.request.get<{
-        value: T[];
-        "@odata.count"?: number;
-      }>(`${this.url(table)}?${this.parameterize(options)}`);
-
-      return response.data.value;
+      return (await this.getPagedCollection<Page<T>>(url)).value;
     } catch (error) {
       if (isRequestError(error)) {
         this.log("[FileMaker] getRecords: HTTP error");
@@ -159,18 +154,16 @@ export class FileMaker {
     // include the count
     const actualOptions: QueryOptions<T> = { ...options, $count: true };
 
-    this.log(`URL: ${this.url(table)}?${this.parameterize(actualOptions)}`);
+    const url = `${this.url(table)}?${this.parameterize(actualOptions)}`;
 
     try {
-      const response = await this.request.get<{
-        value: T[];
-        "@odata.count"?: number;
-        "@count"?: number;
-      }>(`${this.url(table)}?${this.parameterize(actualOptions)}`);
+      const page = await this.getPagedCollection<
+        Page<T> & { "@odata.count"?: number; "@count"?: number }
+      >(url);
 
       return {
-        data: response.data.value,
-        count: response.data["@odata.count"] ?? response.data["@count"] ?? 0,
+        data: page.value,
+        count: page["@odata.count"] ?? page["@count"] ?? 0,
       };
     } catch (error) {
       if (isRequestError(error)) {
@@ -394,6 +387,41 @@ export class FileMaker {
       }
       throw error;
     }
+  }
+
+  // FileMaker caps a JSON response at 10,000 records and links to the rest.
+  // Returns the first page with `value` holding the records of all pages.
+  private async getPagedCollection<P extends Page<unknown>>(
+    url: string,
+  ): Promise<P> {
+    this.log(`URL: ${url}`);
+    const first = (await this.request.get<P | string>(url)).data;
+    // XML responses are not paged (see #42).
+    if (typeof first === "string") return first as unknown as P;
+
+    const nextLinkOf = (page: P) =>
+      page["@odata.nextLink"] ?? page["@nextLink"];
+    const value = [...first.value];
+    let nextLink = nextLinkOf(first);
+    while (nextLink) {
+      const nextUrl = this.resolveNextLink(nextLink);
+      this.log(`URL: ${nextUrl}`);
+      const page = (await this.request.get<P>(nextUrl)).data;
+      value.push(...page.value);
+      nextLink = nextLinkOf(page);
+    }
+    return { ...first, value };
+  }
+
+  private resolveNextLink(link: string) {
+    const serviceRoot = this.url("");
+    const resolved = new URL(link, serviceRoot);
+    if (resolved.origin !== new URL(serviceRoot).origin) {
+      throw new Error(
+        `Refusing to follow OData next link to another origin: ${resolved.origin}`,
+      );
+    }
+    return resolved.href;
   }
 
   private parameterize<T>(options?: QueryOptions<T>) {

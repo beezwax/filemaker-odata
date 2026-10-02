@@ -70,6 +70,8 @@ export declare class FileMaker {
         success: boolean;
         data: T | undefined;
     }>;
+    private getPagedCollection;
+    private resolveNextLink;
     private parameterize;
     private parameterizeCount;
     private log;
