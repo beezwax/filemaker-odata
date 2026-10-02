@@ -416,6 +416,128 @@ describe("getRecords", () => {
       expect(response[0].COMPANY).toEqual("Beezwax");
     });
   });
+
+  describe("paging", () => {
+    const firstUrl = (fm: { url: (path: string) => string }) =>
+      fm.url("people?$format=application/json");
+    const person = (ID: string) => ({ ID, NAME: `P${ID}`, COMPANY: "Beezwax" });
+
+    test("follows an absolute @odata.nextLink", async () => {
+      const { fm, request } = fixtures();
+      request.mock({
+        type: "GET",
+        url: firstUrl(fm),
+        data: {
+          value: [person("1")],
+          "@odata.nextLink": fm.url("people?$skiptoken=1"),
+        },
+      });
+      request.mock({
+        type: "GET",
+        url: fm.url("people?$skiptoken=1"),
+        data: { value: [person("2")] },
+      });
+
+      const response = await fm.getRecords<MockPersonRecord>("people");
+      expect(response.map((r) => r.ID)).toEqual(["1", "2"]);
+    });
+
+    test("follows @nextLink across three pages", async () => {
+      const { fm, request } = fixtures();
+      request.mock({
+        type: "GET",
+        url: firstUrl(fm),
+        data: {
+          value: [person("1")],
+          "@nextLink": fm.url("people?$skiptoken=1"),
+        },
+      });
+      request.mock({
+        type: "GET",
+        url: fm.url("people?$skiptoken=1"),
+        data: {
+          value: [person("2")],
+          "@nextLink": fm.url("people?$skiptoken=2"),
+        },
+      });
+      request.mock({
+        type: "GET",
+        url: fm.url("people?$skiptoken=2"),
+        data: { value: [person("3")] },
+      });
+
+      const response = await fm.getRecords<MockPersonRecord>("people");
+      expect(response.map((r) => r.ID)).toEqual(["1", "2", "3"]);
+    });
+
+    test("resolves a relative next link against the service root", async () => {
+      const { fm, request } = fixtures();
+      request.mock({
+        type: "GET",
+        url: firstUrl(fm),
+        data: {
+          value: [person("1")],
+          "@odata.nextLink": "people?$skiptoken=10000",
+        },
+      });
+      request.mock({
+        type: "GET",
+        url: fm.url("people?$skiptoken=10000"),
+        data: { value: [person("2")] },
+      });
+
+      const response = await fm.getRecords<MockPersonRecord>("people");
+      expect(response.map((r) => r.ID)).toEqual(["1", "2"]);
+      expect(request.requestCount(fm.url("people?$skiptoken=10000"))).toEqual(
+        1,
+      );
+    });
+
+    test("refuses a next link to another origin without requesting it", async () => {
+      const { fm, request } = fixtures();
+      const evil =
+        "https://evil.example.com/fmi/odata/v4/test/people?$skiptoken=1";
+      request.mock({
+        type: "GET",
+        url: firstUrl(fm),
+        data: { value: [person("1")], "@odata.nextLink": evil },
+      });
+
+      await expect(fm.getRecords<MockPersonRecord>("people")).rejects.toThrow(
+        "Refusing to follow OData next link to another origin: https://evil.example.com",
+      );
+      expect(request.requestCount(evil)).toEqual(0);
+    });
+
+    test("rejects when a later page fails", async () => {
+      const { fm, request } = fixtures();
+      request.mock({
+        type: "GET",
+        url: firstUrl(fm),
+        data: {
+          value: [person("1")],
+          "@odata.nextLink": fm.url("people?$skiptoken=1"),
+        },
+      });
+      request.mockGetError(fm.url("people?$skiptoken=1"), new Error("boom"));
+
+      await expect(fm.getRecords<MockPersonRecord>("people")).rejects.toThrow(
+        "boom",
+      );
+    });
+
+    test("makes a single request when there is no next link", async () => {
+      const { fm, request } = fixtures();
+      request.mock({
+        type: "GET",
+        url: firstUrl(fm),
+        data: { value: [person("1")] },
+      });
+
+      await fm.getRecords<MockPersonRecord>("people");
+      expect(request.requestCount(firstUrl(fm))).toEqual(1);
+    });
+  });
 });
 
 describe("getRecordsWithCount", () => {

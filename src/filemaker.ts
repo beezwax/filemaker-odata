@@ -128,6 +128,40 @@ export class FileMaker {
     }
   }
 
+  // FileMaker caps a JSON response at 10,000 records and links to the rest.
+  private async getAllPages<T>(firstPageUrl: string) {
+    type Page = {
+      value: T[];
+      "@odata.count"?: number;
+      "@count"?: number;
+      "@odata.nextLink"?: string;
+      "@nextLink"?: string;
+    };
+    const serviceRoot = this.url("");
+    const nextLinkOf = (page: Page) =>
+      page["@odata.nextLink"] ?? page["@nextLink"];
+
+    const first = (await this.request.get<Page>(firstPageUrl)).data;
+    let nextLink = nextLinkOf(first);
+    // Without a next link, return the value untouched (XML bodies are strings).
+    if (!nextLink) return { records: first.value, firstPage: first };
+
+    const records = [...first.value];
+    while (nextLink) {
+      const resolved = new URL(nextLink, serviceRoot);
+      if (resolved.origin !== new URL(serviceRoot).origin) {
+        throw new Error(
+          `Refusing to follow OData next link to another origin: ${resolved.origin}`,
+        );
+      }
+      this.log(`URL: ${resolved.href}`);
+      const page = (await this.request.get<Page>(resolved.href)).data;
+      records.push(...page.value);
+      nextLink = nextLinkOf(page);
+    }
+    return { records, firstPage: first };
+  }
+
   async getRecords<T>(table: string, options?: QueryOptions<T>) {
     this.log(`[FileMaker] Get records from ${table}`);
     this.log("Options:");
@@ -135,12 +169,11 @@ export class FileMaker {
     this.log(`URL: ${this.url(table)}?${this.parameterize(options)}`);
 
     try {
-      const response = await this.request.get<{
-        value: T[];
-        "@odata.count"?: number;
-      }>(`${this.url(table)}?${this.parameterize(options)}`);
+      const { records } = await this.getAllPages<T>(
+        `${this.url(table)}?${this.parameterize(options)}`,
+      );
 
-      return response.data.value;
+      return records;
     } catch (error) {
       if (isRequestError(error)) {
         this.log("[FileMaker] getRecords: HTTP error");
