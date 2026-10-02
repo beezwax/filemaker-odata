@@ -53,6 +53,7 @@ export declare class FileMaker {
         path: string;
         options?: QueryOptions<T>;
     }): Promise<T[]>;
+    private getAllPages;
     getRecords<T>(table: string, options?: QueryOptions<T>): Promise<T[]>;
     getRecordsWithCount<T>(table: string, options?: QueryOptions<T>): Promise<{
         data: T[];
