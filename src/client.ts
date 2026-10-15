@@ -7,6 +7,7 @@ import {
 } from "./concurrency-limit-request";
 import { type ILogger, Logger } from "./logger";
 import {
+  type FileMakerCredentials,
   FileMakerBasicCredentials,
   FileMakerOAuthCredentials,
   NullFileMakerCredentials,
@@ -25,6 +26,21 @@ const hasConcurrencyLimit = (
 ): concurrency is number =>
   concurrency !== undefined && concurrency !== 0 && concurrency !== Infinity;
 
+// The largest delay JS timers support; longer delays fire almost at once.
+const MAX_TIMEOUT = 2147483647;
+
+// undefined, 0 and Infinity mean "no timeout". Anything else must be a
+// positive finite number of milliseconds.
+const normalizeTimeout = (timeout: number | undefined): number | undefined => {
+  if (timeout === undefined || timeout === 0 || timeout === Infinity)
+    return undefined;
+  if (typeof timeout === "number" && timeout > 0 && timeout <= MAX_TIMEOUT)
+    return timeout;
+  throw new RangeError(
+    `timeout must be a positive number up to ${MAX_TIMEOUT}, 0 or Infinity`,
+  );
+};
+
 /**
  * A facade class that simplifies the creation and configuration of FileMaker
  * instances. This class handles the composition of credentials, requests, and
@@ -36,6 +52,14 @@ const hasConcurrencyLimit = (
  * Pass `concurrency` to cap the number of HTTP requests in flight at once. The
  * cap is shared by every FileMaker this client builds. Leaving it out (or
  * passing undefined, 0 or Infinity) means no limit.
+ *
+ * Pass `timeout` (milliseconds, up to 2147483647) to drop a request that stops
+ * receiving data. A request fails when no response data is received for that
+ * long. The timer starts when the request is sent and restarts each time data
+ * arrives, so a response that keeps sending data is not cut off. This works
+ * the same in Node and browsers. Leaving it
+ * out (or passing undefined, 0 or Infinity) means no timeout. A timed-out
+ * request throws `RequestTimeoutError`.
  *
  * @example
  * // Basic authentication
@@ -65,6 +89,7 @@ export class FileMakerClient {
   private logger: ILogger;
   private dedupe: boolean;
   private concurrencyLimit?: ConcurrencyLimit;
+  private timeout?: number;
 
   constructor({
     server,
@@ -73,6 +98,7 @@ export class FileMakerClient {
     logger,
     dedupe = true,
     concurrency,
+    timeout,
   }: {
     server: string;
     database: string;
@@ -80,6 +106,7 @@ export class FileMakerClient {
     logger?: ILogger;
     dedupe?: boolean;
     concurrency?: number;
+    timeout?: number;
   }) {
     this.server = server;
     this.database = database;
@@ -89,6 +116,7 @@ export class FileMakerClient {
     this.concurrencyLimit = hasConcurrencyLimit(concurrency)
       ? new ConcurrencyLimit(concurrency)
       : undefined;
+    this.timeout = normalizeTimeout(timeout);
   }
 
   /**
@@ -106,7 +134,7 @@ export class FileMakerClient {
     password: string;
   }): FileMaker {
     const credentials = new FileMakerBasicCredentials({ username, password });
-    return this.buildFileMaker(new Request(credentials, this.agent));
+    return this.buildFileMaker(this.request(credentials));
   }
 
   /**
@@ -127,7 +155,11 @@ export class FileMakerClient {
       requestId,
       identifier,
     });
-    return this.buildFileMaker(new Request(credentials, this.agent));
+    return this.buildFileMaker(this.request(credentials));
+  }
+
+  private request(credentials: FileMakerCredentials): Request {
+    return new Request(credentials, this.agent, this.timeout);
   }
 
   private buildFileMaker(request: IRequest): FileMaker {
@@ -167,7 +199,7 @@ export class FileMakerClient {
     provider: string;
     returnUrl?: string;
   }): Promise<{ redirectUrl: string; requestId: string }> {
-    const request = new Request(new NullFileMakerCredentials(), this.agent);
+    const request = this.request(new NullFileMakerCredentials());
 
     const url = `https://${this.server}/oauth/getoauthurl?trackingID=${trackingId}&provider=${provider}&address=${this.server}&X-FMS-OAuth-AuthType=2`;
     const response = await request.get(url, {
@@ -198,7 +230,7 @@ export class FileMakerClient {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes(): Promise<string[]> {
-    const request = new Request(new NullFileMakerCredentials(), this.agent);
+    const request = this.request(new NullFileMakerCredentials());
 
     const response = await request.get<OAuthResponse>(
       `https://${this.server}/fmws/oauthproviderinfo`,

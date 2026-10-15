@@ -6,3 +6,9 @@ export * from "./dedupe-request";
 export * from "./filemaker";
 export * from "./logger";
 export * from "./odata";
+export {
+  RequestError,
+  RequestTimeoutError,
+  isRequestError,
+  isRequestTimeoutError,
+} from "./request";

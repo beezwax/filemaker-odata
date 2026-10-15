@@ -183,6 +183,14 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * cap is shared by every FileMaker this client builds. Leaving it out (or
  * passing undefined, 0 or Infinity) means no limit.
  *
+ * Pass `timeout` (milliseconds, up to 2147483647) to drop a request that stops
+ * receiving data. A request fails when no response data is received for that
+ * long. The timer starts when the request is sent and restarts each time data
+ * arrives, so a response that keeps sending data is not cut off. This works
+ * the same in Node and browsers. Leaving it
+ * out (or passing undefined, 0 or Infinity) means no timeout. A timed-out
+ * request throws `RequestTimeoutError`.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -211,13 +219,15 @@ export declare class FileMakerClient {
     private logger;
     private dedupe;
     private concurrencyLimit?;
-    constructor({ server, database, agent, logger, dedupe, concurrency, }: {
+    private timeout?;
+    constructor({ server, database, agent, logger, dedupe, concurrency, timeout, }: {
         server: string;
         database: string;
         agent?: unknown;
         logger?: ILogger;
         dedupe?: boolean;
         concurrency?: number;
+        timeout?: number;
     });
     /**
      * Creates a FileMaker instance configured with basic authentication.
@@ -241,6 +251,7 @@ export declare class FileMakerClient {
         requestId: string;
         identifier: string;
     }): FileMaker;
+    private request;
     private buildFileMaker;
     private decorate;
     /**
@@ -326,6 +337,10 @@ declare interface IResponse<T> {
 
 declare type IResponseHeaders = AxiosResponse["headers"];
 
+export declare const isRequestError: (error: unknown) => error is RequestError;
+
+export declare const isRequestTimeoutError: (error: unknown) => error is RequestTimeoutError;
+
 export declare class Logger implements ILogger {
     log(message: unknown): void;
 }
@@ -393,9 +408,19 @@ declare interface RecordWithId {
     ID: string;
 }
 
+export declare class RequestError extends Error {
+    data?: unknown;
+    constructor(message: string, data?: unknown);
+}
+
 declare interface RequestOptions {
     headers?: Record<string, string>;
     responseType?: ResponseType_2;
+}
+
+export declare class RequestTimeoutError extends RequestError {
+    readonly timeout: number;
+    constructor(timeout: number);
 }
 
 export { }

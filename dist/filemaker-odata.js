@@ -1,66 +1,85 @@
-import b, { isAxiosError as T } from "axios";
-class w extends Error {
+import y, { isAxiosError as C } from "axios";
+class m extends Error {
   data;
   constructor(t, e) {
     super(t), this.name = "RequestError", this.data = e;
   }
 }
-const l = (s) => s instanceof w, v = (s) => typeof s == "object" && s !== null && !Array.isArray(s) && Object.getPrototypeOf(s) === Object.prototype, y = (s, t) => {
+class x extends m {
+  timeout;
+  constructor(t) {
+    super(`Request timed out after ${t} ms`), this.name = "RequestTimeoutError", this.timeout = t;
+  }
+}
+const l = (s) => s instanceof m, nt = (s) => s instanceof x, w = (s) => typeof s == "object" && s !== null && !Array.isArray(s) && Object.getPrototypeOf(s) === Object.prototype, O = (s, t) => {
   const e = { ...s };
   for (const r of Object.keys(t)) {
     const i = t[r];
     if (i === void 0) continue;
     const n = e[r];
-    e[r] = v(n) && v(i) ? y(n, i) : i;
+    e[r] = w(n) && w(i) ? O(n, i) : i;
   }
   return e;
+}, q = (s) => new m(
+  s instanceof Error ? s.message : String(s),
+  C(s) && s.response ? s.response.data : void 0
+), F = (s) => {
+  const t = new AbortController();
+  let e = !1, r;
+  const i = () => {
+    clearTimeout(r), r = setTimeout(() => {
+      e = !0, t.abort();
+    }, s);
+  };
+  return i(), {
+    config: {
+      signal: t.signal,
+      onDownloadProgress: i
+    },
+    error: (n) => e ? new x(s) : q(n),
+    stop: () => clearTimeout(r)
+  };
 };
-class f {
+class R {
   credentials;
   agent;
-  constructor(t, e) {
-    this.credentials = t, this.agent = e;
+  timeout;
+  constructor(t, e, r) {
+    this.credentials = t, this.agent = e, this.timeout = r;
+  }
+  config(t, e) {
+    return O({ ...t }, {
+      httpsAgent: this.agent,
+      headers: this.credentials.authorizationHeaders,
+      ...e
+    });
+  }
+  async send(t, e) {
+    const r = this.timeout === void 0 ? void 0 : F(this.timeout);
+    try {
+      return await e(this.config(t, r?.config ?? {}));
+    } catch (i) {
+      throw r ? r.error(i) : q(i);
+    } finally {
+      r?.stop();
+    }
   }
   async get(t, e) {
-    try {
-      return await b.get(
-        t,
-        y({ ...e }, {
-          httpsAgent: this.agent,
-          headers: this.credentials.authorizationHeaders
-        })
-      );
-    } catch (r) {
-      throw new w(
-        r instanceof Error ? r.message : String(r),
-        T(r) && r.response ? r.response.data : void 0
-      );
-    }
+    return this.send(e, (r) => y.get(t, r));
   }
   async post(t, e, r) {
-    try {
-      return await b.post(
-        t,
-        e,
-        y({ ...r }, {
-          httpsAgent: this.agent,
-          headers: this.credentials.authorizationHeaders
-        })
-      );
-    } catch (i) {
-      throw new w(
-        i instanceof Error ? i.message : String(i),
-        T(i) && i.response ? i.response.data : void 0
-      );
-    }
+    return this.send(
+      r,
+      (i) => y.post(t, e, i)
+    );
   }
 }
-class m {
+class $ {
   get authorizationHeaders() {
     return {};
   }
 }
-class C {
+class E {
   requestId;
   identifier;
   constructor({
@@ -78,7 +97,7 @@ class C {
     };
   }
 }
-class I {
+class k {
   username;
   password;
   constructor({ username: t, password: e }) {
@@ -90,7 +109,7 @@ class I {
     };
   }
 }
-class tt {
+class ot {
   authorization;
   constructor(t) {
     this.authorization = t;
@@ -101,12 +120,12 @@ class tt {
     };
   }
 }
-class et {
+class at {
   server;
   database;
   request;
   constructor({ server: t, database: e }) {
-    this.server = t, this.database = e, this.request = new f(new m());
+    this.server = t, this.database = e, this.request = new R(new $());
   }
   url(t) {
     return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${t}`;
@@ -181,7 +200,7 @@ class et {
     )).data.response.token ?? null;
   }
 }
-class R {
+class M {
   config;
   table;
   record;
@@ -228,7 +247,7 @@ Content-Length: ${this.byteLength(n)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class q {
+class A {
   config;
   table;
   record;
@@ -274,7 +293,7 @@ Content-Length: ${this.byteLength(r)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class k {
+class P {
   config;
   table;
   id;
@@ -314,7 +333,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class M {
+class D {
   operations;
   callback;
   config;
@@ -326,7 +345,7 @@ class M {
     record: e
   }) {
     return this.operations.push(
-      new R({
+      new M({
         config: this.config,
         table: t,
         record: e
@@ -335,7 +354,7 @@ class M {
   }
   create({ table: t, record: e }) {
     return this.operations.push(
-      new q({
+      new A({
         config: this.config,
         table: t,
         record: e
@@ -344,7 +363,7 @@ class M {
   }
   delete({ table: t, id: e }) {
     return this.operations.push(
-      new k({
+      new P({
         config: this.config,
         table: t,
         id: e
@@ -355,11 +374,11 @@ class M {
     return this.callback(this.operations);
   }
 }
-const x = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (s) => {
+const b = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (s) => {
   const t = Math.random() * 16 | 0;
   return (s == "x" ? t : t & 3 | 8).toString(16);
 });
-class E {
+class L {
   config;
   logger;
   request;
@@ -501,8 +520,8 @@ class E {
   //     ];
   //
   batch() {
-    return new M(this.config, async (t) => {
-      const e = `batch_${x()}`, r = `changeset_${x()}`, i = `--${e}\r
+    return new D(this.config, async (t) => {
+      const e = `batch_${b()}`, r = `changeset_${b()}`, i = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
 ` + t.map(
@@ -526,7 +545,7 @@ Content-Type: multipart/mixed; boundary=${r}\r
         if (o === null) throw new Error("Could not find changeset");
         const a = o[0].split("=")[1].trim();
         return n.data.split(`--${a}`).slice(1, -1).map(
-          (h, d) => t[d].parseResponse(h)
+          (u, d) => t[d].parseResponse(u)
         );
       } catch (n) {
         throw l(n) && (this.log("[FileMaker] batch: HTTP error"), this.log(n.data)), n;
@@ -597,25 +616,25 @@ Content-Type: multipart/mixed; boundary=${r}\r
     return this.logger.log(t);
   }
 }
-const A = (s, t) => {
+const j = (s, t) => {
   const e = Object.entries(t?.headers ?? {}).map(([r, i]) => [r.toLowerCase(), i]).sort(([r], [i]) => r < i ? -1 : r > i ? 1 : 0);
   return JSON.stringify([s, t?.responseType ?? null, e]);
-}, P = (s) => ArrayBuffer.isView(s) ? s instanceof DataView ? new DataView(
+}, S = (s) => ArrayBuffer.isView(s) ? s instanceof DataView ? new DataView(
   s.buffer.slice(s.byteOffset, s.byteOffset + s.byteLength)
 ) : Uint8Array.prototype.slice.call(s) : structuredClone(s);
-class D {
+class N {
   inner;
   inFlight = /* @__PURE__ */ new Map();
   constructor(t) {
     this.inner = t;
   }
   get(t, e) {
-    const r = A(t, e), i = this.inFlight.get(r);
+    const r = j(t, e), i = this.inFlight.get(r);
     if (i !== void 0)
       return i.then((a) => ({
         ...a,
         headers: { ...a.headers },
-        data: P(a.data)
+        data: S(a.data)
       }));
     const n = this.inner.get(t, e);
     this.inFlight.set(r, n);
@@ -632,14 +651,14 @@ class D {
     this.inFlight.clear();
   }
 }
-class L {
+class z {
   value;
   next;
   constructor(t) {
     this.value = t;
   }
 }
-class S {
+class U {
   #t;
   #e;
   #r;
@@ -647,7 +666,7 @@ class S {
     this.clear();
   }
   enqueue(t) {
-    const e = new L(t);
+    const e = new z(t);
     this.#t ? (this.#e.next = e, this.#e = e) : (this.#t = e, this.#e = e), this.#r++;
   }
   dequeue() {
@@ -675,31 +694,31 @@ class S {
       yield this.dequeue();
   }
 }
-function j(s) {
+function H(s) {
   let t = !1;
-  if (typeof s == "object" && ({ concurrency: s, rejectOnClear: t = !1 } = s), O(s), typeof t != "boolean")
+  if (typeof s == "object" && ({ concurrency: s, rejectOnClear: t = !1 } = s), T(s), typeof t != "boolean")
     throw new TypeError("Expected `rejectOnClear` to be a boolean");
-  const e = new S();
+  const e = new U();
   let r = 0;
   const i = () => {
     r < s && e.size > 0 && (r++, e.dequeue().run());
   }, n = () => {
     r--, i();
-  }, o = async (h, d, p) => {
-    const u = (async () => h(...p))();
-    d(u);
+  }, o = async (u, d, p) => {
+    const h = (async () => u(...p))();
+    d(h);
     try {
-      await u;
+      await h;
     } catch {
     }
     n();
-  }, a = (h, d, p, u) => {
+  }, a = (u, d, p, h) => {
     const g = { reject: p };
-    new Promise(($) => {
-      g.run = $, e.enqueue(g);
-    }).then(o.bind(void 0, h, d, u)), r < s && i();
-  }, c = (h, ...d) => new Promise((p, u) => {
-    a(h, p, u, d);
+    new Promise((f) => {
+      g.run = f, e.enqueue(g);
+    }).then(o.bind(void 0, u, d, h)), r < s && i();
+  }, c = (u, ...d) => new Promise((p, h) => {
+    a(u, p, h, d);
   });
   return Object.defineProperties(c, {
     activeCount: {
@@ -714,58 +733,58 @@ function j(s) {
           e.clear();
           return;
         }
-        const h = AbortSignal.abort().reason;
+        const u = AbortSignal.abort().reason;
         for (; e.size > 0; )
-          e.dequeue().reject(h);
+          e.dequeue().reject(u);
       }
     },
     concurrency: {
       get: () => s,
-      set(h) {
-        O(h), s = h, queueMicrotask(() => {
+      set(u) {
+        T(u), s = u, queueMicrotask(() => {
           for (; r < s && e.size > 0; )
             i();
         });
       }
     },
     map: {
-      async value(h, d) {
+      async value(u, d) {
         const p = [];
         try {
-          Array.from(h, (u, g) => {
-            const $ = c(d, u, g);
-            return p.push($), $;
+          Array.from(u, (h, g) => {
+            const f = c(d, h, g);
+            return p.push(f), f;
           });
-        } catch (u) {
+        } catch (h) {
           for (const g of p)
             g.catch(() => {
             });
-          throw u;
+          throw h;
         }
         return Promise.all(p);
       }
     }
   }), c;
 }
-function O(s) {
+function T(s) {
   if (!((Number.isInteger(s) || s === Number.POSITIVE_INFINITY) && s > 0))
     throw new TypeError("Expected `concurrency` to be a number from 1 and up");
 }
-const N = (s) => s === 1 / 0 || typeof s == "number" && Number.isInteger(s) && s > 0;
-class z {
+const X = (s) => s === 1 / 0 || typeof s == "number" && Number.isInteger(s) && s > 0;
+class V {
   limit;
   constructor(t) {
-    if (!N(t))
+    if (!X(t))
       throw new RangeError(
         "concurrency must be a positive integer or Infinity"
       );
-    this.limit = j(t);
+    this.limit = H(t);
   }
   run(t) {
     return this.limit(t);
   }
 }
-class U {
+class B {
   inner;
   limit;
   constructor(t, e) {
@@ -778,32 +797,42 @@ class U {
     return this.limit.run(() => this.inner.post(t, e, r));
   }
 }
-class H {
+class J {
   log(t) {
     console.dir(t, { depth: null });
   }
 }
-class rt {
+class ut {
   log() {
   }
 }
-const X = (s) => s !== void 0 && s !== 0 && s !== 1 / 0;
-class st {
+const G = (s) => s !== void 0 && s !== 0 && s !== 1 / 0, v = 2147483647, _ = (s) => {
+  if (!(s === void 0 || s === 0 || s === 1 / 0)) {
+    if (typeof s == "number" && s > 0 && s <= v)
+      return s;
+    throw new RangeError(
+      `timeout must be a positive number up to ${v}, 0 or Infinity`
+    );
+  }
+};
+class ct {
   server;
   database;
   agent;
   logger;
   dedupe;
   concurrencyLimit;
+  timeout;
   constructor({
     server: t,
     database: e,
     agent: r,
     logger: i,
     dedupe: n = !0,
-    concurrency: o
+    concurrency: o,
+    timeout: a
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = i ?? new H(), this.dedupe = n, this.concurrencyLimit = X(o) ? new z(o) : void 0;
+    this.server = t, this.database = e, this.agent = r, this.logger = i ?? new J(), this.dedupe = n, this.concurrencyLimit = G(o) ? new V(o) : void 0, this.timeout = _(a);
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -816,8 +845,8 @@ class st {
     username: t,
     password: e
   }) {
-    const r = new I({ username: t, password: e });
-    return this.buildFileMaker(new f(r, this.agent));
+    const r = new k({ username: t, password: e });
+    return this.buildFileMaker(this.request(r));
   }
   /**
    * Creates a FileMaker instance configured with OAuth credentials.
@@ -830,14 +859,17 @@ class st {
     requestId: t,
     identifier: e
   }) {
-    const r = new C({
+    const r = new E({
       requestId: t,
       identifier: e
     });
-    return this.buildFileMaker(new f(r, this.agent));
+    return this.buildFileMaker(this.request(r));
+  }
+  request(t) {
+    return new R(t, this.agent, this.timeout);
   }
   buildFileMaker(t) {
-    return new E({
+    return new L({
       server: this.server,
       database: this.database,
       logger: this.logger,
@@ -848,7 +880,7 @@ class st {
   // sharing a deduplicated read do not take a slot.
   decorate(t) {
     let e = t;
-    return this.concurrencyLimit !== void 0 && (e = new U(e, this.concurrencyLimit)), this.dedupe && (e = new D(e)), e;
+    return this.concurrencyLimit !== void 0 && (e = new B(e, this.concurrencyLimit)), this.dedupe && (e = new N(e)), e;
   }
   /**
    * Initiates the OAuth authentication flow by generating the OAuth URL.
@@ -864,7 +896,7 @@ class st {
     provider: e,
     returnUrl: r
   }) {
-    const i = new f(new m(), this.agent), n = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, o = await i.get(n, {
+    const i = this.request(new $()), n = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, o = await i.get(n, {
       headers: {
         "X-FMS-Application-Type": "9",
         "X-FMS-Application-Version": "15",
@@ -884,7 +916,7 @@ class st {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes() {
-    const r = (await new f(new m(), this.agent).get(
+    const r = (await this.request(new $()).get(
       `https://${this.server}/fmws/oauthproviderinfo`,
       {
         headers: {
@@ -904,10 +936,10 @@ class st {
     return `https://${this.server}/fmi/odata/v4/${this.database}/${t}`;
   }
 }
-const F = (s) => {
+const I = (s) => {
   if (typeof s != "string") throw new TypeError("Invalid OData string");
   return `'${s.replaceAll("'", "''")}'`;
-}, V = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, B = (s) => {
+}, Q = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, W = (s) => {
   if (typeof s == "number") {
     if (!Number.isFinite(s)) throw new TypeError("Invalid OData number");
     return String(s);
@@ -915,51 +947,55 @@ const F = (s) => {
   if (typeof s != "string")
     throw new TypeError("Invalid OData number");
   const t = s.trim();
-  if (!V.test(t))
+  if (!Q.test(t))
     throw new TypeError("Invalid OData number");
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
   return String(e);
-}, J = /^[+-]?\d+$/, G = (s) => {
+}, K = /^[+-]?\d+$/, Y = (s) => {
   if (typeof s != "number" && typeof s != "string")
     throw new TypeError("Invalid OData integer");
   const t = typeof s == "number" ? String(s) : s.trim();
-  if (!J.test(t))
+  if (!K.test(t))
     throw new TypeError("Invalid OData integer");
   return t;
-}, _ = (s) => {
+}, Z = (s) => {
   if (typeof s != "boolean") throw new TypeError("Invalid OData boolean");
   return s ? "true" : "false";
-}, Q = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, W = (s) => {
+}, tt = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, et = (s) => {
   if (typeof s != "string") throw new TypeError("Invalid OData UUID");
-  if (!Q.test(s)) throw new TypeError("Invalid OData UUID");
-  return F(s);
-}, K = /^[A-Za-z0-9 _-]+$/, Y = (s) => {
+  if (!tt.test(s)) throw new TypeError("Invalid OData UUID");
+  return I(s);
+}, rt = /^[A-Za-z0-9 _-]+$/, st = (s) => {
   if (typeof s != "string")
     throw new TypeError("Invalid OData identifier");
-  if (!K.test(s))
+  if (!rt.test(s))
     throw new TypeError("Invalid OData identifier");
   return `"${s}"`;
-}, it = {
-  string: F,
-  number: B,
-  integer: G,
-  boolean: _,
-  uuid: W,
-  identifier: Y
+}, ht = {
+  string: I,
+  number: W,
+  integer: Y,
+  boolean: Z,
+  uuid: et,
+  identifier: st
 };
 export {
-  z as ConcurrencyLimit,
-  U as ConcurrencyLimitRequest,
-  D as DedupeRequest,
-  E as FileMaker,
-  et as FileMakerAuthenticator,
-  I as FileMakerBasicCredentials,
-  st as FileMakerClient,
-  C as FileMakerOAuthCredentials,
-  tt as FileMakerRawCredentials,
-  H as Logger,
-  m as NullFileMakerCredentials,
-  rt as NullLogger,
-  it as odata
+  V as ConcurrencyLimit,
+  B as ConcurrencyLimitRequest,
+  N as DedupeRequest,
+  L as FileMaker,
+  at as FileMakerAuthenticator,
+  k as FileMakerBasicCredentials,
+  ct as FileMakerClient,
+  E as FileMakerOAuthCredentials,
+  ot as FileMakerRawCredentials,
+  J as Logger,
+  $ as NullFileMakerCredentials,
+  ut as NullLogger,
+  m as RequestError,
+  x as RequestTimeoutError,
+  l as isRequestError,
+  nt as isRequestTimeoutError,
+  ht as odata
 };
