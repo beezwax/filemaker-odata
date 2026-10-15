@@ -299,6 +299,49 @@ const fm = new FileMaker({
 `FileMaker` instances, pass the same `ConcurrencyLimit` to each `ConcurrencyLimitRequest`.
 `ConcurrencyLimit` accepts only a positive integer or `Infinity`.
 
+## Request Timeout
+
+`timeout` sets how long a `FileMakerClient` waits for each HTTP request, in milliseconds.
+It applies to every request the client makes, including each page that `getRecords`
+follows. Time spent waiting in the `concurrency` queue does not count.
+
+By default there is no timeout. Leaving `timeout` out, or passing `undefined`, `0`, or
+`Infinity`, means no timeout. Any other value must be a positive finite number. Anything
+else (for example `-1` or `NaN`) throws a `RangeError` when the client is created.
+
+```typescript
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  timeout: 5 * 60 * 1000, // 5 minutes
+});
+```
+
+A timed-out request rejects with a `RequestTimeoutError`, which is a subclass of
+`RequestError`. Use the `isRequestTimeoutError` guard to detect it:
+
+```typescript
+import { FileMakerClient, isRequestTimeoutError } from "filemaker-odata";
+
+try {
+  const records = await client.getRecords("Invoices");
+} catch (error) {
+  if (isRequestTimeoutError(error)) {
+    console.log(`Timed out after ${error.timeout} ms`);
+  } else {
+    throw error;
+  }
+}
+```
+
+In Node, a request fails when FileMaker sends no response within the timeout. After the
+response starts, it fails only when no new data arrives for that long, so a response that
+is still sending data is not cut off. In browsers, `timeout` is a total time limit for the
+request.
+
+A script or batch that runs on the server longer than the timeout fails on the client,
+but FileMaker can still finish the work. Pick a timeout longer than your slowest script.
+
 # Development
 
     npm i

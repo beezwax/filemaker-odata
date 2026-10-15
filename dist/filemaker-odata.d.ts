@@ -183,6 +183,12 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * cap is shared by every FileMaker this client builds. Leaving it out (or
  * passing undefined, 0 or Infinity) means no limit.
  *
+ * Pass `timeout` (milliseconds) to drop a request that stops making progress.
+ * In Node a request fails when FileMaker sends no response or no new data for
+ * that long; in browsers it is a total limit. Leaving it out (or passing
+ * undefined, 0 or Infinity) means no timeout. A timed-out request throws
+ * `RequestTimeoutError`.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -211,13 +217,15 @@ export declare class FileMakerClient {
     private logger;
     private dedupe;
     private concurrencyLimit?;
-    constructor({ server, database, agent, logger, dedupe, concurrency, }: {
+    private timeout?;
+    constructor({ server, database, agent, logger, dedupe, concurrency, timeout, }: {
         server: string;
         database: string;
         agent?: unknown;
         logger?: ILogger;
         dedupe?: boolean;
         concurrency?: number;
+        timeout?: number;
     });
     /**
      * Creates a FileMaker instance configured with basic authentication.
@@ -326,6 +334,10 @@ declare interface IResponse<T> {
 
 declare type IResponseHeaders = AxiosResponse["headers"];
 
+export declare const isRequestError: (error: unknown) => error is RequestError;
+
+export declare const isRequestTimeoutError: (error: unknown) => error is RequestTimeoutError;
+
 export declare class Logger implements ILogger {
     log(message: unknown): void;
 }
@@ -393,9 +405,19 @@ declare interface RecordWithId {
     ID: string;
 }
 
+export declare class RequestError extends Error {
+    data?: unknown;
+    constructor(message: string, data?: unknown);
+}
+
 declare interface RequestOptions {
     headers?: Record<string, string>;
     responseType?: ResponseType_2;
+}
+
+export declare class RequestTimeoutError extends RequestError {
+    readonly timeout: number;
+    constructor(timeout: number);
 }
 
 export { }
