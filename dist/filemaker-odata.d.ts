@@ -14,6 +14,40 @@ declare interface BatchOperationResponse<T> {
     body: T;
 }
 
+/**
+ * A pool of request slots. Tasks run through `run` start immediately while a
+ * slot is free and otherwise wait in a FIFO queue. A slot is released as soon
+ * as its task settles, whether it succeeds or fails.
+ *
+ * Share one instance between several ConcurrencyLimitRequests to make them
+ * compete for the same slots.
+ */
+export declare class ConcurrencyLimit {
+    private limit;
+    constructor(concurrency: number);
+    run<T>(task: () => Promise<T>): Promise<T>;
+}
+
+/**
+ * An IRequest wrapper that limits how many requests to the inner request are
+ * in flight at once.
+ *
+ * GETs and POSTs share the same slots. Calls over the limit wait in a queue
+ * and start in FIFO order as slots free up. A slot is released as soon as the
+ * inner call settles, whether it succeeds or fails. Meant to sit inside
+ * DedupeRequest, so shared reads do not take a slot.
+ *
+ * Pass a number to give this wrapper its own slots, or a shared
+ * ConcurrencyLimit to share slots with other wrappers.
+ */
+export declare class ConcurrencyLimitRequest implements IRequest {
+    private inner;
+    private limit;
+    constructor(inner: IRequest, concurrency: number | ConcurrencyLimit);
+    get<T>(url: string, options?: RequestOptions): Promise<IResponse<T>>;
+    post<T>(url: string, params: string | Record<string, unknown> | null, options?: RequestOptions): Promise<IResponse<T>>;
+}
+
 declare type CountQueryOptions<T> = Pick<QueryOptions<T>, "$filter">;
 
 declare type CrossJoinQueryOptions<T> = Pick<QueryOptions<T>, "$filter" | "$expand" | "$format" | "$metadata">;
@@ -146,6 +180,10 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * Identical concurrent GET requests made through the same FileMaker instance
  * are shared by default. Pass `dedupe: false` to send every request.
  *
+ * Pass `concurrency` to cap the number of HTTP requests in flight at once. The
+ * cap is shared by every FileMaker this client builds. The default is 0, which
+ * means no limit.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -173,12 +211,14 @@ export declare class FileMakerClient {
     private agent?;
     private logger;
     private dedupe;
-    constructor({ server, database, agent, logger, dedupe, }: {
+    private concurrencyLimit?;
+    constructor({ server, database, agent, logger, dedupe, concurrency, }: {
         server: string;
         database: string;
         agent?: unknown;
         logger?: ILogger;
         dedupe?: boolean;
+        concurrency?: number;
     });
     /**
      * Creates a FileMaker instance configured with basic authentication.
@@ -203,6 +243,7 @@ export declare class FileMakerClient {
         identifier: string;
     }): FileMaker;
     private buildFileMaker;
+    private decorate;
     /**
      * Initiates the OAuth authentication flow by generating the OAuth URL.
      * Redirect the user to the returned URL to begin authentication.
