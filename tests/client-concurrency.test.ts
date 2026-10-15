@@ -1,10 +1,6 @@
-import axios from "axios";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { FileMakerClient, NullLogger } from "../src/index";
-
-type Resolve = (response: unknown) => void;
-
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+import { flush, pendingAxios } from "./mocks";
 
 const emptyPage = { data: { value: [] }, headers: {} };
 
@@ -18,26 +14,6 @@ const buildClient = (concurrency?: number, dedupe?: boolean) =>
   });
 
 const basicAuth = { username: "user", password: "pass" };
-
-// Replaces axios.get/post with calls that stay pending until the test
-// resolves them, recording the URL of each call in order.
-const pendingAxios = () => {
-  const getUrls: string[] = [];
-  const getResolvers: Resolve[] = [];
-  const postResolvers: Resolve[] = [];
-
-  const get = vi.spyOn(axios, "get").mockImplementation((url: string) => {
-    getUrls.push(url);
-    return new Promise((resolve) => getResolvers.push(resolve));
-  });
-  const post = vi
-    .spyOn(axios, "post")
-    .mockImplementation(
-      () => new Promise((resolve) => postResolvers.push(resolve)),
-    );
-
-  return { get, post, getUrls, getResolvers, postResolvers };
-};
 
 afterEach(() => {
   vi.restoreAllMocks();

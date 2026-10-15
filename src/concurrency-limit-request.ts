@@ -42,19 +42,15 @@ export class ConcurrencyLimit {
  * inner call settles, whether it succeeds or fails. Meant to sit inside
  * DedupeRequest, so shared reads do not take a slot.
  *
- * Pass a number to give this wrapper its own slots, or a shared
- * ConcurrencyLimit to share slots with other wrappers.
+ * Pass the same ConcurrencyLimit to several wrappers to make them share slots.
  */
 export class ConcurrencyLimitRequest implements IRequest {
   private inner: IRequest;
   private limit: ConcurrencyLimit;
 
-  constructor(inner: IRequest, concurrency: number | ConcurrencyLimit) {
+  constructor(inner: IRequest, limit: ConcurrencyLimit) {
     this.inner = inner;
-    this.limit =
-      concurrency instanceof ConcurrencyLimit
-        ? concurrency
-        : new ConcurrencyLimit(concurrency);
+    this.limit = limit;
   }
 
   get<T>(url: string, options?: RequestOptions): Promise<IResponse<T>> {

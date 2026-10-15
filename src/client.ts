@@ -18,10 +18,12 @@ interface OAuthResponse {
   };
 }
 
-// 0 and Infinity mean "no limit". Anything else is left to ConcurrencyLimit,
-// which throws a RangeError for invalid values.
-const hasConcurrencyLimit = (concurrency: number): boolean =>
-  concurrency !== 0 && concurrency !== Infinity;
+// undefined, 0 and Infinity mean "no limit". Anything else is left to
+// ConcurrencyLimit, which throws a RangeError for invalid values.
+const hasConcurrencyLimit = (
+  concurrency: number | undefined,
+): concurrency is number =>
+  concurrency !== undefined && concurrency !== 0 && concurrency !== Infinity;
 
 /**
  * A facade class that simplifies the creation and configuration of FileMaker
@@ -32,8 +34,8 @@ const hasConcurrencyLimit = (concurrency: number): boolean =>
  * are shared by default. Pass `dedupe: false` to send every request.
  *
  * Pass `concurrency` to cap the number of HTTP requests in flight at once. The
- * cap is shared by every FileMaker this client builds. The default is 0, which
- * means no limit.
+ * cap is shared by every FileMaker this client builds. Leaving it out (or
+ * passing undefined, 0 or Infinity) means no limit.
  *
  * @example
  * // Basic authentication
@@ -70,7 +72,7 @@ export class FileMakerClient {
     agent,
     logger,
     dedupe = true,
-    concurrency = 0,
+    concurrency,
   }: {
     server: string;
     database: string;

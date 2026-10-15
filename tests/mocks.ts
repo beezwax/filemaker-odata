@@ -1,9 +1,36 @@
+import axios from "axios";
+import { vi } from "vitest";
 import type {
   IRequest,
   IResponse,
   IResponseHeaders,
   RequestOptions,
 } from "../src/request";
+
+// Lets queued work (p-limit starts it asynchronously) run before asserting.
+export const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+type Resolve = (response: unknown) => void;
+
+// Replaces axios.get/post with calls that stay pending until the test
+// resolves them, recording the URL of each GET in order.
+export const pendingAxios = () => {
+  const getUrls: string[] = [];
+  const getResolvers: Resolve[] = [];
+  const postResolvers: Resolve[] = [];
+
+  const get = vi.spyOn(axios, "get").mockImplementation((url: string) => {
+    getUrls.push(url);
+    return new Promise((resolve) => getResolvers.push(resolve));
+  });
+  const post = vi
+    .spyOn(axios, "post")
+    .mockImplementation(
+      () => new Promise((resolve) => postResolvers.push(resolve)),
+    );
+
+  return { get, post, getUrls, getResolvers, postResolvers };
+};
 
 // The test tsconfig has no Node types; tests run in Node, where Buffer exists.
 export const NodeBuffer = (

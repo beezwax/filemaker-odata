@@ -254,9 +254,9 @@ FileMaker Server at the same time. Extra requests wait in a queue and start in t
 they were made (first in, first out). This keeps many parallel queries (for example with
 `Promise.all`) from overloading the server.
 
-The default is `0`, which means no limit. `Infinity` also means no limit. Any other value
-must be a positive integer. Anything else (for example `-1`, `1.5`, or `NaN`) throws a
-`RangeError` when the client is created.
+By default there is no limit. Leaving `concurrency` out, or passing `undefined`, `0`, or
+`Infinity`, means no limit. Any other value must be a positive integer. Anything else (for
+example `-1`, `1.5`, or `NaN`) throws a `RangeError` when the client is created.
 
 ```typescript
 const client = new FileMakerClient({
@@ -295,10 +295,9 @@ const fm = new FileMaker({
 });
 ```
 
-To give one wrapper its own limit, pass a number instead: `new ConcurrencyLimitRequest(request, 2)`.
-To share one limit between several `FileMaker` instances, create one `ConcurrencyLimit` and
-pass it to each `ConcurrencyLimitRequest`. `ConcurrencyLimit` and `ConcurrencyLimitRequest`
-accept only a positive integer or `Infinity`.
+`ConcurrencyLimitRequest` takes a `ConcurrencyLimit`. To share one limit between several
+`FileMaker` instances, pass the same `ConcurrencyLimit` to each `ConcurrencyLimitRequest`.
+`ConcurrencyLimit` accepts only a positive integer or `Infinity`.
 
 # Development
 

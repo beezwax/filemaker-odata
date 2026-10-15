@@ -40,7 +40,7 @@ The `FileMaker` class constructor takes the following options (this is an option
 - `server` — The FileMaker server hostname
 - `database` — The FileMaker database name
 - `logger` — A logger instance implementing `ILogger`
-- `request` — An `IRequest` instance for making HTTP requests. It is used as given. To deduplicate reads on a `FileMaker` you create directly, wrap it: `request: new DedupeRequest(request)`. To limit concurrent requests on a `FileMaker` you create directly, wrap it in `ConcurrencyLimitRequest` (inside `DedupeRequest` when using both), e.g. `request: new DedupeRequest(new ConcurrencyLimitRequest(request, 2))`. See [`dedupe` in the FileMakerClient constructor](#filemakerclient-constructor) and [`concurrency` in the FileMakerClient constructor](#filemakerclient-constructor).
+- `request` — An `IRequest` instance for making HTTP requests. It is used as given. To deduplicate reads on a `FileMaker` you create directly, wrap it: `request: new DedupeRequest(request)`. To limit concurrent requests on a `FileMaker` you create directly, wrap it in `ConcurrencyLimitRequest` (inside `DedupeRequest` when using both), e.g. `request: new DedupeRequest(new ConcurrencyLimitRequest(request, new ConcurrencyLimit(2)))`. See [`dedupe` in the FileMakerClient constructor](#filemakerclient-constructor) and [`concurrency` in the FileMakerClient constructor](#filemakerclient-constructor).
 
 **Note:** In most cases, you'll use `FileMakerClient` to create authenticated instances rather than constructing `FileMaker` directly. See the [README](./README.md) for authentication examples.
 
@@ -53,7 +53,7 @@ The `FileMakerClient` constructor accepts the following options:
 - `agent?: unknown` — Optional custom HTTPS agent (e.g., for self-signed certificates)
 - `logger?: ILogger` — Optional logger instance (defaults to standard logger)
 - `dedupe?: boolean` (default: `true`) — When enabled, identical concurrent read requests made through the same FileMaker instance are deduplicated, with all callers receiving their own copy of the result. Reads are deduplicated only when the URL, response type, and request headers all match. See the [Request Deduplication](./README.md#request-deduplication) section in the README for details.
-- `concurrency?: number` (default: `0`) — Maximum number of HTTP requests sent at the same time, shared by every FileMaker instance the client creates. Extra requests wait in a first-in, first-out queue. `0` or `Infinity` means no limit; other values must be a positive integer or the constructor throws a `RangeError`. See the [Request Concurrency Limit](./README.md#request-concurrency-limit) section in the README for details.
+- `concurrency?: number` (default: no limit) — Maximum number of HTTP requests sent at the same time, shared by every FileMaker instance the client creates. Extra requests wait in a first-in, first-out queue. Leaving it out, or passing `undefined`, `0`, or `Infinity`, means no limit; other values must be a positive integer or the constructor throws a `RangeError`. See the [Request Concurrency Limit](./README.md#request-concurrency-limit) section in the README for details.
 
 ## Methods
 

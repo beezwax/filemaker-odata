@@ -37,13 +37,12 @@ export declare class ConcurrencyLimit {
  * inner call settles, whether it succeeds or fails. Meant to sit inside
  * DedupeRequest, so shared reads do not take a slot.
  *
- * Pass a number to give this wrapper its own slots, or a shared
- * ConcurrencyLimit to share slots with other wrappers.
+ * Pass the same ConcurrencyLimit to several wrappers to make them share slots.
  */
 export declare class ConcurrencyLimitRequest implements IRequest {
     private inner;
     private limit;
-    constructor(inner: IRequest, concurrency: number | ConcurrencyLimit);
+    constructor(inner: IRequest, limit: ConcurrencyLimit);
     get<T>(url: string, options?: RequestOptions): Promise<IResponse<T>>;
     post<T>(url: string, params: string | Record<string, unknown> | null, options?: RequestOptions): Promise<IResponse<T>>;
 }
@@ -181,8 +180,8 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * are shared by default. Pass `dedupe: false` to send every request.
  *
  * Pass `concurrency` to cap the number of HTTP requests in flight at once. The
- * cap is shared by every FileMaker this client builds. The default is 0, which
- * means no limit.
+ * cap is shared by every FileMaker this client builds. Leaving it out (or
+ * passing undefined, 0 or Infinity) means no limit.
  *
  * @example
  * // Basic authentication

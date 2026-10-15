@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, expectTypeOf, it } from "vitest";
 import {
   ConcurrencyLimit,
   ConcurrencyLimitRequest,
 } from "../src/concurrency-limit-request";
 import type { IRequest, IResponse, RequestOptions } from "../src/request";
+import { flush } from "./mocks";
 
 interface RecordedCall {
   type: "GET" | "POST";
@@ -51,30 +52,21 @@ class FakeRequest implements IRequest {
 
 const respond = (data: unknown): IResponse<unknown> => ({ data, headers: {} });
 
-// p-limit starts queued work asynchronously, so let it run before asserting.
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
-
 const setup = (concurrency: number) => {
   const inner = new FakeRequest();
-  const request = new ConcurrencyLimitRequest(inner, concurrency);
+  const request = new ConcurrencyLimitRequest(
+    inner,
+    new ConcurrencyLimit(concurrency),
+  );
   return { inner, request };
 };
 
 describe("ConcurrencyLimitRequest", () => {
   describe("constructor", () => {
-    it.each([0, -1, 1.5, NaN, -Infinity, "2" as unknown as number])(
-      "rejects %j with a RangeError",
-      (concurrency) => {
-        expect(
-          () => new ConcurrencyLimitRequest(new FakeRequest(), concurrency),
-        ).toThrow(RangeError);
-      },
-    );
-
-    it.each([1, 3, Infinity])("accepts %j", (concurrency) => {
-      expect(
-        () => new ConcurrencyLimitRequest(new FakeRequest(), concurrency),
-      ).not.toThrow();
+    it("only accepts a ConcurrencyLimit, not a number", () => {
+      expectTypeOf(ConcurrencyLimitRequest).constructorParameters.toEqualTypeOf<
+        [IRequest, ConcurrencyLimit]
+      >();
     });
   });
 

@@ -1,17 +1,17 @@
-import T, { isAxiosError as v } from "axios";
+import b, { isAxiosError as T } from "axios";
 class w extends Error {
   data;
   constructor(t, e) {
     super(t), this.name = "RequestError", this.data = e;
   }
 }
-const l = (s) => s instanceof w, x = (s) => typeof s == "object" && s !== null && !Array.isArray(s) && Object.getPrototypeOf(s) === Object.prototype, y = (s, t) => {
+const l = (s) => s instanceof w, v = (s) => typeof s == "object" && s !== null && !Array.isArray(s) && Object.getPrototypeOf(s) === Object.prototype, y = (s, t) => {
   const e = { ...s };
   for (const r of Object.keys(t)) {
     const i = t[r];
     if (i === void 0) continue;
     const n = e[r];
-    e[r] = x(n) && x(i) ? y(n, i) : i;
+    e[r] = v(n) && v(i) ? y(n, i) : i;
   }
   return e;
 };
@@ -23,7 +23,7 @@ class f {
   }
   async get(t, e) {
     try {
-      return await T.get(
+      return await b.get(
         t,
         y({ ...e }, {
           httpsAgent: this.agent,
@@ -33,13 +33,13 @@ class f {
     } catch (r) {
       throw new w(
         r instanceof Error ? r.message : String(r),
-        v(r) && r.response ? r.response.data : void 0
+        T(r) && r.response ? r.response.data : void 0
       );
     }
   }
   async post(t, e, r) {
     try {
-      return await T.post(
+      return await b.post(
         t,
         e,
         y({ ...r }, {
@@ -50,7 +50,7 @@ class f {
     } catch (i) {
       throw new w(
         i instanceof Error ? i.message : String(i),
-        v(i) && i.response ? i.response.data : void 0
+        T(i) && i.response ? i.response.data : void 0
       );
     }
   }
@@ -60,7 +60,7 @@ class m {
     return {};
   }
 }
-class I {
+class C {
   requestId;
   identifier;
   constructor({
@@ -78,7 +78,7 @@ class I {
     };
   }
 }
-class R {
+class I {
   username;
   password;
   constructor({ username: t, password: e }) {
@@ -181,7 +181,7 @@ class et {
     )).data.response.token ?? null;
   }
 }
-class q {
+class R {
   config;
   table;
   record;
@@ -228,7 +228,7 @@ Content-Length: ${this.byteLength(n)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class k {
+class q {
   config;
   table;
   record;
@@ -274,7 +274,7 @@ Content-Length: ${this.byteLength(r)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class M {
+class k {
   config;
   table;
   id;
@@ -314,7 +314,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class E {
+class M {
   operations;
   callback;
   config;
@@ -326,7 +326,7 @@ class E {
     record: e
   }) {
     return this.operations.push(
-      new q({
+      new R({
         config: this.config,
         table: t,
         record: e
@@ -335,7 +335,7 @@ class E {
   }
   create({ table: t, record: e }) {
     return this.operations.push(
-      new k({
+      new q({
         config: this.config,
         table: t,
         record: e
@@ -344,7 +344,7 @@ class E {
   }
   delete({ table: t, id: e }) {
     return this.operations.push(
-      new M({
+      new k({
         config: this.config,
         table: t,
         id: e
@@ -355,11 +355,11 @@ class E {
     return this.callback(this.operations);
   }
 }
-const O = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (s) => {
+const x = () => "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (s) => {
   const t = Math.random() * 16 | 0;
   return (s == "x" ? t : t & 3 | 8).toString(16);
 });
-class A {
+class E {
   config;
   logger;
   request;
@@ -501,8 +501,8 @@ class A {
   //     ];
   //
   batch() {
-    return new E(this.config, async (t) => {
-      const e = `batch_${O()}`, r = `changeset_${O()}`, i = `--${e}\r
+    return new M(this.config, async (t) => {
+      const e = `batch_${x()}`, r = `changeset_${x()}`, i = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
 ` + t.map(
@@ -597,25 +597,25 @@ Content-Type: multipart/mixed; boundary=${r}\r
     return this.logger.log(t);
   }
 }
-const P = (s, t) => {
+const A = (s, t) => {
   const e = Object.entries(t?.headers ?? {}).map(([r, i]) => [r.toLowerCase(), i]).sort(([r], [i]) => r < i ? -1 : r > i ? 1 : 0);
   return JSON.stringify([s, t?.responseType ?? null, e]);
-}, D = (s) => ArrayBuffer.isView(s) ? s instanceof DataView ? new DataView(
+}, P = (s) => ArrayBuffer.isView(s) ? s instanceof DataView ? new DataView(
   s.buffer.slice(s.byteOffset, s.byteOffset + s.byteLength)
 ) : Uint8Array.prototype.slice.call(s) : structuredClone(s);
-class L {
+class D {
   inner;
   inFlight = /* @__PURE__ */ new Map();
   constructor(t) {
     this.inner = t;
   }
   get(t, e) {
-    const r = P(t, e), i = this.inFlight.get(r);
+    const r = A(t, e), i = this.inFlight.get(r);
     if (i !== void 0)
       return i.then((a) => ({
         ...a,
         headers: { ...a.headers },
-        data: D(a.data)
+        data: P(a.data)
       }));
     const n = this.inner.get(t, e);
     this.inFlight.set(r, n);
@@ -632,14 +632,14 @@ class L {
     this.inFlight.clear();
   }
 }
-class S {
+class L {
   value;
   next;
   constructor(t) {
     this.value = t;
   }
 }
-class j {
+class S {
   #t;
   #e;
   #r;
@@ -647,7 +647,7 @@ class j {
     this.clear();
   }
   enqueue(t) {
-    const e = new S(t);
+    const e = new L(t);
     this.#t ? (this.#e.next = e, this.#e = e) : (this.#t = e, this.#e = e), this.#r++;
   }
   dequeue() {
@@ -675,11 +675,11 @@ class j {
       yield this.dequeue();
   }
 }
-function N(s) {
+function j(s) {
   let t = !1;
-  if (typeof s == "object" && ({ concurrency: s, rejectOnClear: t = !1 } = s), F(s), typeof t != "boolean")
+  if (typeof s == "object" && ({ concurrency: s, rejectOnClear: t = !1 } = s), O(s), typeof t != "boolean")
     throw new TypeError("Expected `rejectOnClear` to be a boolean");
-  const e = new j();
+  const e = new S();
   let r = 0;
   const i = () => {
     r < s && e.size > 0 && (r++, e.dequeue().run());
@@ -722,7 +722,7 @@ function N(s) {
     concurrency: {
       get: () => s,
       set(h) {
-        F(h), s = h, queueMicrotask(() => {
+        O(h), s = h, queueMicrotask(() => {
           for (; r < s && e.size > 0; )
             i();
         });
@@ -747,19 +747,19 @@ function N(s) {
     }
   }), c;
 }
-function F(s) {
+function O(s) {
   if (!((Number.isInteger(s) || s === Number.POSITIVE_INFINITY) && s > 0))
     throw new TypeError("Expected `concurrency` to be a number from 1 and up");
 }
-const z = (s) => s === 1 / 0 || typeof s == "number" && Number.isInteger(s) && s > 0;
-class b {
+const N = (s) => s === 1 / 0 || typeof s == "number" && Number.isInteger(s) && s > 0;
+class z {
   limit;
   constructor(t) {
-    if (!z(t))
+    if (!N(t))
       throw new RangeError(
         "concurrency must be a positive integer or Infinity"
       );
-    this.limit = N(t);
+    this.limit = j(t);
   }
   run(t) {
     return this.limit(t);
@@ -769,7 +769,7 @@ class U {
   inner;
   limit;
   constructor(t, e) {
-    this.inner = t, this.limit = e instanceof b ? e : new b(e);
+    this.inner = t, this.limit = e;
   }
   get(t, e) {
     return this.limit.run(() => this.inner.get(t, e));
@@ -787,7 +787,7 @@ class rt {
   log() {
   }
 }
-const X = (s) => s !== 0 && s !== 1 / 0;
+const X = (s) => s !== void 0 && s !== 0 && s !== 1 / 0;
 class st {
   server;
   database;
@@ -801,9 +801,9 @@ class st {
     agent: r,
     logger: i,
     dedupe: n = !0,
-    concurrency: o = 0
+    concurrency: o
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = i ?? new H(), this.dedupe = n, this.concurrencyLimit = X(o) ? new b(o) : void 0;
+    this.server = t, this.database = e, this.agent = r, this.logger = i ?? new H(), this.dedupe = n, this.concurrencyLimit = X(o) ? new z(o) : void 0;
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -816,7 +816,7 @@ class st {
     username: t,
     password: e
   }) {
-    const r = new R({ username: t, password: e });
+    const r = new I({ username: t, password: e });
     return this.buildFileMaker(new f(r, this.agent));
   }
   /**
@@ -830,14 +830,14 @@ class st {
     requestId: t,
     identifier: e
   }) {
-    const r = new I({
+    const r = new C({
       requestId: t,
       identifier: e
     });
     return this.buildFileMaker(new f(r, this.agent));
   }
   buildFileMaker(t) {
-    return new A({
+    return new E({
       server: this.server,
       database: this.database,
       logger: this.logger,
@@ -848,7 +848,7 @@ class st {
   // sharing a deduplicated read do not take a slot.
   decorate(t) {
     let e = t;
-    return this.concurrencyLimit !== void 0 && (e = new U(e, this.concurrencyLimit)), this.dedupe && (e = new L(e)), e;
+    return this.concurrencyLimit !== void 0 && (e = new U(e, this.concurrencyLimit)), this.dedupe && (e = new D(e)), e;
   }
   /**
    * Initiates the OAuth authentication flow by generating the OAuth URL.
@@ -904,7 +904,7 @@ class st {
     return `https://${this.server}/fmi/odata/v4/${this.database}/${t}`;
   }
 }
-const C = (s) => {
+const F = (s) => {
   if (typeof s != "string") throw new TypeError("Invalid OData string");
   return `'${s.replaceAll("'", "''")}'`;
 }, V = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, B = (s) => {
@@ -933,7 +933,7 @@ const C = (s) => {
 }, Q = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, W = (s) => {
   if (typeof s != "string") throw new TypeError("Invalid OData UUID");
   if (!Q.test(s)) throw new TypeError("Invalid OData UUID");
-  return C(s);
+  return F(s);
 }, K = /^[A-Za-z0-9 _-]+$/, Y = (s) => {
   if (typeof s != "string")
     throw new TypeError("Invalid OData identifier");
@@ -941,7 +941,7 @@ const C = (s) => {
     throw new TypeError("Invalid OData identifier");
   return `"${s}"`;
 }, it = {
-  string: C,
+  string: F,
   number: B,
   integer: G,
   boolean: _,
@@ -949,14 +949,14 @@ const C = (s) => {
   identifier: Y
 };
 export {
-  b as ConcurrencyLimit,
+  z as ConcurrencyLimit,
   U as ConcurrencyLimitRequest,
-  L as DedupeRequest,
-  A as FileMaker,
+  D as DedupeRequest,
+  E as FileMaker,
   et as FileMakerAuthenticator,
-  R as FileMakerBasicCredentials,
+  I as FileMakerBasicCredentials,
   st as FileMakerClient,
-  I as FileMakerOAuthCredentials,
+  C as FileMakerOAuthCredentials,
   tt as FileMakerRawCredentials,
   H as Logger,
   m as NullFileMakerCredentials,
