@@ -1,4 +1,5 @@
 import axios, {
+  AxiosError,
   isAxiosError,
   type ResponseType,
   type AxiosResponse,
@@ -17,7 +18,7 @@ export interface RequestOptions {
   responseType?: ResponseType;
 }
 
-class RequestError extends Error {
+export class RequestError extends Error {
   data?: unknown;
 
   constructor(message: string, data?: unknown) {
@@ -27,8 +28,22 @@ class RequestError extends Error {
   }
 }
 
+export class RequestTimeoutError extends RequestError {
+  readonly timeout: number;
+
+  constructor(timeout: number) {
+    super(`Request timed out after ${timeout} ms`);
+    this.name = "RequestTimeoutError";
+    this.timeout = timeout;
+  }
+}
+
 export const isRequestError = (error: unknown): error is RequestError =>
   error instanceof RequestError;
+
+export const isRequestTimeoutError = (
+  error: unknown,
+): error is RequestTimeoutError => error instanceof RequestTimeoutError;
 
 export type IResponseHeaders = AxiosResponse["headers"];
 
@@ -76,28 +91,54 @@ export const mergeDeep = (target: PlainObject, source: PlainObject): PlainObject
 export class Request implements IRequest {
   private credentials: FileMakerCredentials;
   private agent?: unknown;
+  private timeout?: number;
 
-  constructor(credentials: FileMakerCredentials, agent?: unknown) {
+  constructor(
+    credentials: FileMakerCredentials,
+    agent?: unknown,
+    timeout?: number,
+  ) {
     this.credentials = credentials;
     this.agent = agent;
+    this.timeout = timeout;
+  }
+
+  private transportConfig(): PlainObject {
+    return {
+      httpsAgent: this.agent,
+      headers: this.credentials.authorizationHeaders,
+      timeout: this.timeout,
+      // Makes axios reject timeouts with ETIMEDOUT instead of ECONNABORTED.
+      transitional:
+        this.timeout === undefined ? undefined : { clarifyTimeoutError: true },
+    };
+  }
+
+  private toRequestError(error: unknown): RequestError {
+    if (
+      this.timeout !== undefined &&
+      isAxiosError(error) &&
+      error.code === AxiosError.ETIMEDOUT
+    ) {
+      return new RequestTimeoutError(this.timeout);
+    }
+
+    return new RequestError(
+      error instanceof Error ? error.message : String(error),
+      isAxiosError(error) && error.response ? error.response.data : undefined,
+    );
   }
 
   async get<T>(url: string, options?: RequestOptions) {
     try {
       const response = await axios.get<T>(
         url,
-        mergeDeep({ ...options } as PlainObject, {
-          httpsAgent: this.agent,
-          headers: this.credentials.authorizationHeaders,
-        }),
+        mergeDeep({ ...options } as PlainObject, this.transportConfig()),
       );
 
       return response;
     } catch (error) {
-      throw new RequestError(
-        error instanceof Error ? error.message : String(error),
-        isAxiosError(error) && error.response ? error.response.data : undefined,
-      );
+      throw this.toRequestError(error);
     }
   }
 
@@ -110,18 +151,12 @@ export class Request implements IRequest {
       const response = await axios.post<T>(
         url,
         params,
-        mergeDeep({ ...options } as PlainObject, {
-          httpsAgent: this.agent,
-          headers: this.credentials.authorizationHeaders,
-        }),
+        mergeDeep({ ...options } as PlainObject, this.transportConfig()),
       );
 
       return response;
     } catch (error) {
-      throw new RequestError(
-        error instanceof Error ? error.message : String(error),
-        isAxiosError(error) && error.response ? error.response.data : undefined,
-      );
+      throw this.toRequestError(error);
     }
   }
 }
