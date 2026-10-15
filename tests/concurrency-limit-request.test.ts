@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { ConcurrencyLimitRequest } from "../src/concurrency-limit-request";
+import {
+  ConcurrencyLimit,
+  ConcurrencyLimitRequest,
+} from "../src/concurrency-limit-request";
 import type { IRequest, IResponse, RequestOptions } from "../src/request";
 
 interface RecordedCall {
@@ -200,6 +203,41 @@ describe("ConcurrencyLimitRequest", () => {
 
       inner.calls[0]!.resolve(response);
       expect(await promise).toBe(response);
+    });
+  });
+});
+
+describe("ConcurrencyLimit", () => {
+  describe("constructor", () => {
+    it.each([0, -1, 1.5, NaN, -Infinity, "2" as unknown as number])(
+      "rejects %j with a RangeError",
+      (concurrency) => {
+        expect(() => new ConcurrencyLimit(concurrency)).toThrow(RangeError);
+      },
+    );
+
+    it.each([1, 3, Infinity])("accepts %j", (concurrency) => {
+      expect(() => new ConcurrencyLimit(concurrency)).not.toThrow();
+    });
+  });
+
+  describe("sharing between requests", () => {
+    it("blocks a call on one request while another request holds the only slot", async () => {
+      const limit = new ConcurrencyLimit(1);
+      const firstInner = new FakeRequest();
+      const secondInner = new FakeRequest();
+      const first = new ConcurrencyLimitRequest(firstInner, limit);
+      const second = new ConcurrencyLimitRequest(secondInner, limit);
+
+      void first.get("/a");
+      void second.get("/b");
+      await flush();
+      expect(firstInner.calls).toHaveLength(1);
+      expect(secondInner.calls).toHaveLength(0);
+
+      firstInner.calls[0]!.resolve(respond(1));
+      await flush();
+      expect(secondInner.calls).toHaveLength(1);
     });
   });
 });
