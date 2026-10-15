@@ -1,5 +1,6 @@
 import axios, {
   isAxiosError,
+  type AxiosRequestConfig,
   type ResponseType,
   type AxiosResponse,
 } from "axios";
@@ -84,6 +85,48 @@ export const mergeDeep = (target: PlainObject, source: PlainObject): PlainObject
   return result;
 };
 
+type ExtraConfig = Pick<AxiosRequestConfig, "signal" | "onDownloadProgress">;
+
+const toRequestError = (error: unknown): RequestError =>
+  new RequestError(
+    error instanceof Error ? error.message : String(error),
+    isAxiosError(error) && error.response ? error.response.data : undefined,
+  );
+
+// Fails a request with RequestTimeoutError when no response data is received
+// for `ms` ms. We use our own timer instead of axios's `timeout`: in Node
+// axios's timer stops once response headers arrive, and in browsers it is a
+// total limit. The timer counts from the start of the request (upload time
+// included) and restarts each time response data arrives, so it is an
+// inactivity limit everywhere. We do not use `onUploadProgress`: it makes the
+// axios fetch adapter stream request bodies (which needs HTTP/2 in Chrome) and
+// forces CORS preflights with XHR. FileMaker request bodies are small. Axios
+// throttles progress events to about 3 per second, so the limit is
+// approximate by up to ~1/3 s.
+const watchInactivity = (ms: number) => {
+  const controller = new AbortController();
+  let timedOut = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const restart = () => {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, ms);
+  };
+  restart();
+
+  return {
+    config: {
+      signal: controller.signal,
+      onDownloadProgress: restart,
+    } satisfies ExtraConfig,
+    error: (cause: unknown): RequestError =>
+      timedOut ? new RequestTimeoutError(ms) : toRequestError(cause),
+    stop: () => clearTimeout(timer),
+  };
+};
+
 /**
  * An IRequest implementation using Axios
  */
@@ -102,71 +145,34 @@ export class Request implements IRequest {
     this.timeout = timeout;
   }
 
-  private transportConfig(): PlainObject {
-    return {
+  private config(
+    options: RequestOptions | undefined,
+    extra: ExtraConfig,
+  ): PlainObject {
+    return mergeDeep({ ...options } as PlainObject, {
       httpsAgent: this.agent,
       headers: this.credentials.authorizationHeaders,
-    };
+      ...extra,
+    });
   }
 
-  private config(options: RequestOptions | undefined, extra: PlainObject) {
-    return mergeDeep(
-      mergeDeep({ ...options } as PlainObject, this.transportConfig()),
-      extra,
-    );
-  }
-
-  // Runs one axios call, failing it with RequestTimeoutError when no response
-  // data is received for `timeout` ms. We use our own timer instead of axios's
-  // `timeout`: in Node axios's timer stops once response headers arrive, and in
-  // browsers it is a total limit. The timer counts from the start of the
-  // request (upload time included) and restarts each time response data
-  // arrives, so it is an inactivity limit everywhere. We do not use
-  // `onUploadProgress`: it makes the axios fetch adapter stream request bodies
-  // (which needs HTTP/2 in Chrome) and forces CORS preflights with XHR.
-  // FileMaker request bodies are small. Axios throttles progress events to
-  // about 3 per second, so the limit is approximate by up to ~1/3 s.
   private async send<T>(
-    call: (extra: PlainObject) => Promise<AxiosResponse<T>>,
+    options: RequestOptions | undefined,
+    call: (config: PlainObject) => Promise<AxiosResponse<T>>,
   ): Promise<AxiosResponse<T>> {
-    const timeout = this.timeout;
-    if (timeout === undefined) {
-      try {
-        return await call({});
-      } catch (error) {
-        throw toRequestError(error);
-      }
-    }
-
-    const controller = new AbortController();
-    let timedOut = false;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const restart = () => {
-      clearTimeout(timer);
-      timer = setTimeout(() => {
-        timedOut = true;
-        controller.abort();
-      }, timeout);
-    };
-
+    const watch =
+      this.timeout === undefined ? undefined : watchInactivity(this.timeout);
     try {
-      restart();
-      return await call({
-        signal: controller.signal,
-        onDownloadProgress: restart,
-      });
+      return await call(this.config(options, watch?.config ?? {}));
     } catch (error) {
-      if (timedOut) throw new RequestTimeoutError(timeout);
-      throw toRequestError(error);
+      throw watch ? watch.error(error) : toRequestError(error);
     } finally {
-      clearTimeout(timer);
+      watch?.stop();
     }
   }
 
   async get<T>(url: string, options?: RequestOptions) {
-    return this.send((extra) =>
-      axios.get<T>(url, this.config(options, extra)),
-    );
+    return this.send(options, (config) => axios.get<T>(url, config));
   }
 
   async post<T>(
@@ -174,14 +180,8 @@ export class Request implements IRequest {
     params: string | Record<string, unknown> | null,
     options?: RequestOptions,
   ) {
-    return this.send((extra) =>
-      axios.post<T>(url, params, this.config(options, extra)),
+    return this.send(options, (config) =>
+      axios.post<T>(url, params, config),
     );
   }
 }
-
-const toRequestError = (error: unknown): RequestError =>
-  new RequestError(
-    error instanceof Error ? error.message : String(error),
-    isAxiosError(error) && error.response ? error.response.data : undefined,
-  );

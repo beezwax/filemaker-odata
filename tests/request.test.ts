@@ -8,7 +8,7 @@ import {
   RequestTimeoutError,
 } from "../src/index";
 import { Request } from "../src/request";
-import { pendingAxios } from "./mocks";
+import { configOf, pendingAxios } from "./mocks";
 
 const okResponse = { data: {}, headers: {} };
 
@@ -19,13 +19,6 @@ afterEach(() => {
 
 const buildRequest = (timeout?: number) =>
   new Request(new NullFileMakerCredentials(), undefined, timeout);
-
-type Config = Record<string, unknown> & {
-  onDownloadProgress?: (event: unknown) => void;
-};
-
-const configOf = (spy: { mock: { calls: unknown[][] } }, index: number) =>
-  spy.mock.calls[0]![index] as Config;
 
 const timeoutKeys = [
   "signal",

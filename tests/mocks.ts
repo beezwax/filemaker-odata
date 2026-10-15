@@ -15,6 +15,16 @@ type Reject = (error: unknown) => void;
 
 type AxiosConfig = { signal?: AbortSignal } & Record<string, unknown>;
 
+// The config object axios received on its first call; `index` is the
+// position of the config argument (1 for get, 2 for post).
+export const configOf = (
+  spy: { mock: { calls: unknown[][] } },
+  index: number,
+) =>
+  spy.mock.calls[0]![index] as AxiosConfig & {
+    onDownloadProgress?: (event: unknown) => void;
+  };
+
 // A promise that stays pending until the test settles it, and rejects with
 // axios's CanceledError when the request's signal aborts (as axios does).
 const pendingCall = (

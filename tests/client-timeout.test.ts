@@ -5,7 +5,7 @@ import {
   RequestTimeoutError,
   isRequestTimeoutError,
 } from "../src/index";
-import { flush, pendingAxios } from "./mocks";
+import { configOf, flush, pendingAxios } from "./mocks";
 
 const emptyPage = { data: { value: [] }, headers: {} };
 
@@ -20,10 +20,6 @@ const buildClient = (
   });
 
 const basicAuth = { username: "user", password: "pass" };
-
-// The config object axios received on its first call.
-const configOf = (spy: { mock: { calls: unknown[][] } }, index: number) =>
-  spy.mock.calls[0]![index] as Record<string, unknown>;
 
 afterEach(() => {
   vi.restoreAllMocks();

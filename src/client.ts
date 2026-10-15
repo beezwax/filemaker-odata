@@ -7,6 +7,7 @@ import {
 } from "./concurrency-limit-request";
 import { type ILogger, Logger } from "./logger";
 import {
+  type FileMakerCredentials,
   FileMakerBasicCredentials,
   FileMakerOAuthCredentials,
   NullFileMakerCredentials,
@@ -25,11 +26,11 @@ const hasConcurrencyLimit = (
 ): concurrency is number =>
   concurrency !== undefined && concurrency !== 0 && concurrency !== Infinity;
 
-// undefined, 0 and Infinity mean "no timeout". Anything else must be a
-// positive finite number of milliseconds.
 // The largest delay JS timers support; longer delays fire almost at once.
 const MAX_TIMEOUT = 2147483647;
 
+// undefined, 0 and Infinity mean "no timeout". Anything else must be a
+// positive finite number of milliseconds.
 const normalizeTimeout = (timeout: number | undefined): number | undefined => {
   if (timeout === undefined || timeout === 0 || timeout === Infinity)
     return undefined;
@@ -133,9 +134,7 @@ export class FileMakerClient {
     password: string;
   }): FileMaker {
     const credentials = new FileMakerBasicCredentials({ username, password });
-    return this.buildFileMaker(
-      new Request(credentials, this.agent, this.timeout),
-    );
+    return this.buildFileMaker(this.request(credentials));
   }
 
   /**
@@ -156,9 +155,11 @@ export class FileMakerClient {
       requestId,
       identifier,
     });
-    return this.buildFileMaker(
-      new Request(credentials, this.agent, this.timeout),
-    );
+    return this.buildFileMaker(this.request(credentials));
+  }
+
+  private request(credentials: FileMakerCredentials): Request {
+    return new Request(credentials, this.agent, this.timeout);
   }
 
   private buildFileMaker(request: IRequest): FileMaker {
@@ -198,11 +199,7 @@ export class FileMakerClient {
     provider: string;
     returnUrl?: string;
   }): Promise<{ redirectUrl: string; requestId: string }> {
-    const request = new Request(
-      new NullFileMakerCredentials(),
-      this.agent,
-      this.timeout,
-    );
+    const request = this.request(new NullFileMakerCredentials());
 
     const url = `https://${this.server}/oauth/getoauthurl?trackingID=${trackingId}&provider=${provider}&address=${this.server}&X-FMS-OAuth-AuthType=2`;
     const response = await request.get(url, {
@@ -233,11 +230,7 @@ export class FileMakerClient {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes(): Promise<string[]> {
-    const request = new Request(
-      new NullFileMakerCredentials(),
-      this.agent,
-      this.timeout,
-    );
+    const request = this.request(new NullFileMakerCredentials());
 
     const response = await request.get<OAuthResponse>(
       `https://${this.server}/fmws/oauthproviderinfo`,

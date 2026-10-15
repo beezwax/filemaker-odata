@@ -251,6 +251,7 @@ export declare class FileMakerClient {
         requestId: string;
         identifier: string;
     }): FileMaker;
+    private request;
     private buildFileMaker;
     private decorate;
     /**
