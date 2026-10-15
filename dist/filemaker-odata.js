@@ -1,23 +1,23 @@
-import b, { isAxiosError as T, AxiosError as E } from "axios";
-class w extends Error {
+import b, { isAxiosError as I } from "axios";
+class y extends Error {
   data;
   constructor(t, e) {
     super(t), this.name = "RequestError", this.data = e;
   }
 }
-class R extends w {
+class q extends y {
   timeout;
   constructor(t) {
     super(`Request timed out after ${t} ms`), this.name = "RequestTimeoutError", this.timeout = t;
   }
 }
-const l = (s) => s instanceof w, st = (s) => s instanceof R, v = (s) => typeof s == "object" && s !== null && !Array.isArray(s) && Object.getPrototypeOf(s) === Object.prototype, m = (s, t) => {
+const l = (s) => s instanceof y, it = (s) => s instanceof q, T = (s) => typeof s == "object" && s !== null && !Array.isArray(s) && Object.getPrototypeOf(s) === Object.prototype, m = (s, t) => {
   const e = { ...s };
   for (const r of Object.keys(t)) {
     const i = t[r];
     if (i === void 0) continue;
     const n = e[r];
-    e[r] = v(n) && v(i) ? m(n, i) : i;
+    e[r] = T(n) && T(i) ? m(n, i) : i;
   }
   return e;
 };
@@ -31,46 +31,69 @@ class f {
   transportConfig() {
     return {
       httpsAgent: this.agent,
-      headers: this.credentials.authorizationHeaders,
-      timeout: this.timeout,
-      // Makes axios reject timeouts with ETIMEDOUT instead of ECONNABORTED.
-      transitional: this.timeout === void 0 ? void 0 : { clarifyTimeoutError: !0 }
+      headers: this.credentials.authorizationHeaders
     };
   }
-  toRequestError(t) {
-    return this.timeout !== void 0 && T(t) && t.code === E.ETIMEDOUT ? new R(this.timeout) : new w(
-      t instanceof Error ? t.message : String(t),
-      T(t) && t.response ? t.response.data : void 0
+  config(t, e) {
+    return m(
+      m({ ...t }, this.transportConfig()),
+      e
     );
   }
-  async get(t, e) {
+  // Runs one axios call, failing it with RequestTimeoutError when no data is
+  // sent or received for `timeout` ms. We use our own timer instead of axios's
+  // `timeout`: in Node axios's timer stops once response headers arrive, and in
+  // browsers it is a total limit. Restarting on progress events gives an
+  // inactivity limit everywhere. Axios throttles progress events to about 3
+  // per second, so the limit is approximate by up to ~1/3 s.
+  async send(t) {
+    const e = this.timeout;
+    if (e === void 0)
+      try {
+        return await t({});
+      } catch (a) {
+        throw v(a);
+      }
+    const r = new AbortController();
+    let i = !1, n;
+    const o = () => {
+      clearTimeout(n), n = setTimeout(() => {
+        i = !0, r.abort();
+      }, e);
+    };
     try {
-      return await b.get(
-        t,
-        m({ ...e }, this.transportConfig())
-      );
-    } catch (r) {
-      throw this.toRequestError(r);
+      return o(), await t({
+        signal: r.signal,
+        onDownloadProgress: o,
+        onUploadProgress: o
+      });
+    } catch (a) {
+      throw i ? new q(e) : v(a);
+    } finally {
+      clearTimeout(n);
     }
+  }
+  async get(t, e) {
+    return this.send(
+      (r) => b.get(t, this.config(e, r))
+    );
   }
   async post(t, e, r) {
-    try {
-      return await b.post(
-        t,
-        e,
-        m({ ...r }, this.transportConfig())
-      );
-    } catch (i) {
-      throw this.toRequestError(i);
-    }
+    return this.send(
+      (i) => b.post(t, e, this.config(r, i))
+    );
   }
 }
-class y {
+const v = (s) => new y(
+  s instanceof Error ? s.message : String(s),
+  I(s) && s.response ? s.response.data : void 0
+);
+class w {
   get authorizationHeaders() {
     return {};
   }
 }
-class C {
+class F {
   requestId;
   identifier;
   constructor({
@@ -88,7 +111,7 @@ class C {
     };
   }
 }
-class I {
+class E {
   username;
   password;
   constructor({ username: t, password: e }) {
@@ -100,7 +123,7 @@ class I {
     };
   }
 }
-class it {
+class nt {
   authorization;
   constructor(t) {
     this.authorization = t;
@@ -111,12 +134,12 @@ class it {
     };
   }
 }
-class nt {
+class ot {
   server;
   database;
   request;
   constructor({ server: t, database: e }) {
-    this.server = t, this.database = e, this.request = new f(new y());
+    this.server = t, this.database = e, this.request = new f(new w());
   }
   url(t) {
     return `https://${this.server}/fmi/data/vLatest/databases/${this.database}/${t}`;
@@ -191,7 +214,7 @@ class nt {
     )).data.response.token ?? null;
   }
 }
-class F {
+class k {
   config;
   table;
   record;
@@ -238,7 +261,7 @@ Content-Length: ${this.byteLength(n)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class k {
+class M {
   config;
   table;
   record;
@@ -284,7 +307,7 @@ Content-Length: ${this.byteLength(r)}\r
     return new TextEncoder().encode(t).byteLength;
   }
 }
-class M {
+class A {
   config;
   table;
   id;
@@ -324,7 +347,7 @@ DELETE ${this.url(this.table)}('${this.id}') HTTP/1.1\r
     return `https://${this.config.server}/fmi/odata/v4/${this.config.database}/${t}`;
   }
 }
-class A {
+class P {
   operations;
   callback;
   config;
@@ -336,7 +359,7 @@ class A {
     record: e
   }) {
     return this.operations.push(
-      new F({
+      new k({
         config: this.config,
         table: t,
         record: e
@@ -345,7 +368,7 @@ class A {
   }
   create({ table: t, record: e }) {
     return this.operations.push(
-      new k({
+      new M({
         config: this.config,
         table: t,
         record: e
@@ -354,7 +377,7 @@ class A {
   }
   delete({ table: t, id: e }) {
     return this.operations.push(
-      new M({
+      new A({
         config: this.config,
         table: t,
         id: e
@@ -511,7 +534,7 @@ class D {
   //     ];
   //
   batch() {
-    return new A(this.config, async (t) => {
+    return new P(this.config, async (t) => {
       const e = `batch_${x()}`, r = `changeset_${x()}`, i = `--${e}\r
 Content-Type: multipart/mixed; boundary=${r}\r
 \r
@@ -607,25 +630,25 @@ Content-Type: multipart/mixed; boundary=${r}\r
     return this.logger.log(t);
   }
 }
-const P = (s, t) => {
+const L = (s, t) => {
   const e = Object.entries(t?.headers ?? {}).map(([r, i]) => [r.toLowerCase(), i]).sort(([r], [i]) => r < i ? -1 : r > i ? 1 : 0);
   return JSON.stringify([s, t?.responseType ?? null, e]);
-}, L = (s) => ArrayBuffer.isView(s) ? s instanceof DataView ? new DataView(
+}, j = (s) => ArrayBuffer.isView(s) ? s instanceof DataView ? new DataView(
   s.buffer.slice(s.byteOffset, s.byteOffset + s.byteLength)
 ) : Uint8Array.prototype.slice.call(s) : structuredClone(s);
-class j {
+class S {
   inner;
   inFlight = /* @__PURE__ */ new Map();
   constructor(t) {
     this.inner = t;
   }
   get(t, e) {
-    const r = P(t, e), i = this.inFlight.get(r);
+    const r = L(t, e), i = this.inFlight.get(r);
     if (i !== void 0)
       return i.then((a) => ({
         ...a,
         headers: { ...a.headers },
-        data: L(a.data)
+        data: j(a.data)
       }));
     const n = this.inner.get(t, e);
     this.inFlight.set(r, n);
@@ -642,14 +665,14 @@ class j {
     this.inFlight.clear();
   }
 }
-class S {
+class N {
   value;
   next;
   constructor(t) {
     this.value = t;
   }
 }
-class N {
+class z {
   #t;
   #e;
   #r;
@@ -657,7 +680,7 @@ class N {
     this.clear();
   }
   enqueue(t) {
-    const e = new S(t);
+    const e = new N(t);
     this.#t ? (this.#e.next = e, this.#e = e) : (this.#t = e, this.#e = e), this.#r++;
   }
   dequeue() {
@@ -685,11 +708,11 @@ class N {
       yield this.dequeue();
   }
 }
-function z(s) {
+function U(s) {
   let t = !1;
   if (typeof s == "object" && ({ concurrency: s, rejectOnClear: t = !1 } = s), O(s), typeof t != "boolean")
     throw new TypeError("Expected `rejectOnClear` to be a boolean");
-  const e = new N();
+  const e = new z();
   let r = 0;
   const i = () => {
     r < s && e.size > 0 && (r++, e.dequeue().run());
@@ -761,21 +784,21 @@ function O(s) {
   if (!((Number.isInteger(s) || s === Number.POSITIVE_INFINITY) && s > 0))
     throw new TypeError("Expected `concurrency` to be a number from 1 and up");
 }
-const U = (s) => s === 1 / 0 || typeof s == "number" && Number.isInteger(s) && s > 0;
-class H {
+const H = (s) => s === 1 / 0 || typeof s == "number" && Number.isInteger(s) && s > 0;
+class X {
   limit;
   constructor(t) {
-    if (!U(t))
+    if (!H(t))
       throw new RangeError(
         "concurrency must be a positive integer or Infinity"
       );
-    this.limit = z(t);
+    this.limit = U(t);
   }
   run(t) {
     return this.limit(t);
   }
 }
-class X {
+class V {
   inner;
   limit;
   constructor(t, e) {
@@ -788,23 +811,25 @@ class X {
     return this.limit.run(() => this.inner.post(t, e, r));
   }
 }
-class V {
+class B {
   log(t) {
     console.dir(t, { depth: null });
   }
 }
-class ot {
+class at {
   log() {
   }
 }
-const B = (s) => s !== void 0 && s !== 0 && s !== 1 / 0, J = (s) => {
+const J = (s) => s !== void 0 && s !== 0 && s !== 1 / 0, R = 2147483647, G = (s) => {
   if (!(s === void 0 || s === 0 || s === 1 / 0)) {
-    if (typeof s == "number" && Number.isFinite(s) && s > 0)
+    if (typeof s == "number" && s > 0 && s <= R)
       return s;
-    throw new RangeError("timeout must be a positive number, 0 or Infinity");
+    throw new RangeError(
+      `timeout must be a positive number up to ${R}, 0 or Infinity`
+    );
   }
 };
-class at {
+class ht {
   server;
   database;
   agent;
@@ -821,7 +846,7 @@ class at {
     concurrency: o,
     timeout: a
   }) {
-    this.server = t, this.database = e, this.agent = r, this.logger = i ?? new V(), this.dedupe = n, this.concurrencyLimit = B(o) ? new H(o) : void 0, this.timeout = J(a);
+    this.server = t, this.database = e, this.agent = r, this.logger = i ?? new B(), this.dedupe = n, this.concurrencyLimit = J(o) ? new X(o) : void 0, this.timeout = G(a);
   }
   /**
    * Creates a FileMaker instance configured with basic authentication.
@@ -834,7 +859,7 @@ class at {
     username: t,
     password: e
   }) {
-    const r = new I({ username: t, password: e });
+    const r = new E({ username: t, password: e });
     return this.buildFileMaker(
       new f(r, this.agent, this.timeout)
     );
@@ -850,7 +875,7 @@ class at {
     requestId: t,
     identifier: e
   }) {
-    const r = new C({
+    const r = new F({
       requestId: t,
       identifier: e
     });
@@ -870,7 +895,7 @@ class at {
   // sharing a deduplicated read do not take a slot.
   decorate(t) {
     let e = t;
-    return this.concurrencyLimit !== void 0 && (e = new X(e, this.concurrencyLimit)), this.dedupe && (e = new j(e)), e;
+    return this.concurrencyLimit !== void 0 && (e = new V(e, this.concurrencyLimit)), this.dedupe && (e = new S(e)), e;
   }
   /**
    * Initiates the OAuth authentication flow by generating the OAuth URL.
@@ -887,7 +912,7 @@ class at {
     returnUrl: r
   }) {
     const i = new f(
-      new y(),
+      new w(),
       this.agent,
       this.timeout
     ), n = `https://${this.server}/oauth/getoauthurl?trackingID=${t}&provider=${e}&address=${this.server}&X-FMS-OAuth-AuthType=2`, o = await i.get(n, {
@@ -911,7 +936,7 @@ class at {
    */
   async getAuthTypes() {
     const r = (await new f(
-      new y(),
+      new w(),
       this.agent,
       this.timeout
     ).get(
@@ -934,10 +959,10 @@ class at {
     return `https://${this.server}/fmi/odata/v4/${this.database}/${t}`;
   }
 }
-const q = (s) => {
+const C = (s) => {
   if (typeof s != "string") throw new TypeError("Invalid OData string");
   return `'${s.replaceAll("'", "''")}'`;
-}, G = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, _ = (s) => {
+}, _ = /^[+-]?(?:\d+|\d+\.\d+|\.\d+)$/, Q = (s) => {
   if (typeof s == "number") {
     if (!Number.isFinite(s)) throw new TypeError("Invalid OData number");
     return String(s);
@@ -945,55 +970,55 @@ const q = (s) => {
   if (typeof s != "string")
     throw new TypeError("Invalid OData number");
   const t = s.trim();
-  if (!G.test(t))
+  if (!_.test(t))
     throw new TypeError("Invalid OData number");
   const e = Number(t);
   if (!Number.isFinite(e)) throw new TypeError("Invalid OData number");
   return String(e);
-}, Q = /^[+-]?\d+$/, W = (s) => {
+}, W = /^[+-]?\d+$/, K = (s) => {
   if (typeof s != "number" && typeof s != "string")
     throw new TypeError("Invalid OData integer");
   const t = typeof s == "number" ? String(s) : s.trim();
-  if (!Q.test(t))
+  if (!W.test(t))
     throw new TypeError("Invalid OData integer");
   return t;
-}, K = (s) => {
+}, Y = (s) => {
   if (typeof s != "boolean") throw new TypeError("Invalid OData boolean");
   return s ? "true" : "false";
-}, Y = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, Z = (s) => {
+}, Z = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, tt = (s) => {
   if (typeof s != "string") throw new TypeError("Invalid OData UUID");
-  if (!Y.test(s)) throw new TypeError("Invalid OData UUID");
-  return q(s);
-}, tt = /^[A-Za-z0-9 _-]+$/, et = (s) => {
+  if (!Z.test(s)) throw new TypeError("Invalid OData UUID");
+  return C(s);
+}, et = /^[A-Za-z0-9 _-]+$/, rt = (s) => {
   if (typeof s != "string")
     throw new TypeError("Invalid OData identifier");
-  if (!tt.test(s))
+  if (!et.test(s))
     throw new TypeError("Invalid OData identifier");
   return `"${s}"`;
-}, ht = {
-  string: q,
-  number: _,
-  integer: W,
-  boolean: K,
-  uuid: Z,
-  identifier: et
+}, ut = {
+  string: C,
+  number: Q,
+  integer: K,
+  boolean: Y,
+  uuid: tt,
+  identifier: rt
 };
 export {
-  H as ConcurrencyLimit,
-  X as ConcurrencyLimitRequest,
-  j as DedupeRequest,
+  X as ConcurrencyLimit,
+  V as ConcurrencyLimitRequest,
+  S as DedupeRequest,
   D as FileMaker,
-  nt as FileMakerAuthenticator,
-  I as FileMakerBasicCredentials,
-  at as FileMakerClient,
-  C as FileMakerOAuthCredentials,
-  it as FileMakerRawCredentials,
-  V as Logger,
-  y as NullFileMakerCredentials,
-  ot as NullLogger,
-  w as RequestError,
-  R as RequestTimeoutError,
+  ot as FileMakerAuthenticator,
+  E as FileMakerBasicCredentials,
+  ht as FileMakerClient,
+  F as FileMakerOAuthCredentials,
+  nt as FileMakerRawCredentials,
+  B as Logger,
+  w as NullFileMakerCredentials,
+  at as NullLogger,
+  y as RequestError,
+  q as RequestTimeoutError,
   l as isRequestError,
-  st as isRequestTimeoutError,
-  ht as odata
+  it as isRequestTimeoutError,
+  ut as odata
 };

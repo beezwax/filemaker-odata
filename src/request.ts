@@ -1,5 +1,4 @@
 import axios, {
-  AxiosError,
   isAxiosError,
   type ResponseType,
   type AxiosResponse,
@@ -107,39 +106,64 @@ export class Request implements IRequest {
     return {
       httpsAgent: this.agent,
       headers: this.credentials.authorizationHeaders,
-      timeout: this.timeout,
-      // Makes axios reject timeouts with ETIMEDOUT instead of ECONNABORTED.
-      transitional:
-        this.timeout === undefined ? undefined : { clarifyTimeoutError: true },
     };
   }
 
-  private toRequestError(error: unknown): RequestError {
-    if (
-      this.timeout !== undefined &&
-      isAxiosError(error) &&
-      error.code === AxiosError.ETIMEDOUT
-    ) {
-      return new RequestTimeoutError(this.timeout);
-    }
-
-    return new RequestError(
-      error instanceof Error ? error.message : String(error),
-      isAxiosError(error) && error.response ? error.response.data : undefined,
+  private config(options: RequestOptions | undefined, extra: PlainObject) {
+    return mergeDeep(
+      mergeDeep({ ...options } as PlainObject, this.transportConfig()),
+      extra,
     );
   }
 
-  async get<T>(url: string, options?: RequestOptions) {
-    try {
-      const response = await axios.get<T>(
-        url,
-        mergeDeep({ ...options } as PlainObject, this.transportConfig()),
-      );
-
-      return response;
-    } catch (error) {
-      throw this.toRequestError(error);
+  // Runs one axios call, failing it with RequestTimeoutError when no data is
+  // sent or received for `timeout` ms. We use our own timer instead of axios's
+  // `timeout`: in Node axios's timer stops once response headers arrive, and in
+  // browsers it is a total limit. Restarting on progress events gives an
+  // inactivity limit everywhere. Axios throttles progress events to about 3
+  // per second, so the limit is approximate by up to ~1/3 s.
+  private async send<T>(
+    call: (extra: PlainObject) => Promise<AxiosResponse<T>>,
+  ): Promise<AxiosResponse<T>> {
+    const timeout = this.timeout;
+    if (timeout === undefined) {
+      try {
+        return await call({});
+      } catch (error) {
+        throw toRequestError(error);
+      }
     }
+
+    const controller = new AbortController();
+    let timedOut = false;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const restart = () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, timeout);
+    };
+
+    try {
+      restart();
+      return await call({
+        signal: controller.signal,
+        onDownloadProgress: restart,
+        onUploadProgress: restart,
+      });
+    } catch (error) {
+      if (timedOut) throw new RequestTimeoutError(timeout);
+      throw toRequestError(error);
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
+  async get<T>(url: string, options?: RequestOptions) {
+    return this.send((extra) =>
+      axios.get<T>(url, this.config(options, extra)),
+    );
   }
 
   async post<T>(
@@ -147,16 +171,14 @@ export class Request implements IRequest {
     params: string | Record<string, unknown> | null,
     options?: RequestOptions,
   ) {
-    try {
-      const response = await axios.post<T>(
-        url,
-        params,
-        mergeDeep({ ...options } as PlainObject, this.transportConfig()),
-      );
-
-      return response;
-    } catch (error) {
-      throw this.toRequestError(error);
-    }
+    return this.send((extra) =>
+      axios.post<T>(url, params, this.config(options, extra)),
+    );
   }
 }
+
+const toRequestError = (error: unknown): RequestError =>
+  new RequestError(
+    error instanceof Error ? error.message : String(error),
+    isAxiosError(error) && error.response ? error.response.data : undefined,
+  );

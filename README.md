@@ -301,13 +301,18 @@ const fm = new FileMaker({
 
 ## Request Timeout
 
-`timeout` sets how long a `FileMakerClient` waits for each HTTP request, in milliseconds.
-It applies to every request the client makes, including each page that `getRecords`
-follows. Time spent waiting in the `concurrency` queue does not count.
+`timeout` sets how long, in milliseconds, a `FileMakerClient` lets an HTTP request go
+without sending or receiving any data. A request fails when no data moves for `timeout`
+ms, counting from the start of the request. A transfer that keeps sending or receiving
+data is not cut off, however long it takes. This works the same in Node and browsers.
+
+The timer applies to every request the client makes, including each page that
+`getRecords` follows. Time spent waiting in the `concurrency` queue does not count.
 
 By default there is no timeout. Leaving `timeout` out, or passing `undefined`, `0`, or
-`Infinity`, means no timeout. Any other value must be a positive finite number. Anything
-else (for example `-1` or `NaN`) throws a `RangeError` when the client is created.
+`Infinity`, means no timeout. Any other value must be a positive number up to
+`2147483647` (the largest delay JavaScript timers support). Anything else (for example
+`-1`, `NaN`, or `2147483648`) throws a `RangeError` when the client is created.
 
 ```typescript
 const client = new FileMakerClient({
@@ -333,11 +338,6 @@ try {
   }
 }
 ```
-
-In Node, a request fails when FileMaker sends no response within the timeout. After the
-response starts, it fails only when no new data arrives for that long, so a response that
-is still sending data is not cut off. In browsers, `timeout` is a total time limit for the
-request.
 
 A script or batch that runs on the server longer than the timeout fails on the client,
 but FileMaker can still finish the work. Pick a timeout longer than your slowest script.

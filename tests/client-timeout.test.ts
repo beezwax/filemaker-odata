@@ -1,4 +1,3 @@
-import { AxiosError } from "axios";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
   FileMakerClient,
@@ -22,15 +21,13 @@ const buildClient = (
 
 const basicAuth = { username: "user", password: "pass" };
 
-const timeoutError = () =>
-  new AxiosError("timeout of 300000ms exceeded", AxiosError.ETIMEDOUT);
-
 // The config object axios received on its first call.
 const configOf = (spy: { mock: { calls: unknown[][] } }, index: number) =>
   spy.mock.calls[0]![index] as Record<string, unknown>;
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
 });
 
 describe("FileMakerClient timeout", () => {
@@ -46,7 +43,7 @@ describe("FileMakerClient timeout", () => {
 
       expect(get).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ timeout: 300000 }),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
 
@@ -64,7 +61,7 @@ describe("FileMakerClient timeout", () => {
 
       expect(get).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ timeout: 300000 }),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
 
@@ -80,7 +77,7 @@ describe("FileMakerClient timeout", () => {
       expect(post).toHaveBeenCalledWith(
         expect.any(String),
         null,
-        expect.objectContaining({ timeout: 300000 }),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
 
@@ -99,7 +96,7 @@ describe("FileMakerClient timeout", () => {
 
       expect(get).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ timeout: 300000 }),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
 
@@ -112,7 +109,7 @@ describe("FileMakerClient timeout", () => {
 
       expect(get).toHaveBeenCalledWith(
         expect.any(String),
-        expect.objectContaining({ timeout: 300000 }),
+        expect.objectContaining({ signal: expect.any(AbortSignal) }),
       );
     });
   });
@@ -131,6 +128,7 @@ describe("FileMakerClient timeout", () => {
       getResolvers[0]!(emptyPage);
       await records;
 
+      expect(configOf(get, 1).signal).toBeUndefined();
       expect(configOf(get, 1).timeout).toBeUndefined();
       expect(configOf(get, 1).transitional).toBeUndefined();
     });
@@ -142,54 +140,64 @@ describe("FileMakerClient timeout", () => {
       getResolvers[0]!({ data: {}, headers: {} });
       await result;
 
+      expect(configOf(get, 1).signal).toBeUndefined();
       expect(configOf(get, 1).timeout).toBeUndefined();
     });
   });
 
-  test.each([-1, NaN, -Infinity, "5000" as unknown as number])(
+  test.each([-1, NaN, -Infinity, 2147483648, "5000" as unknown as number])(
     "throws a RangeError for timeout %j",
     (timeout) => {
-      expect(() => buildClient({ timeout })).toThrow(RangeError);
+      expect(() => buildClient({ timeout })).toThrow(
+        new RangeError(
+          "timeout must be a positive number up to 2147483647, 0 or Infinity",
+        ),
+      );
     },
   );
 
+  test("accepts the largest timer delay, 2147483647", () => {
+    expect(() => buildClient({ timeout: 2147483647 })).not.toThrow();
+  });
+
   test("a timed-out request frees its concurrency slot for the next one", async () => {
-    const { get, getRejecters } = pendingAxios();
-    const fm = buildClient({ timeout: 300000, concurrency: 1 }).withBasicAuth(
+    vi.useFakeTimers();
+    const { get } = pendingAxios();
+    const fm = buildClient({ timeout: 1000, concurrency: 1 }).withBasicAuth(
       basicAuth,
     );
 
-    const first = fm.getRecords("a");
-    const failure = first.catch((error: unknown) => error);
-    void fm.getRecords("b");
-    await flush();
+    const failure = fm.getRecords("a").catch((error: unknown) => error);
+    void fm.getRecords("b").catch(() => undefined);
+    await vi.advanceTimersByTimeAsync(0);
     expect(get).toHaveBeenCalledTimes(1);
 
-    getRejecters[0]!(timeoutError());
+    await vi.advanceTimersByTimeAsync(1000);
     const error = await failure;
-    await flush();
+    await vi.advanceTimersByTimeAsync(0);
 
     expect(isRequestTimeoutError(error)).toBe(true);
     expect(get).toHaveBeenCalledTimes(2);
   });
 
   test("shares a timeout failure with deduplicated callers, then sends a fresh request", async () => {
-    const { get, getRejecters } = pendingAxios();
-    const fm = buildClient({ timeout: 300000 }).withBasicAuth(basicAuth);
+    vi.useFakeTimers();
+    const { get } = pendingAxios();
+    const fm = buildClient({ timeout: 1000 }).withBasicAuth(basicAuth);
 
     const first = fm.getRecords("a").catch((error: unknown) => error);
     const second = fm.getRecords("a").catch((error: unknown) => error);
-    await flush();
+    await vi.advanceTimersByTimeAsync(0);
     expect(get).toHaveBeenCalledTimes(1);
 
-    getRejecters[0]!(timeoutError());
+    await vi.advanceTimersByTimeAsync(1000);
     const errors = await Promise.all([first, second]);
 
     expect(errors[0]).toBeInstanceOf(RequestTimeoutError);
     expect(errors[1]).toBeInstanceOf(RequestTimeoutError);
 
-    void fm.getRecords("a");
-    await flush();
+    void fm.getRecords("a").catch(() => undefined);
+    await vi.advanceTimersByTimeAsync(0);
     expect(get).toHaveBeenCalledTimes(2);
   });
 });

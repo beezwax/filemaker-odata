@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { CanceledError } from "axios";
 import { vi } from "vitest";
 import type {
   IRequest,
@@ -13,8 +13,26 @@ export const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 type Resolve = (response: unknown) => void;
 type Reject = (error: unknown) => void;
 
+type AxiosConfig = { signal?: AbortSignal } & Record<string, unknown>;
+
+// A promise that stays pending until the test settles it, and rejects with
+// axios's CanceledError when the request's signal aborts (as axios does).
+const pendingCall = (
+  config: AxiosConfig | undefined,
+  resolvers: Resolve[],
+  rejecters: Reject[],
+) =>
+  new Promise((resolve, reject) => {
+    resolvers.push(resolve);
+    rejecters.push(reject);
+    config?.signal?.addEventListener("abort", () =>
+      reject(new CanceledError()),
+    );
+  });
+
 // Replaces axios.get/post with calls that stay pending until the test
-// resolves (or rejects) them, recording the URL of each GET in order.
+// resolves (or rejects) them, recording the URL of each GET in order. A call
+// whose config carries a signal rejects with CanceledError when it aborts.
 export const pendingAxios = () => {
   const getUrls: string[] = [];
   const getResolvers: Resolve[] = [];
@@ -22,20 +40,17 @@ export const pendingAxios = () => {
   const postResolvers: Resolve[] = [];
   const postRejecters: Reject[] = [];
 
-  const get = vi.spyOn(axios, "get").mockImplementation((url: string) => {
-    getUrls.push(url);
-    return new Promise((resolve, reject) => {
-      getResolvers.push(resolve);
-      getRejecters.push(reject);
+  const get = vi
+    .spyOn(axios, "get")
+    .mockImplementation((url: string, config?: unknown) => {
+      getUrls.push(url);
+      return pendingCall(config as AxiosConfig, getResolvers, getRejecters);
     });
-  });
-  const post = vi.spyOn(axios, "post").mockImplementation(
-    () =>
-      new Promise((resolve, reject) => {
-        postResolvers.push(resolve);
-        postRejecters.push(reject);
-      }),
-  );
+  const post = vi
+    .spyOn(axios, "post")
+    .mockImplementation((_url: string, _data?: unknown, config?: unknown) =>
+      pendingCall(config as AxiosConfig, postResolvers, postRejecters),
+    );
 
   return {
     get,

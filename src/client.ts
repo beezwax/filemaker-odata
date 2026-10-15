@@ -27,12 +27,17 @@ const hasConcurrencyLimit = (
 
 // undefined, 0 and Infinity mean "no timeout". Anything else must be a
 // positive finite number of milliseconds.
+// The largest delay JS timers support; longer delays fire almost at once.
+const MAX_TIMEOUT = 2147483647;
+
 const normalizeTimeout = (timeout: number | undefined): number | undefined => {
   if (timeout === undefined || timeout === 0 || timeout === Infinity)
     return undefined;
-  if (typeof timeout === "number" && Number.isFinite(timeout) && timeout > 0)
+  if (typeof timeout === "number" && timeout > 0 && timeout <= MAX_TIMEOUT)
     return timeout;
-  throw new RangeError("timeout must be a positive number, 0 or Infinity");
+  throw new RangeError(
+    `timeout must be a positive number up to ${MAX_TIMEOUT}, 0 or Infinity`,
+  );
 };
 
 /**
@@ -47,11 +52,12 @@ const normalizeTimeout = (timeout: number | undefined): number | undefined => {
  * cap is shared by every FileMaker this client builds. Leaving it out (or
  * passing undefined, 0 or Infinity) means no limit.
  *
- * Pass `timeout` (milliseconds) to drop a request that stops making progress.
- * In Node a request fails when FileMaker sends no response or no new data for
- * that long; in browsers it is a total limit. Leaving it out (or passing
- * undefined, 0 or Infinity) means no timeout. A timed-out request throws
- * `RequestTimeoutError`.
+ * Pass `timeout` (milliseconds, up to 2147483647) to drop a request that stops
+ * making progress. A request fails when no data is sent or received for that
+ * long, counting from the start of the request; a transfer that keeps moving
+ * data is never cut off. This works the same in Node and browsers. Leaving it
+ * out (or passing undefined, 0 or Infinity) means no timeout. A timed-out
+ * request throws `RequestTimeoutError`.
  *
  * @example
  * // Basic authentication
