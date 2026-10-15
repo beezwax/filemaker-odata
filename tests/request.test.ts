@@ -22,7 +22,6 @@ const buildRequest = (timeout?: number) =>
 
 type Config = Record<string, unknown> & {
   onDownloadProgress?: (event: unknown) => void;
-  onUploadProgress?: (event: unknown) => void;
 };
 
 const configOf = (spy: { mock: { calls: unknown[][] } }, index: number) =>
@@ -55,7 +54,7 @@ describe("Request timeout config", () => {
     ["get", 1],
     ["post", 2],
   ] as const)(
-    "%s with a timeout sends a signal and progress callbacks",
+    "%s with a timeout sends a signal and a download progress callback only",
     async (method, index) => {
       const spy = vi.spyOn(axios, method).mockResolvedValue(okResponse);
       const request = buildRequest(5000);
@@ -65,7 +64,7 @@ describe("Request timeout config", () => {
       const config = configOf(spy, index);
       expect(config.signal).toBeInstanceOf(AbortSignal);
       expect(typeof config.onDownloadProgress).toBe("function");
-      expect(typeof config.onUploadProgress).toBe("function");
+      expect("onUploadProgress" in config).toBe(false);
       expect("timeout" in config).toBe(false);
       expect("transitional" in config).toBe(false);
     },
@@ -119,18 +118,17 @@ describe("Request inactivity timeout", () => {
   );
 
   test.each([
-    ["get", "onDownloadProgress", 1],
-    ["post", "onDownloadProgress", 2],
-    ["post", "onUploadProgress", 2],
+    ["get", 1],
+    ["post", 2],
   ] as const)(
-    "%s: %s restarts the deadline",
-    async (method, callback, index) => {
+    "%s: onDownloadProgress restarts the deadline",
+    async (method, index) => {
       const { get, post } = pendingAxios();
       const state = track(send(method, 1000));
       const config = configOf(method === "get" ? get : post, index);
 
       await vi.advanceTimersByTimeAsync(900);
-      config[callback]!({});
+      config.onDownloadProgress!({});
 
       await vi.advanceTimersByTimeAsync(900);
       expect(state.settled).toBe(false);

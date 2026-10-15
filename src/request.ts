@@ -116,12 +116,16 @@ export class Request implements IRequest {
     );
   }
 
-  // Runs one axios call, failing it with RequestTimeoutError when no data is
-  // sent or received for `timeout` ms. We use our own timer instead of axios's
+  // Runs one axios call, failing it with RequestTimeoutError when no response
+  // data is received for `timeout` ms. We use our own timer instead of axios's
   // `timeout`: in Node axios's timer stops once response headers arrive, and in
-  // browsers it is a total limit. Restarting on progress events gives an
-  // inactivity limit everywhere. Axios throttles progress events to about 3
-  // per second, so the limit is approximate by up to ~1/3 s.
+  // browsers it is a total limit. The timer counts from the start of the
+  // request (upload time included) and restarts each time response data
+  // arrives, so it is an inactivity limit everywhere. We do not use
+  // `onUploadProgress`: it makes the axios fetch adapter stream request bodies
+  // (which needs HTTP/2 in Chrome) and forces CORS preflights with XHR.
+  // FileMaker request bodies are small. Axios throttles progress events to
+  // about 3 per second, so the limit is approximate by up to ~1/3 s.
   private async send<T>(
     call: (extra: PlainObject) => Promise<AxiosResponse<T>>,
   ): Promise<AxiosResponse<T>> {
@@ -150,7 +154,6 @@ export class Request implements IRequest {
       return await call({
         signal: controller.signal,
         onDownloadProgress: restart,
-        onUploadProgress: restart,
       });
     } catch (error) {
       if (timedOut) throw new RequestTimeoutError(timeout);

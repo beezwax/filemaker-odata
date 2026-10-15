@@ -301,10 +301,11 @@ const fm = new FileMaker({
 
 ## Request Timeout
 
-`timeout` sets how long, in milliseconds, a `FileMakerClient` lets an HTTP request go
-without sending or receiving any data. A request fails when no data moves for `timeout`
-ms, counting from the start of the request. A transfer that keeps sending or receiving
-data is not cut off, however long it takes. This works the same in Node and browsers.
+`timeout` sets how long, in milliseconds, a `FileMakerClient` waits for response data.
+A request fails when no response data is received for `timeout` ms. The timer starts when
+the request is sent and restarts each time data arrives, so a response that keeps sending
+data is not cut off. This works the same in Node and browsers. Progress is checked about
+three times per second, so use a timeout of at least one second.
 
 The timer applies to every request the client makes, including each page that
 `getRecords` follows. Time spent waiting in the `concurrency` queue does not count.

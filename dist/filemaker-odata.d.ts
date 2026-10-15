@@ -184,9 +184,10 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * passing undefined, 0 or Infinity) means no limit.
  *
  * Pass `timeout` (milliseconds, up to 2147483647) to drop a request that stops
- * making progress. A request fails when no data is sent or received for that
- * long, counting from the start of the request; a transfer that keeps moving
- * data is never cut off. This works the same in Node and browsers. Leaving it
+ * receiving data. A request fails when no response data is received for that
+ * long. The timer starts when the request is sent and restarts each time data
+ * arrives, so a response that keeps sending data is not cut off. This works
+ * the same in Node and browsers. Leaving it
  * out (or passing undefined, 0 or Infinity) means no timeout. A timed-out
  * request throws `RequestTimeoutError`.
  *
