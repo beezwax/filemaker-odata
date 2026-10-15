@@ -247,6 +247,58 @@ const fm = new FileMaker({
 });
 ```
 
+## Request Concurrency Limit
+
+`concurrency` sets the maximum number of HTTP requests a `FileMakerClient` sends to
+FileMaker Server at the same time. Extra requests wait in a queue and start in the order
+they were made (first in, first out). This keeps many parallel queries (for example with
+`Promise.all`) from overloading the server.
+
+By default there is no limit. Leaving `concurrency` out, or passing `undefined`, `0`, or
+`Infinity`, means no limit. Any other value must be a positive integer. Anything else (for
+example `-1`, `1.5`, or `NaN`) throws a `RangeError` when the client is created.
+
+```typescript
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  concurrency: 2,
+});
+```
+
+The limit is shared by every `FileMaker` the client creates, including every
+`withBasicAuth` and `withOAuth` call.
+
+Every HTTP request takes one slot: reads, `batch().execute()`, `script()`, and each extra
+page that `getRecords` loads when following next links. A request that fails frees its slot
+right away. Reads shared by request deduplication do not take an extra slot.
+`getOAuthUrl()` and `getAuthTypes()` are not limited.
+
+A `FileMaker` you construct yourself is not limited. To limit it, wrap its request in
+`ConcurrencyLimitRequest`. If you use deduplication too, put the limit inside `DedupeRequest`:
+
+```typescript
+import {
+  ConcurrencyLimit,
+  ConcurrencyLimitRequest,
+  DedupeRequest,
+  FileMaker,
+} from "filemaker-odata";
+
+const limit = new ConcurrencyLimit(2);
+
+const fm = new FileMaker({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  logger,
+  request: new DedupeRequest(new ConcurrencyLimitRequest(request, limit)),
+});
+```
+
+`ConcurrencyLimitRequest` takes a `ConcurrencyLimit`. To share one limit between several
+`FileMaker` instances, pass the same `ConcurrencyLimit` to each `ConcurrencyLimitRequest`.
+`ConcurrencyLimit` accepts only a positive integer or `Infinity`.
+
 # Development
 
     npm i

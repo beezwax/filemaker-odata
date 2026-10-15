@@ -1,6 +1,10 @@
 import { FileMaker } from "./filemaker";
 import { type IRequest, Request } from "./request";
 import { DedupeRequest } from "./dedupe-request";
+import {
+  ConcurrencyLimit,
+  ConcurrencyLimitRequest,
+} from "./concurrency-limit-request";
 import { type ILogger, Logger } from "./logger";
 import {
   FileMakerBasicCredentials,
@@ -14,6 +18,13 @@ interface OAuthResponse {
   };
 }
 
+// undefined, 0 and Infinity mean "no limit". Anything else is left to
+// ConcurrencyLimit, which throws a RangeError for invalid values.
+const hasConcurrencyLimit = (
+  concurrency: number | undefined,
+): concurrency is number =>
+  concurrency !== undefined && concurrency !== 0 && concurrency !== Infinity;
+
 /**
  * A facade class that simplifies the creation and configuration of FileMaker
  * instances. This class handles the composition of credentials, requests, and
@@ -21,6 +32,10 @@ interface OAuthResponse {
  *
  * Identical concurrent GET requests made through the same FileMaker instance
  * are shared by default. Pass `dedupe: false` to send every request.
+ *
+ * Pass `concurrency` to cap the number of HTTP requests in flight at once. The
+ * cap is shared by every FileMaker this client builds. Leaving it out (or
+ * passing undefined, 0 or Infinity) means no limit.
  *
  * @example
  * // Basic authentication
@@ -49,6 +64,7 @@ export class FileMakerClient {
   private agent?: unknown;
   private logger: ILogger;
   private dedupe: boolean;
+  private concurrencyLimit?: ConcurrencyLimit;
 
   constructor({
     server,
@@ -56,18 +72,23 @@ export class FileMakerClient {
     agent,
     logger,
     dedupe = true,
+    concurrency,
   }: {
     server: string;
     database: string;
     agent?: unknown;
     logger?: ILogger;
     dedupe?: boolean;
+    concurrency?: number;
   }) {
     this.server = server;
     this.database = database;
     this.agent = agent;
     this.logger = logger ?? new Logger();
     this.dedupe = dedupe;
+    this.concurrencyLimit = hasConcurrencyLimit(concurrency)
+      ? new ConcurrencyLimit(concurrency)
+      : undefined;
   }
 
   /**
@@ -114,8 +135,18 @@ export class FileMakerClient {
       server: this.server,
       database: this.database,
       logger: this.logger,
-      request: this.dedupe ? new DedupeRequest(request) : request,
+      request: this.decorate(request),
     });
+  }
+
+  // Innermost first: the concurrency limit sits inside dedupe, so callers
+  // sharing a deduplicated read do not take a slot.
+  private decorate(request: IRequest): IRequest {
+    let decorated = request;
+    if (this.concurrencyLimit !== undefined)
+      decorated = new ConcurrencyLimitRequest(decorated, this.concurrencyLimit);
+    if (this.dedupe) decorated = new DedupeRequest(decorated);
+    return decorated;
   }
 
   /**
