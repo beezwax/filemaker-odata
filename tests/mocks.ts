@@ -11,25 +11,41 @@ import type {
 export const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
 type Resolve = (response: unknown) => void;
+type Reject = (error: unknown) => void;
 
 // Replaces axios.get/post with calls that stay pending until the test
-// resolves them, recording the URL of each GET in order.
+// resolves (or rejects) them, recording the URL of each GET in order.
 export const pendingAxios = () => {
   const getUrls: string[] = [];
   const getResolvers: Resolve[] = [];
+  const getRejecters: Reject[] = [];
   const postResolvers: Resolve[] = [];
+  const postRejecters: Reject[] = [];
 
   const get = vi.spyOn(axios, "get").mockImplementation((url: string) => {
     getUrls.push(url);
-    return new Promise((resolve) => getResolvers.push(resolve));
+    return new Promise((resolve, reject) => {
+      getResolvers.push(resolve);
+      getRejecters.push(reject);
+    });
   });
-  const post = vi
-    .spyOn(axios, "post")
-    .mockImplementation(
-      () => new Promise((resolve) => postResolvers.push(resolve)),
-    );
+  const post = vi.spyOn(axios, "post").mockImplementation(
+    () =>
+      new Promise((resolve, reject) => {
+        postResolvers.push(resolve);
+        postRejecters.push(reject);
+      }),
+  );
 
-  return { get, post, getUrls, getResolvers, postResolvers };
+  return {
+    get,
+    post,
+    getUrls,
+    getResolvers,
+    getRejecters,
+    postResolvers,
+    postRejecters,
+  };
 };
 
 // The test tsconfig has no Node types; tests run in Node, where Buffer exists.
