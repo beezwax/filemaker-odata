@@ -187,3 +187,55 @@ describe("Request inactivity timeout", () => {
     expect(isRequestTimeoutError(error)).toBe(false);
   });
 });
+
+describe("Request error details", () => {
+  test("keeps the status, headers, code and body of an error response", async () => {
+    const headers = { "content-type": "text/html" };
+    vi.spyOn(axios, "get").mockRejectedValue(
+      new AxiosError(
+        "Request failed with status code 500",
+        AxiosError.ERR_BAD_RESPONSE,
+        undefined,
+        undefined,
+        { status: 500, headers, data: "<html>" } as never,
+      ),
+    );
+
+    const error = (await buildRequest()
+      .get("http://x")
+      .catch((e: unknown) => e)) as RequestError;
+
+    expect(error).toBeInstanceOf(RequestError);
+    expect(error.status).toBe(500);
+    expect(error.headers).toBe(headers);
+    expect(error.code).toBe("ERR_BAD_RESPONSE");
+    expect(error.data).toBe("<html>");
+  });
+
+  test("keeps the code of a transport error with no response", async () => {
+    vi.spyOn(axios, "post").mockRejectedValue(
+      new AxiosError("connect ECONNREFUSED", "ECONNREFUSED"),
+    );
+
+    const error = (await buildRequest()
+      .post("http://x", null)
+      .catch((e: unknown) => e)) as RequestError;
+
+    expect(error.code).toBe("ECONNREFUSED");
+    expect(error.status).toBeUndefined();
+    expect(error.headers).toBeUndefined();
+    expect(error.data).toBeUndefined();
+  });
+
+  test("leaves the details empty for a non-axios error", async () => {
+    vi.spyOn(axios, "get").mockRejectedValue(new Error("boom"));
+
+    const error = (await buildRequest()
+      .get("http://x")
+      .catch((e: unknown) => e)) as RequestError;
+
+    expect(error.message).toBe("boom");
+    expect(error.status).toBeUndefined();
+    expect(error.code).toBeUndefined();
+  });
+});

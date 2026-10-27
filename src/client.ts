@@ -1,6 +1,7 @@
 import { FileMaker } from "./filemaker";
 import { type IRequest, Request } from "./request";
 import { DedupeRequest } from "./dedupe-request";
+import { RetryRequest } from "./retry-request";
 import {
   ConcurrencyLimit,
   ConcurrencyLimitRequest,
@@ -61,6 +62,12 @@ const normalizeTimeout = (timeout: number | undefined): number | undefined => {
  * out (or passing undefined, 0 or Infinity) means no timeout. A timed-out
  * request throws `RequestTimeoutError`.
  *
+ * Requests failing in a transient way (for example a proxy in front of
+ * FileMaker returning a generic 500 page) are retried once by default. GETs
+ * are retried on any transient failure; POSTs only when they most likely
+ * never reached FileMaker. Pass `retries` to change the number of retries, or
+ * `retries: 0` to turn them off.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -90,6 +97,7 @@ export class FileMakerClient {
   private dedupe: boolean;
   private concurrencyLimit?: ConcurrencyLimit;
   private timeout?: number;
+  private retries: number;
 
   constructor({
     server,
@@ -99,6 +107,7 @@ export class FileMakerClient {
     dedupe = true,
     concurrency,
     timeout,
+    retries = 1,
   }: {
     server: string;
     database: string;
@@ -107,6 +116,7 @@ export class FileMakerClient {
     dedupe?: boolean;
     concurrency?: number;
     timeout?: number;
+    retries?: number;
   }) {
     this.server = server;
     this.database = database;
@@ -117,6 +127,9 @@ export class FileMakerClient {
       ? new ConcurrencyLimit(concurrency)
       : undefined;
     this.timeout = normalizeTimeout(timeout);
+    if (!Number.isInteger(retries) || retries < 0)
+      throw new RangeError("retries must be a non-negative integer");
+    this.retries = retries;
   }
 
   /**
@@ -158,8 +171,13 @@ export class FileMakerClient {
     return this.buildFileMaker(this.request(credentials));
   }
 
-  private request(credentials: FileMakerCredentials): Request {
-    return new Request(credentials, this.agent, this.timeout);
+  private request(credentials: FileMakerCredentials): IRequest {
+    const request = new Request(credentials, this.agent, this.timeout);
+    if (this.retries === 0) return request;
+    return new RetryRequest(request, {
+      retries: this.retries,
+      logger: this.logger,
+    });
   }
 
   private buildFileMaker(request: IRequest): FileMaker {
@@ -171,8 +189,9 @@ export class FileMakerClient {
     });
   }
 
-  // Innermost first: the concurrency limit sits inside dedupe, so callers
-  // sharing a deduplicated read do not take a slot.
+  // Innermost first: retries sit inside the concurrency limit, so a request
+  // keeps its slot while it waits to retry. The limit sits inside dedupe, so
+  // callers sharing a deduplicated read do not take a slot and share retries.
   private decorate(request: IRequest): IRequest {
     let decorated = request;
     if (this.concurrencyLimit !== undefined)

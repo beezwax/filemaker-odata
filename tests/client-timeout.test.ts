@@ -10,7 +10,12 @@ import { configOf, flush, pendingAxios } from "./mocks";
 const emptyPage = { data: { value: [] }, headers: {} };
 
 const buildClient = (
-  options: { timeout?: number; concurrency?: number; dedupe?: boolean } = {},
+  options: {
+    timeout?: number;
+    concurrency?: number;
+    dedupe?: boolean;
+    retries?: number;
+  } = {},
 ) =>
   new FileMakerClient({
     server: "demo.server.beezwax.net",
@@ -159,9 +164,11 @@ describe("FileMakerClient timeout", () => {
   test("a timed-out request frees its concurrency slot for the next one", async () => {
     vi.useFakeTimers();
     const { get } = pendingAxios();
-    const fm = buildClient({ timeout: 1000, concurrency: 1 }).withBasicAuth(
-      basicAuth,
-    );
+    const fm = buildClient({
+      timeout: 1000,
+      concurrency: 1,
+      retries: 0,
+    }).withBasicAuth(basicAuth);
 
     const failure = fm.getRecords("a").catch((error: unknown) => error);
     void fm.getRecords("b").catch(() => undefined);
@@ -179,7 +186,9 @@ describe("FileMakerClient timeout", () => {
   test("shares a timeout failure with deduplicated callers, then sends a fresh request", async () => {
     vi.useFakeTimers();
     const { get } = pendingAxios();
-    const fm = buildClient({ timeout: 1000 }).withBasicAuth(basicAuth);
+    const fm = buildClient({ timeout: 1000, retries: 0 }).withBasicAuth(
+      basicAuth,
+    );
 
     const first = fm.getRecords("a").catch((error: unknown) => error);
     const second = fm.getRecords("a").catch((error: unknown) => error);

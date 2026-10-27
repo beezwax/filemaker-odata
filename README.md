@@ -343,6 +343,65 @@ try {
 A script or batch that runs on the server longer than the timeout fails on the client,
 but FileMaker can still finish the work. Pick a timeout longer than your slowest script.
 
+## Request Retries
+
+A proxy in front of FileMaker Server (for example a gateway or a security proxy) sometimes
+answers with a generic `500 Internal Server Error` page for no lasting reason. A
+`FileMakerClient` retries such failures once by default.
+
+Reads (GET) only read data, so they are retried on any transient failure:
+
+- a `500`, `502`, `503`, or `504` response,
+- a network error with no response (connection reset or refused, DNS failure, socket hang
+  up, or a browser network error),
+- a request that hit the client's `timeout`.
+
+Scripts and batches (POST) can write data, so they are retried only when the request most
+likely never ran in FileMaker:
+
+- a `5xx` response whose body is not JSON (a proxy error page), or
+- a connection that could not be made (`ECONNREFUSED`, `ENOTFOUND`, `EAI_AGAIN`).
+
+A POST that FileMaker answered with a JSON error, that timed out, or whose connection was
+reset or hung up is never retried, because FileMaker may have run it already. Other
+errors, such as `400` or `404`, are never retried.
+
+The first retry waits 250 to 500 ms. Each later retry waits twice as long. Each attempt
+gets its own `timeout`. A request keeps its `concurrency` slot while it waits, and callers
+sharing a deduplicated read share its retries. When retries run out, the last error is
+thrown. Each retry is logged with the client's `logger`.
+
+`retries` sets how many times a failed request is retried. It defaults to `1`. Pass `0` to
+turn retries off. Any other value must be a non-negative integer, or the constructor
+throws a `RangeError`.
+
+```typescript
+const client = new FileMakerClient({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  retries: 2,
+});
+```
+
+A `FileMaker` you construct yourself does not retry. To turn retries on, wrap its request
+in `RetryRequest`, inside `ConcurrencyLimitRequest` and `DedupeRequest` when using them:
+
+```typescript
+import { DedupeRequest, FileMaker, RetryRequest } from "filemaker-odata";
+
+const fm = new FileMaker({
+  server: "demo.server.beezwax.net",
+  database: "test",
+  logger,
+  request: new DedupeRequest(new RetryRequest(request, { retries: 1, logger })),
+});
+```
+
+`RetryRequest` also accepts `baseDelay`, the wait in ms before the first retry (default
+`250`). The `isRetryableGetError` and `isRetryablePostError` functions expose the rules
+above. A `RequestError` carries the response `status` and `headers` and the network error
+`code`, when there are any.
+
 # Development
 
     npm i

@@ -18,13 +18,28 @@ export interface RequestOptions {
   responseType?: ResponseType;
 }
 
+export interface RequestErrorDetails {
+  // HTTP status, when the server (or a proxy in front of it) responded.
+  status?: number;
+  // Response headers, when there was a response.
+  headers?: IResponseHeaders;
+  // Transport error code, e.g. "ECONNRESET", "ECONNREFUSED", "ERR_NETWORK".
+  code?: string;
+}
+
 export class RequestError extends Error {
   data?: unknown;
+  status?: number;
+  headers?: IResponseHeaders;
+  code?: string;
 
-  constructor(message: string, data?: unknown) {
+  constructor(message: string, data?: unknown, details?: RequestErrorDetails) {
     super(message);
     this.name = "RequestError";
     this.data = data;
+    this.status = details?.status;
+    this.headers = details?.headers;
+    this.code = details?.code;
   }
 }
 
@@ -87,11 +102,17 @@ export const mergeDeep = (target: PlainObject, source: PlainObject): PlainObject
 
 type ExtraConfig = Pick<AxiosRequestConfig, "signal" | "onDownloadProgress">;
 
-const toRequestError = (error: unknown): RequestError =>
-  new RequestError(
-    error instanceof Error ? error.message : String(error),
-    isAxiosError(error) && error.response ? error.response.data : undefined,
-  );
+const toRequestError = (error: unknown): RequestError => {
+  const message = error instanceof Error ? error.message : String(error);
+  if (!isAxiosError(error)) return new RequestError(message);
+
+  const { response } = error;
+  return new RequestError(message, response?.data, {
+    status: response?.status,
+    headers: response?.headers,
+    code: error.code,
+  });
+};
 
 // Fails a request with RequestTimeoutError when no response data is received
 // for `ms` ms. We use our own timer instead of axios's `timeout`: in Node
