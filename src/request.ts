@@ -1,8 +1,10 @@
 import axios, {
+  AxiosHeaders,
   isAxiosError,
   type AxiosRequestConfig,
   type ResponseType,
   type AxiosResponse,
+  type RawAxiosHeaders,
 } from "axios";
 import type { FileMakerCredentials } from "./credentials";
 
@@ -21,8 +23,10 @@ export interface RequestOptions {
 export interface RequestErrorDetails {
   // HTTP status, when the server (or a proxy in front of it) responded.
   status?: number;
-  // Response headers, when there was a response.
-  headers?: IResponseHeaders;
+  // Lowercased Content-Type of the error response, when it had one. Only this
+  // header is kept: the others may hold secrets, such as Set-Cookie, and
+  // errors are often logged or serialized.
+  contentType?: string;
   // Transport error code, e.g. "ECONNRESET", "ECONNREFUSED", "ERR_NETWORK".
   code?: string;
 }
@@ -30,7 +34,7 @@ export interface RequestErrorDetails {
 export class RequestError extends Error {
   data?: unknown;
   status?: number;
-  headers?: IResponseHeaders;
+  contentType?: string;
   code?: string;
 
   constructor(message: string, data?: unknown, details?: RequestErrorDetails) {
@@ -38,7 +42,7 @@ export class RequestError extends Error {
     this.name = "RequestError";
     this.data = data;
     this.status = details?.status;
-    this.headers = details?.headers;
+    this.contentType = details?.contentType;
     this.code = details?.code;
   }
 }
@@ -102,6 +106,15 @@ export const mergeDeep = (target: PlainObject, source: PlainObject): PlainObject
 
 type ExtraConfig = Pick<AxiosRequestConfig, "signal" | "onDownloadProgress">;
 
+// Reads the Content-Type, in any case, from either an AxiosHeaders instance or
+// a plain headers object.
+const contentTypeOf = (headers: IResponseHeaders): string | undefined => {
+  const value = AxiosHeaders.from(headers as RawAxiosHeaders).get(
+    "content-type",
+  );
+  return value ? String(value).toLowerCase() : undefined;
+};
+
 const toRequestError = (error: unknown): RequestError => {
   const message = error instanceof Error ? error.message : String(error);
   if (!isAxiosError(error)) return new RequestError(message);
@@ -109,7 +122,7 @@ const toRequestError = (error: unknown): RequestError => {
   const { response } = error;
   return new RequestError(message, response?.data, {
     status: response?.status,
-    headers: response?.headers,
+    contentType: response ? contentTypeOf(response.headers) : undefined,
     code: error.code,
   });
 };

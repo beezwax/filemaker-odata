@@ -4,15 +4,15 @@ import {
   isRequestTimeoutError,
   type IRequest,
   type IResponse,
-  type RequestError,
   type RequestOptions,
 } from "./request";
 
 // 5xx statuses a gateway or FileMaker returns for transient trouble.
 const RETRYABLE_GET_STATUSES = new Set([500, 502, 503, 504]);
 
-// Transport errors with no response. Axios keeps Node's error code; in
-// browsers every network failure is "ERR_NETWORK".
+// Transport errors. Axios keeps Node's error code; in browsers every network
+// failure is "ERR_NETWORK". A connection dropped while the body was arriving
+// may also carry the response (status 200) it was reading.
 const RETRYABLE_GET_CODES = new Set([
   "ECONNRESET",
   "ECONNREFUSED",
@@ -21,58 +21,77 @@ const RETRYABLE_GET_CODES = new Set([
   "EPIPE",
   "ENOTFOUND",
   "EAI_AGAIN",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
   "ERR_NETWORK",
 ]);
 
+// Messages of connections dropped mid-request. Axios reports a body that
+// stopped arriving as "stream has been aborted", with code ERR_BAD_RESPONSE.
+// That code alone is not retried: axios also gives it to every 5xx response,
+// including ones such as 501 that are not transient.
+const DROPPED_CONNECTION_MESSAGES = [
+  "socket hang up",
+  "stream has been aborted",
+];
+
 // Errors raised before a connection was made, so the request never reached
 // the server.
-const NOT_SENT_CODES = new Set(["ECONNREFUSED", "ENOTFOUND", "EAI_AGAIN"]);
+const NOT_SENT_CODES = new Set([
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+]);
 
-const contentTypeOf = (error: RequestError): string => {
-  const headers = (error.headers ?? {}) as Record<string, unknown>;
-  const key = Object.keys(headers).find(
-    (name) => name.toLowerCase() === "content-type",
-  );
-  return key === undefined ? "" : String(headers[key]).toLowerCase();
-};
+// Statuses a proxy answers with when it could not hand the request to
+// FileMaker at all.
+const NOT_SENT_STATUSES = new Set([500, 503]);
 
 /**
  * Whether a failed GET is safe to retry. Reads are idempotent, so a GET is
  * retried on any transient failure:
+ *   - a transport error (connection reset, refused or unreachable, DNS
+ *     failure, socket hang up, browser network error), even when the
+ *     connection dropped after the response started arriving, or
  *   - a 500, 502, 503 or 504 (FileMaker or a proxy in front of it), or
- *   - a transport error with no response (connection reset or refused, DNS
- *     failure, socket hang up, browser network error), or
  *   - our own inactivity timeout (RequestTimeoutError).
  */
 export const isRetryableGetError = (error: unknown): boolean => {
   if (!isRequestError(error)) return false;
   if (isRequestTimeoutError(error)) return true;
-  if (error.status !== undefined)
-    return RETRYABLE_GET_STATUSES.has(error.status);
-  return (
+  if (
     (error.code !== undefined && RETRYABLE_GET_CODES.has(error.code)) ||
-    error.message.includes("socket hang up")
-  );
+    DROPPED_CONNECTION_MESSAGES.some((text) => error.message.includes(text))
+  )
+    return true;
+  return error.status !== undefined && RETRYABLE_GET_STATUSES.has(error.status);
 };
 
 /**
  * Whether a failed POST is safe to retry. POSTs run scripts and batches that
- * may write, so a POST is retried only when it most likely did not run in
- * FileMaker:
- *   - a 5xx whose body is not JSON, i.e. a proxy error page (such as the
- *     generic "500 Internal Server Error" from a gateway), or
- *   - a connection that could not be made at all (ECONNREFUSED, DNS failure).
+ * may write, so a POST is retried only when it almost certainly did not run
+ * in FileMaker:
+ *   - a 500 or 503 that is an HTML page or has no content type, i.e. a proxy
+ *     error page (such as the generic "500 Internal Server Error" from a
+ *     gateway), or
+ *   - a connection that could not be made at all (refused, DNS failure, host
+ *     or network unreachable).
  *
- * A JSON error means FileMaker received the request and may have applied it.
- * Timeouts, connection resets and socket hang ups can happen after the body
- * was sent, while FileMaker keeps working. None of these are retried, so a
- * write is never applied twice.
+ * A JSON, XML, multipart or plain text error may come from FileMaker, which
+ * received the request and may have applied it. A 502 or 504 means the proxy
+ * may have forwarded the request, then lost the connection to FileMaker or
+ * stopped waiting for its answer. Timeouts, connection resets and socket hang ups can happen after
+ * the body was sent, while FileMaker keeps working. None of these are
+ * retried, so a write is never applied twice.
  */
 export const isRetryablePostError = (error: unknown): boolean => {
   if (!isRequestError(error) || isRequestTimeoutError(error)) return false;
   if (error.status !== undefined)
     return (
-      error.status >= 500 && !contentTypeOf(error).includes("application/json")
+      NOT_SENT_STATUSES.has(error.status) &&
+      (!error.contentType || error.contentType.includes("text/html"))
     );
   return error.code !== undefined && NOT_SENT_CODES.has(error.code);
 };

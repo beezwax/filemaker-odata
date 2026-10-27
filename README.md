@@ -352,19 +352,23 @@ answers with a generic `500 Internal Server Error` page for no lasting reason. A
 Reads (GET) only read data, so they are retried on any transient failure:
 
 - a `500`, `502`, `503`, or `504` response,
-- a network error with no response (connection reset or refused, DNS failure, socket hang
-  up, or a browser network error),
+- a network error (connection reset or refused, host or network unreachable, DNS failure,
+  socket hang up, or a browser network error), including a connection that drops while
+  the response is still arriving,
 - a request that hit the client's `timeout`.
 
-Scripts and batches (POST) can write data, so they are retried only when the request most
-likely never ran in FileMaker:
+Scripts and batches (POST) can write data, so they are retried only when the request almost
+certainly never ran in FileMaker:
 
-- a `5xx` response whose body is not JSON (a proxy error page), or
-- a connection that could not be made (`ECONNREFUSED`, `ENOTFOUND`, `EAI_AGAIN`).
+- a `500` or `503` proxy error page: a response that is HTML or has no content type, or
+- a connection that could not be made (`ECONNREFUSED`, `ENOTFOUND`, `EAI_AGAIN`,
+  `EHOSTUNREACH`, `ENETUNREACH`).
 
-A POST that FileMaker answered with a JSON error, that timed out, or whose connection was
-reset or hung up is never retried, because FileMaker may have run it already. Other
-errors, such as `400` or `404`, are never retried.
+A POST whose error response is not HTML (JSON, XML, plain text, and so on), that timed
+out, or whose connection was reset or hung up is never retried, because FileMaker may have
+run it already. Neither is a `502` or `504`: the proxy may have forwarded the request
+to FileMaker and then lost the connection or stopped waiting for the answer. Other errors,
+such as `400` or `404`, are never retried.
 
 The first retry waits 250 to 500 ms. Each later retry waits twice as long. Each attempt
 gets its own `timeout`. A request keeps its `concurrency` slot while it waits, and callers
@@ -399,8 +403,8 @@ const fm = new FileMaker({
 
 `RetryRequest` also accepts `baseDelay`, the wait in ms before the first retry (default
 `250`). The `isRetryableGetError` and `isRetryablePostError` functions expose the rules
-above. A `RequestError` carries the response `status` and `headers` and the network error
-`code`, when there are any.
+above. A `RequestError` carries the response `status` and `contentType` and the network
+error `code`, when there are any.
 
 # Development
 

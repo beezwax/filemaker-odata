@@ -113,6 +113,54 @@ describe("FileMakerClient retries", () => {
     expect(post).toHaveBeenCalledTimes(1);
   });
 
+  const batchCreate = (fm: ReturnType<typeof buildClient>) =>
+    fm
+      .withBasicAuth(basicAuth)
+      .batch()
+      .create({ table: "T", record: { a: 1 } })
+      .execute()
+      .catch((error: unknown) => error);
+
+  test("retries a batch POST after a proxy 500, with the same body", async () => {
+    const { post, postRejecters, postResolvers } = pendingAxios();
+
+    const result = batchCreate(buildClient());
+    await vi.advanceTimersByTimeAsync(0);
+    postRejecters[0]!(proxy500());
+    await pastRetryDelay();
+    expect(post).toHaveBeenCalledTimes(2);
+    expect(post.mock.calls[1]).toEqual(post.mock.calls[0]);
+
+    // An empty body fails to parse, which shows the second response was used.
+    postResolvers[1]!({ data: "", headers: {} });
+    expect(await result).toEqual(new Error("Could not find changeset"));
+  });
+
+  test("does not retry a batch POST that FileMaker answered with a JSON error", async () => {
+    const { post, postRejecters } = pendingAxios();
+
+    const failure = batchCreate(buildClient());
+    await vi.advanceTimersByTimeAsync(0);
+    postRejecters[0]!(fileMaker500());
+    await pastRetryDelay();
+
+    expect(isRequestError(await failure)).toBe(true);
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
+  test("does not retry a script POST after a proxy 504", async () => {
+    const { post, postRejecters } = pendingAxios();
+    const fm = buildClient().withBasicAuth(basicAuth);
+
+    const failure = fm.script("MyScript").catch((error: unknown) => error);
+    await vi.advanceTimersByTimeAsync(0);
+    postRejecters[0]!(errorResponse(504, "text/html", "<html>504</html>"));
+    await pastRetryDelay();
+
+    expect(await failure).toMatchObject({ status: 504 });
+    expect(post).toHaveBeenCalledTimes(1);
+  });
+
   test("does not retry a POST that timed out", async () => {
     const { post } = pendingAxios();
     const fm = buildClient({ timeout: 1000 }).withBasicAuth(basicAuth);

@@ -16,7 +16,7 @@ afterEach(() => {
 const html500 = () =>
   new RequestError("Request failed with status code 500", "<html>", {
     status: 500,
-    headers: { "content-type": "text/html; charset=utf-8" },
+    contentType: "text/html; charset=utf-8",
     code: "ERR_BAD_RESPONSE",
   });
 
@@ -26,7 +26,7 @@ const json500 = () =>
     { error: {} },
     {
       status: 500,
-      headers: { "Content-Type": "application/json;charset=utf-8" },
+      contentType: "application/json;charset=utf-8",
       code: "ERR_BAD_RESPONSE",
     },
   );
@@ -34,11 +34,16 @@ const json500 = () =>
 const status = (code: number, contentType = "text/html") =>
   new RequestError(`status ${code}`, undefined, {
     status: code,
-    headers: { "content-type": contentType },
+    contentType,
   });
 
 const network = (code: string, message = code) =>
   new RequestError(message, undefined, { code });
+
+// A connection dropped while the response body was arriving: axios keeps the
+// response it was reading.
+const midBody = (code: string, message = "stream has been aborted") =>
+  new RequestError(message, undefined, { status: 200, code });
 
 describe("isRetryableGetError", () => {
   test.each([
@@ -50,9 +55,20 @@ describe("isRetryableGetError", () => {
     ["ECONNRESET", network("ECONNRESET")],
     ["ECONNREFUSED", network("ECONNREFUSED")],
     ["ETIMEDOUT", network("ETIMEDOUT")],
+    ["ECONNABORTED", network("ECONNABORTED")],
+    ["EPIPE", network("EPIPE")],
     ["ENOTFOUND", network("ENOTFOUND")],
+    ["EAI_AGAIN", network("EAI_AGAIN")],
+    ["EHOSTUNREACH", network("EHOSTUNREACH")],
+    ["ENETUNREACH", network("ENETUNREACH")],
     ["a browser network error", network("ERR_NETWORK", "Network Error")],
     ["a socket hang up", new RequestError("socket hang up")],
+    [
+      "a socket hang up with ECONNRESET",
+      network("ECONNRESET", "socket hang up"),
+    ],
+    ["a body stream aborted mid-response", midBody("ERR_BAD_RESPONSE")],
+    ["a connection reset mid-response", midBody("ECONNRESET", "aborted")],
     ["our inactivity timeout", new RequestTimeoutError(1000)],
   ])("retries %s", (_label, error) => {
     expect(isRetryableGetError(error)).toBe(true);
@@ -62,6 +78,13 @@ describe("isRetryableGetError", () => {
     ["a 400", status(400)],
     ["a 401", status(401)],
     ["a 404", status(404)],
+    [
+      "a 404 with code ERR_BAD_RESPONSE",
+      new RequestError("status 404", undefined, {
+        status: 404,
+        code: "ERR_BAD_RESPONSE",
+      }),
+    ],
     ["a 501", status(501)],
     ["a cancelled request", network("ERR_CANCELED", "canceled")],
     ["an error with no code", new RequestError("boom")],
@@ -74,18 +97,24 @@ describe("isRetryableGetError", () => {
 describe("isRetryablePostError", () => {
   test.each([
     ["an HTML 500 (proxy error page)", html500()],
-    ["a 502 with no content type", new RequestError("x", "", { status: 502 })],
-    ["a plain text 503", status(503, "text/plain")],
+    ["an HTML 503", status(503)],
+    ["a 500 with no content type", new RequestError("x", "", { status: 500 })],
     ["ECONNREFUSED", network("ECONNREFUSED")],
     ["ENOTFOUND", network("ENOTFOUND")],
     ["EAI_AGAIN", network("EAI_AGAIN")],
+    ["EHOSTUNREACH", network("EHOSTUNREACH")],
+    ["ENETUNREACH", network("ENETUNREACH")],
   ])("retries %s", (_label, error) => {
     expect(isRetryablePostError(error)).toBe(true);
   });
 
   test.each([
     ["a JSON 500 from FileMaker", json500()],
-    ["a JSON 503", status(503, "application/json")],
+    ["an HTML 502", status(502)],
+    ["an HTML 504", status(504)],
+    ["a plain text 503", status(503, "text/plain")],
+    ["an XML 500", status(500, "application/xml")],
+    ["a multipart 500", status(500, "multipart/mixed; boundary=b")],
     ["a 400", status(400)],
     ["our inactivity timeout", new RequestTimeoutError(1000)],
     ["ECONNRESET", network("ECONNRESET")],

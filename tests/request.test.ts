@@ -1,4 +1,4 @@
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, AxiosHeaders } from "axios";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { NullFileMakerCredentials } from "../src/credentials";
 import {
@@ -189,27 +189,52 @@ describe("Request inactivity timeout", () => {
 });
 
 describe("Request error details", () => {
-  test("keeps the status, headers, code and body of an error response", async () => {
-    const headers = { "content-type": "text/html" };
-    vi.spyOn(axios, "get").mockRejectedValue(
-      new AxiosError(
-        "Request failed with status code 500",
-        AxiosError.ERR_BAD_RESPONSE,
-        undefined,
-        undefined,
-        { status: 500, headers, data: "<html>" } as never,
-      ),
-    );
+  const failWith = (headers: unknown) =>
+    vi
+      .spyOn(axios, "get")
+      .mockRejectedValue(
+        new AxiosError(
+          "Request failed with status code 500",
+          AxiosError.ERR_BAD_RESPONSE,
+          undefined,
+          undefined,
+          { status: 500, headers, data: "<html>" } as never,
+        ),
+      );
 
-    const error = (await buildRequest()
+  const getError = () =>
+    buildRequest()
       .get("http://x")
-      .catch((e: unknown) => e)) as RequestError;
+      .catch((e: unknown) => e) as Promise<RequestError>;
+
+  test("keeps the status, content type, code and body of an error response", async () => {
+    failWith({ "Content-Type": "Text/HTML", "Set-Cookie": "session=secret" });
+
+    const error = await getError();
 
     expect(error).toBeInstanceOf(RequestError);
     expect(error.status).toBe(500);
-    expect(error.headers).toBe(headers);
+    expect(error.contentType).toBe("text/html");
     expect(error.code).toBe("ERR_BAD_RESPONSE");
     expect(error.data).toBe("<html>");
+    expect(JSON.stringify(error)).not.toContain("secret");
+  });
+
+  test("reads the content type from AxiosHeaders", async () => {
+    failWith(new AxiosHeaders({ "Content-Type": "text/HTML; charset=utf-8" }));
+
+    const error = await getError();
+
+    expect(error.contentType).toBe("text/html; charset=utf-8");
+  });
+
+  test("leaves the content type undefined when the response has none", async () => {
+    failWith({});
+
+    const error = await getError();
+
+    expect(error.status).toBe(500);
+    expect(error.contentType).toBeUndefined();
   });
 
   test("keeps the code of a transport error with no response", async () => {
@@ -223,7 +248,7 @@ describe("Request error details", () => {
 
     expect(error.code).toBe("ECONNREFUSED");
     expect(error.status).toBeUndefined();
-    expect(error.headers).toBeUndefined();
+    expect(error.contentType).toBeUndefined();
     expect(error.data).toBeUndefined();
   });
 
