@@ -1,4 +1,5 @@
 import axios, {
+  AxiosError,
   AxiosHeaders,
   isAxiosError,
   type AxiosRequestConfig,
@@ -20,6 +21,20 @@ export interface RequestOptions {
   responseType?: ResponseType;
 }
 
+// Why a request failed, as far as we can tell:
+//   - "not-connected": the connection could not be made, so the request never
+//     reached the server.
+//   - "interrupted": the connection failed after the request may have been
+//     sent, including while the response was still arriving.
+//   - "response": the server, or a proxy in front of it, answered with an
+//     error status.
+//   - "other": anything else, such as a cancelled request.
+export type RequestFailure =
+  | "not-connected"
+  | "interrupted"
+  | "response"
+  | "other";
+
 export interface RequestErrorDetails {
   // HTTP status, when the server (or a proxy in front of it) responded.
   status?: number;
@@ -27,15 +42,15 @@ export interface RequestErrorDetails {
   // header is kept: the others may hold secrets, such as Set-Cookie, and
   // errors are often logged or serialized.
   contentType?: string;
-  // Transport error code, e.g. "ECONNRESET", "ECONNREFUSED", "ERR_NETWORK".
-  code?: string;
+  // Defaults to "other".
+  failure?: RequestFailure;
 }
 
 export class RequestError extends Error {
   data?: unknown;
   status?: number;
   contentType?: string;
-  code?: string;
+  failure: RequestFailure;
 
   constructor(message: string, data?: unknown, details?: RequestErrorDetails) {
     super(message);
@@ -43,7 +58,7 @@ export class RequestError extends Error {
     this.data = data;
     this.status = details?.status;
     this.contentType = details?.contentType;
-    this.code = details?.code;
+    this.failure = details?.failure ?? "other";
   }
 }
 
@@ -51,7 +66,9 @@ export class RequestTimeoutError extends RequestError {
   readonly timeout: number;
 
   constructor(timeout: number) {
-    super(`Request timed out after ${timeout} ms`);
+    super(`Request timed out after ${timeout} ms`, undefined, {
+      failure: "interrupted",
+    });
     this.name = "RequestTimeoutError";
     this.timeout = timeout;
   }
@@ -115,6 +132,44 @@ const contentTypeOf = (headers: IResponseHeaders): string | undefined => {
   return value ? String(value).toLowerCase() : undefined;
 };
 
+// Errors raised before a connection was made.
+const NOT_CONNECTED_CODES = new Set([
+  "ECONNREFUSED",
+  "ENOTFOUND",
+  "EAI_AGAIN",
+  "EHOSTUNREACH",
+  "ENETUNREACH",
+]);
+
+// Connections that failed once the request may have been sent. In browsers
+// every network failure is "ERR_NETWORK".
+const INTERRUPTED_CODES = new Set([
+  "ECONNRESET",
+  "ECONNABORTED",
+  "ETIMEDOUT",
+  "EPIPE",
+  "ERR_NETWORK",
+]);
+
+const failureOf = (error: AxiosError): RequestFailure => {
+  const { code, response } = error;
+  if (!response && code !== undefined && NOT_CONNECTED_CODES.has(code))
+    return "not-connected";
+  if (code !== undefined && INTERRUPTED_CODES.has(code)) return "interrupted";
+  // Axios reports a body that stopped arriving ("stream has been aborted") as
+  // ERR_BAD_RESPONSE with the 2xx response it was reading. Error statuses get
+  // that code too, and so do rejected 3xx responses, hence the 2xx check. A
+  // body over maxContentLength comes with no response, so it is "other".
+  if (
+    code === AxiosError.ERR_BAD_RESPONSE &&
+    response &&
+    response.status >= 200 &&
+    response.status < 300
+  )
+    return "interrupted";
+  return response ? "response" : "other";
+};
+
 const toRequestError = (error: unknown): RequestError => {
   const message = error instanceof Error ? error.message : String(error);
   if (!isAxiosError(error)) return new RequestError(message);
@@ -123,7 +178,7 @@ const toRequestError = (error: unknown): RequestError => {
   return new RequestError(message, response?.data, {
     status: response?.status,
     contentType: response ? contentTypeOf(response.headers) : undefined,
-    code: error.code,
+    failure: failureOf(error),
   });
 };
 

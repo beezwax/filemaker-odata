@@ -136,31 +136,6 @@ describe("FileMakerClient retries", () => {
     expect(await result).toEqual(new Error("Could not find changeset"));
   });
 
-  test("does not retry a batch POST that FileMaker answered with a JSON error", async () => {
-    const { post, postRejecters } = pendingAxios();
-
-    const failure = batchCreate(buildClient());
-    await vi.advanceTimersByTimeAsync(0);
-    postRejecters[0]!(fileMaker500());
-    await pastRetryDelay();
-
-    expect(isRequestError(await failure)).toBe(true);
-    expect(post).toHaveBeenCalledTimes(1);
-  });
-
-  test("does not retry a script POST after a proxy 504", async () => {
-    const { post, postRejecters } = pendingAxios();
-    const fm = buildClient().withBasicAuth(basicAuth);
-
-    const failure = fm.script("MyScript").catch((error: unknown) => error);
-    await vi.advanceTimersByTimeAsync(0);
-    postRejecters[0]!(errorResponse(504, "text/html", "<html>504</html>"));
-    await pastRetryDelay();
-
-    expect(await failure).toMatchObject({ status: 504 });
-    expect(post).toHaveBeenCalledTimes(1);
-  });
-
   test("does not retry a POST that timed out", async () => {
     const { post } = pendingAxios();
     const fm = buildClient({ timeout: 1000 }).withBasicAuth(basicAuth);
@@ -197,6 +172,29 @@ describe("FileMakerClient retries", () => {
 
     await expect(result).resolves.toEqual(["basic"]);
     expect(get).toHaveBeenCalledTimes(2);
+  });
+
+  test("retries getOAuthUrl", async () => {
+    const { get, getRejecters, getResolvers } = pendingAxios();
+
+    const result = buildClient().getOAuthUrl({
+      trackingId: "t",
+      provider: "Google",
+    });
+    await vi.advanceTimersByTimeAsync(0);
+    getRejecters[0]!(proxy500());
+    await pastRetryDelay();
+    getResolvers[1]!({
+      data: "https://oauth/redirect",
+      headers: { "x-fms-request-id": "abc" },
+    });
+
+    await expect(result).resolves.toEqual({
+      redirectUrl: "https://oauth/redirect",
+      requestId: "abc",
+    });
+    expect(get).toHaveBeenCalledTimes(2);
+    expect(get.mock.calls[1]).toEqual(get.mock.calls[0]);
   });
 
   test("retries: 0 turns retries off", async () => {

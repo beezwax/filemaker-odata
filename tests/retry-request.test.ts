@@ -1,12 +1,15 @@
 import { afterEach, describe, expect, test, vi } from "vitest";
 import {
-  isRetryableGetError,
-  isRetryablePostError,
   RequestError,
   RequestTimeoutError,
+  type IRequest,
+  type RequestFailure,
+} from "../src/request";
+import {
+  isRetryableGetError,
+  isRetryablePostError,
   RetryRequest,
-} from "../src/index";
-import type { IRequest } from "../src/request";
+} from "../src/retry-request";
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -17,7 +20,7 @@ const html500 = () =>
   new RequestError("Request failed with status code 500", "<html>", {
     status: 500,
     contentType: "text/html; charset=utf-8",
-    code: "ERR_BAD_RESPONSE",
+    failure: "response",
   });
 
 const json500 = () =>
@@ -27,23 +30,27 @@ const json500 = () =>
     {
       status: 500,
       contentType: "application/json;charset=utf-8",
-      code: "ERR_BAD_RESPONSE",
+      failure: "response",
     },
   );
 
-const status = (code: number, contentType = "text/html") =>
+const status = (code: number, contentType: string | undefined = "text/html") =>
   new RequestError(`status ${code}`, undefined, {
     status: code,
     contentType,
+    failure: "response",
   });
 
-const network = (code: string, message = code) =>
-  new RequestError(message, undefined, { code });
+const failed = (failure: RequestFailure) =>
+  new RequestError(failure, undefined, { failure });
 
-// A connection dropped while the response body was arriving: axios keeps the
-// response it was reading.
-const midBody = (code: string, message = "stream has been aborted") =>
-  new RequestError(message, undefined, { status: 200, code });
+// A connection dropped while the response body was arriving: the error keeps
+// the response that was being read.
+const midBody = () =>
+  new RequestError("stream has been aborted", undefined, {
+    status: 200,
+    failure: "interrupted",
+  });
 
 describe("isRetryableGetError", () => {
   test.each([
@@ -52,23 +59,9 @@ describe("isRetryableGetError", () => {
     ["a 502", status(502)],
     ["a 503", status(503)],
     ["a 504", status(504)],
-    ["ECONNRESET", network("ECONNRESET")],
-    ["ECONNREFUSED", network("ECONNREFUSED")],
-    ["ETIMEDOUT", network("ETIMEDOUT")],
-    ["ECONNABORTED", network("ECONNABORTED")],
-    ["EPIPE", network("EPIPE")],
-    ["ENOTFOUND", network("ENOTFOUND")],
-    ["EAI_AGAIN", network("EAI_AGAIN")],
-    ["EHOSTUNREACH", network("EHOSTUNREACH")],
-    ["ENETUNREACH", network("ENETUNREACH")],
-    ["a browser network error", network("ERR_NETWORK", "Network Error")],
-    ["a socket hang up", new RequestError("socket hang up")],
-    [
-      "a socket hang up with ECONNRESET",
-      network("ECONNRESET", "socket hang up"),
-    ],
-    ["a body stream aborted mid-response", midBody("ERR_BAD_RESPONSE")],
-    ["a connection reset mid-response", midBody("ECONNRESET", "aborted")],
+    ["a connection that could not be made", failed("not-connected")],
+    ["an interrupted connection", failed("interrupted")],
+    ["a connection dropped mid-response", midBody()],
     ["our inactivity timeout", new RequestTimeoutError(1000)],
   ])("retries %s", (_label, error) => {
     expect(isRetryableGetError(error)).toBe(true);
@@ -78,16 +71,13 @@ describe("isRetryableGetError", () => {
     ["a 400", status(400)],
     ["a 401", status(401)],
     ["a 404", status(404)],
-    [
-      "a 404 with code ERR_BAD_RESPONSE",
-      new RequestError("status 404", undefined, {
-        status: 404,
-        code: "ERR_BAD_RESPONSE",
-      }),
-    ],
     ["a 501", status(501)],
-    ["a cancelled request", network("ERR_CANCELED", "canceled")],
-    ["an error with no code", new RequestError("boom")],
+    ["an other failure", failed("other")],
+    [
+      "an other failure with a 500 status",
+      new RequestError("x", undefined, { status: 500 }),
+    ],
+    ["an error with no details", new RequestError("boom")],
     ["a non-request error", new Error("socket hang up")],
   ])("does not retry %s", (_label, error) => {
     expect(isRetryableGetError(error)).toBe(false);
@@ -98,12 +88,8 @@ describe("isRetryablePostError", () => {
   test.each([
     ["an HTML 500 (proxy error page)", html500()],
     ["an HTML 503", status(503)],
-    ["a 500 with no content type", new RequestError("x", "", { status: 500 })],
-    ["ECONNREFUSED", network("ECONNREFUSED")],
-    ["ENOTFOUND", network("ENOTFOUND")],
-    ["EAI_AGAIN", network("EAI_AGAIN")],
-    ["EHOSTUNREACH", network("EHOSTUNREACH")],
-    ["ENETUNREACH", network("ENETUNREACH")],
+    ["a 500 with no content type", status(500, undefined)],
+    ["a connection that could not be made", failed("not-connected")],
   ])("retries %s", (_label, error) => {
     expect(isRetryablePostError(error)).toBe(true);
   });
@@ -117,11 +103,18 @@ describe("isRetryablePostError", () => {
     ["a multipart 500", status(500, "multipart/mixed; boundary=b")],
     ["a 400", status(400)],
     ["our inactivity timeout", new RequestTimeoutError(1000)],
-    ["ECONNRESET", network("ECONNRESET")],
-    ["ETIMEDOUT", network("ETIMEDOUT")],
-    ["a socket hang up", network("ECONNRESET", "socket hang up")],
-    ["a browser network error", network("ERR_NETWORK", "Network Error")],
-    ["an error with no code", new RequestError("boom")],
+    ["an interrupted connection", failed("interrupted")],
+    ["a connection dropped mid-response", midBody()],
+    [
+      "an interrupted connection with an HTML 500",
+      new RequestError("x", undefined, {
+        status: 500,
+        contentType: "text/html",
+        failure: "interrupted",
+      }),
+    ],
+    ["an other failure", failed("other")],
+    ["an error with no details", new RequestError("boom")],
     ["a non-request error", new Error("boom")],
   ])("does not retry %s", (_label, error) => {
     expect(isRetryablePostError(error)).toBe(false);
@@ -262,12 +255,43 @@ describe("RetryRequest", () => {
     );
   });
 
+  test("caps each delay at 30 s", async () => {
+    vi.useFakeTimers();
+    vi.spyOn(Math, "random").mockReturnValue(0);
+    const inner = failing(...Array.from({ length: 9 }, html500));
+    const request = new RetryRequest(inner, { retries: 20, baseDelay: 250 });
+
+    const result = request.get("http://x");
+    // Retries 1 to 7 wait 250 ms doubled each time: 31750 ms in all.
+    await vi.advanceTimersByTimeAsync(31750);
+    expect(inner.get).toHaveBeenCalledTimes(8);
+
+    // Retry 8 would wait 32000 ms uncapped, retry 9 64000 ms.
+    for (const calls of [9, 10]) {
+      await vi.advanceTimersByTimeAsync(29999);
+      expect(inner.get).toHaveBeenCalledTimes(calls - 1);
+      await vi.advanceTimersByTimeAsync(1);
+      expect(inner.get).toHaveBeenCalledTimes(calls);
+    }
+
+    await expect(result).resolves.toBe(okResponse);
+  });
+
   test.each([-1, 1.5, NaN, Infinity, "1" as unknown as number])(
     "throws a RangeError for retries %j",
     (retries) => {
       expect(() => new RetryRequest(failing(), { retries })).toThrow(
         new RangeError("retries must be a non-negative integer"),
       );
+    },
+  );
+
+  test.each([-1, NaN, Infinity, "1" as unknown as number])(
+    "throws a RangeError for baseDelay %j",
+    (baseDelay) => {
+      expect(
+        () => new RetryRequest(failing(), { retries: 1, baseDelay }),
+      ).toThrow(new RangeError("baseDelay must be a non-negative number"));
     },
   );
 });

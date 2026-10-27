@@ -352,28 +352,29 @@ answers with a generic `500 Internal Server Error` page for no lasting reason. A
 Reads (GET) only read data, so they are retried on any transient failure:
 
 - a `500`, `502`, `503`, or `504` response,
-- a network error (connection reset or refused, host or network unreachable, DNS failure,
-  socket hang up, or a browser network error), including a connection that drops while
-  the response is still arriving,
+- a connection that could not be made (refused, host or network unreachable, DNS failure),
+- a connection that failed once the request was sent (reset, aborted, or a browser network
+  error), including one that drops while the response is still arriving,
 - a request that hit the client's `timeout`.
 
-Scripts and batches (POST) can write data, so they are retried only when the request almost
-certainly never ran in FileMaker:
+Scripts and batches (POST) can write data, so they are retried only when the request most
+likely never ran in FileMaker:
 
 - a `500` or `503` proxy error page: a response that is HTML or has no content type, or
-- a connection that could not be made (`ECONNREFUSED`, `ENOTFOUND`, `EAI_AGAIN`,
-  `EHOSTUNREACH`, `ENETUNREACH`).
+- a connection that could not be made (refused, host or network unreachable, DNS failure).
 
 A POST whose error response is not HTML (JSON, XML, plain text, and so on), that timed
-out, or whose connection was reset or hung up is never retried, because FileMaker may have
-run it already. Neither is a `502` or `504`: the proxy may have forwarded the request
-to FileMaker and then lost the connection or stopped waiting for the answer. Other errors,
-such as `400` or `404`, are never retried.
+out, or whose connection failed after it was sent is not retried, because FileMaker may
+have run it already. Neither is a `502` or `504`: the proxy may have forwarded the request
+to FileMaker and then lost the connection or stopped waiting for the answer. This avoids
+retrying when FileMaker may have run the request, but it is not a guarantee: a proxy can
+forward a request and still answer with an HTML `500`. Other errors, such as `400` or
+`404`, are never retried.
 
-The first retry waits 250 to 500 ms. Each later retry waits twice as long. Each attempt
-gets its own `timeout`. A request keeps its `concurrency` slot while it waits, and callers
-sharing a deduplicated read share its retries. When retries run out, the last error is
-thrown. Each retry is logged with the client's `logger`.
+The first retry waits 250 to 500 ms. Each later retry waits twice as long, up to 30 s.
+Each attempt gets its own `timeout`. A request keeps its `concurrency` slot while it waits,
+and callers sharing a deduplicated read share its retries. When retries run out, the last
+error is thrown. Each retry is logged with the client's `logger`.
 
 `retries` sets how many times a failed request is retried. It defaults to `1`. Pass `0` to
 turn retries off. Any other value must be a non-negative integer, or the constructor
@@ -402,9 +403,15 @@ const fm = new FileMaker({
 ```
 
 `RetryRequest` also accepts `baseDelay`, the wait in ms before the first retry (default
-`250`). The `isRetryableGetError` and `isRetryablePostError` functions expose the rules
-above. A `RequestError` carries the response `status` and `contentType` and the network
-error `code`, when there are any.
+`250`); it must be a non-negative number, or the constructor throws a `RangeError`. Waits
+are capped at 30 s whatever the `baseDelay` and `retries`.
+
+A failed request throws a `RequestError` carrying the response `status` and `contentType`,
+when there was a response, and a `failure` kind (`RequestFailure`): `"not-connected"` (the
+connection could not be made), `"interrupted"` (the connection failed after the request may
+have been sent, or the request timed out), `"response"` (the server or a proxy answered
+with an error status), or `"other"` (the default). Retries are decided from these fields, so
+an `IRequest` of your own wrapped in `RetryRequest` must set them on the errors it throws.
 
 # Development
 
