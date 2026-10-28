@@ -191,6 +191,10 @@ export declare class FileMakerBasicCredentials implements FileMakerCredentials {
  * out (or passing undefined, 0 or Infinity) means no timeout. A timed-out
  * request throws `RequestTimeoutError`.
  *
+ * Requests failing in a transient way are retried once by default; pass
+ * `retries` to change that (0 turns retries off). See "Request Retries" in
+ * the README for which failures are retried.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -220,7 +224,8 @@ export declare class FileMakerClient {
     private dedupe;
     private concurrencyLimit?;
     private timeout?;
-    constructor({ server, database, agent, logger, dedupe, concurrency, timeout, }: {
+    private retries;
+    constructor({ server, database, agent, logger, dedupe, concurrency, timeout, retries, }: {
         server: string;
         database: string;
         agent?: unknown;
@@ -228,6 +233,7 @@ export declare class FileMakerClient {
         dedupe?: boolean;
         concurrency?: number;
         timeout?: number;
+        retries?: number;
     });
     /**
      * Creates a FileMaker instance configured with basic authentication.
@@ -251,7 +257,7 @@ export declare class FileMakerClient {
         requestId: string;
         identifier: string;
     }): FileMaker;
-    private request;
+    private transport;
     private buildFileMaker;
     private decorate;
     /**
@@ -410,8 +416,19 @@ declare interface RecordWithId {
 
 export declare class RequestError extends Error {
     data?: unknown;
-    constructor(message: string, data?: unknown);
+    status?: number;
+    contentType?: string;
+    failure: RequestFailure;
+    constructor(message: string, data?: unknown, details?: RequestErrorDetails);
 }
+
+declare interface RequestErrorDetails {
+    status?: number;
+    contentType?: string;
+    failure?: RequestFailure;
+}
+
+export declare type RequestFailure = "not-connected" | "interrupted" | "response" | "other";
 
 declare interface RequestOptions {
     headers?: Record<string, string>;
@@ -421,6 +438,37 @@ declare interface RequestOptions {
 export declare class RequestTimeoutError extends RequestError {
     readonly timeout: number;
     constructor(timeout: number);
+}
+
+export declare interface RetryOptions {
+    retries: number;
+    baseDelay?: number;
+    logger?: ILogger;
+}
+
+/**
+ * An IRequest wrapper that retries requests failing in a transient way, such
+ * as a proxy returning a generic 500 error page.
+ *
+ * GETs are retried on any transient failure. POSTs are retried only when
+ * they most likely never reached FileMaker. See `isRetryableGetError` and
+ * `isRetryablePostError` above. Other errors, and the last failure, are
+ * thrown as they are.
+ *
+ * Meant to sit inside ConcurrencyLimitRequest and DedupeRequest: a request
+ * keeps its slot while it waits to retry, and callers sharing a deduplicated
+ * read share its retries.
+ */
+export declare class RetryRequest implements IRequest {
+    private inner;
+    private retries;
+    private baseDelay;
+    private logger?;
+    constructor(inner: IRequest, { retries, baseDelay, logger }: RetryOptions);
+    get<T>(url: string, options?: RequestOptions): Promise<IResponse<T>>;
+    post<T>(url: string, params: string | Record<string, unknown> | null, options?: RequestOptions): Promise<IResponse<T>>;
+    private attempt;
+    private delayFor;
 }
 
 export { }
