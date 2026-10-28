@@ -1,6 +1,7 @@
 import { FileMaker } from "./filemaker";
 import { type IRequest, Request } from "./request";
 import { DedupeRequest } from "./dedupe-request";
+import { RetryRequest, assertValidRetries } from "./retry-request";
 import {
   ConcurrencyLimit,
   ConcurrencyLimitRequest,
@@ -61,6 +62,10 @@ const normalizeTimeout = (timeout: number | undefined): number | undefined => {
  * out (or passing undefined, 0 or Infinity) means no timeout. A timed-out
  * request throws `RequestTimeoutError`.
  *
+ * Requests failing in a transient way are retried once by default; pass
+ * `retries` to change that (0 turns retries off). See "Request Retries" in
+ * the README for which failures are retried.
+ *
  * @example
  * // Basic authentication
  * const client = new FileMakerClient({
@@ -90,6 +95,7 @@ export class FileMakerClient {
   private dedupe: boolean;
   private concurrencyLimit?: ConcurrencyLimit;
   private timeout?: number;
+  private retries: number;
 
   constructor({
     server,
@@ -99,6 +105,7 @@ export class FileMakerClient {
     dedupe = true,
     concurrency,
     timeout,
+    retries = 1,
   }: {
     server: string;
     database: string;
@@ -107,6 +114,7 @@ export class FileMakerClient {
     dedupe?: boolean;
     concurrency?: number;
     timeout?: number;
+    retries?: number;
   }) {
     this.server = server;
     this.database = database;
@@ -117,6 +125,8 @@ export class FileMakerClient {
       ? new ConcurrencyLimit(concurrency)
       : undefined;
     this.timeout = normalizeTimeout(timeout);
+    assertValidRetries(retries);
+    this.retries = retries;
   }
 
   /**
@@ -134,7 +144,7 @@ export class FileMakerClient {
     password: string;
   }): FileMaker {
     const credentials = new FileMakerBasicCredentials({ username, password });
-    return this.buildFileMaker(this.request(credentials));
+    return this.buildFileMaker(this.transport(credentials));
   }
 
   /**
@@ -155,11 +165,19 @@ export class FileMakerClient {
       requestId,
       identifier,
     });
-    return this.buildFileMaker(this.request(credentials));
+    return this.buildFileMaker(this.transport(credentials));
   }
 
-  private request(credentials: FileMakerCredentials): Request {
-    return new Request(credentials, this.agent, this.timeout);
+  // The per-attempt transport: the axios Request plus retries, also used by
+  // the unauthenticated getOAuthUrl and getAuthTypes. Retries sit inside
+  // decorate()'s concurrency limit and dedupe, so a request keeps its slot
+  // while it waits to retry and callers sharing a deduplicated read share its
+  // retries.
+  private transport(credentials: FileMakerCredentials): IRequest {
+    return new RetryRequest(
+      new Request(credentials, this.agent, this.timeout),
+      { retries: this.retries, logger: this.logger },
+    );
   }
 
   private buildFileMaker(request: IRequest): FileMaker {
@@ -171,8 +189,8 @@ export class FileMakerClient {
     });
   }
 
-  // Innermost first: the concurrency limit sits inside dedupe, so callers
-  // sharing a deduplicated read do not take a slot.
+  // Wraps the transport, innermost first: the concurrency limit sits inside
+  // dedupe, so callers sharing a deduplicated read do not take a slot.
   private decorate(request: IRequest): IRequest {
     let decorated = request;
     if (this.concurrencyLimit !== undefined)
@@ -199,7 +217,7 @@ export class FileMakerClient {
     provider: string;
     returnUrl?: string;
   }): Promise<{ redirectUrl: string; requestId: string }> {
-    const request = this.request(new NullFileMakerCredentials());
+    const request = this.transport(new NullFileMakerCredentials());
 
     const url = `https://${this.server}/oauth/getoauthurl?trackingID=${trackingId}&provider=${provider}&address=${this.server}&X-FMS-OAuth-AuthType=2`;
     const response = await request.get(url, {
@@ -230,7 +248,7 @@ export class FileMakerClient {
    * @returns The authentication types (e.g., "Google", "Microsoft", "basic")
    */
   async getAuthTypes(): Promise<string[]> {
-    const request = this.request(new NullFileMakerCredentials());
+    const request = this.transport(new NullFileMakerCredentials());
 
     const response = await request.get<OAuthResponse>(
       `https://${this.server}/fmws/oauthproviderinfo`,
